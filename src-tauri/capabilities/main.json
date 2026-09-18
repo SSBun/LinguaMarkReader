@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "仅本地主阅读窗口可请求用户选择文件及读取已授权内容。",
+  "windows": ["main"],
+  "permissions": [
+    "allow-pick-entry",
+    "allow-pick-directory",
+    "allow-read-file",
+    "allow-read-directory",
+    "allow-open-external"
+  ]
+}

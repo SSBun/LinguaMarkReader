@@ -1,0 +1,127 @@
+/* Reading preferences are scoped to content, not the application controls. */
+body.linguamark-markdown-page #write:not(.linguamark-empty-viewer):not(.linguamark-directory-image-preview) {
+  font-family: var(--reader-font, var(--font-body));
+  font-size: var(--reader-font-size, 18px);
+  line-height: var(--reader-line-height, 1.78);
+}
+body.linguamark-markdown-page #write :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--reader-heading-font, var(--font-heading));
+}
+
+/* Lock the actual reading pane, not the non-scrolling window frame. */
+body:has(> #reader-settings[open], > #linguamark-markdown-library[open]) .linguamark-markdown-content {
+  overflow: hidden;
+}
+
+.reader-settings {
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  box-sizing: border-box;
+  padding: 24px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--bg-soft);
+  border-radius: var(--radius-lg);
+  background: var(--bg-write);
+  color: var(--fg-main);
+  box-shadow: var(--shadow-lg);
+  font: 15px/1.5 system-ui, -apple-system, "PingFang SC", sans-serif;
+}
+.reader-settings::backdrop { background: rgb(31 42 35 / 35%); }
+.reader-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  font: inherit;
+  margin-bottom: 20px;
+}
+.reader-settings-header h2 { margin: 0; font-size: 22px; font-weight: 650; }
+.reader-settings button, .reader-settings select { font: inherit; color: inherit; }
+.reader-settings-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--bg-soft);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  font-size: 22px !important;
+}
+.reader-settings-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 20px;
+  background: var(--bg-soft);
+  border-radius: var(--radius);
+}
+.reader-settings-tabs button {
+  flex: 1;
+  min-height: 38px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+.reader-settings-tabs button[aria-selected="true"] { background: var(--bg-write); box-shadow: var(--shadow-sm); }
+.reader-settings-tabs span { margin-left: 6px; color: var(--fg-muted); font-size: 12px; }
+.reader-settings :is(button, select, input, [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.reader-settings [role="tabpanel"][hidden] { display: none; }
+.reader-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 54px;
+  padding: 10px 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--bg-soft);
+}
+.reader-settings-row select {
+  max-width: 62%;
+  min-height: 34px;
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  background: var(--bg-write);
+}
+.reader-settings-range { display: flex; align-items: center; gap: 12px; width: 55%; }
+.reader-settings-range input { width: 100%; min-width: 40px; accent-color: var(--accent-deep); }
+.reader-settings-range output { min-width: 64px; font-variant-numeric: tabular-nums; text-align: right; }
+.reader-settings-toggle { cursor: pointer; }
+.reader-settings-toggle input { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--accent-deep); }
+.reader-settings-toggle small { display: block; margin-top: 4px; color: var(--fg-muted); font-size: 12px; }
+.reader-settings-preview {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--bg-page);
+  font-family: var(--reader-font, var(--font-body));
+  font-size: var(--reader-font-size, 18px);
+  line-height: var(--reader-line-height, 1.78);
+}
+.reader-settings-status { margin: 14px 0 0; color: var(--fg-muted); font-size: 12px; min-height: 36px; }
+.reader-settings-status.is-error { color: #a43127; }
+#settings-about { text-align: center; padding: 26px 16px; min-height: 360px; }
+.reader-settings-about-mark {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  border-radius: var(--radius-lg);
+  background: var(--accent-deep);
+  color: var(--bg-write);
+  font-size: 24px;
+  font-weight: 650;
+}
+.reader-settings-app-name { margin: 0; font-size: 24px; }
+.reader-settings-version { color: var(--fg-muted); margin: 8px 0 24px; }
+.reader-settings-muted { color: var(--fg-muted); font-size: 13px; margin-top: 24px; }
+@media (max-width: 600px) {
+  .reader-settings { padding: 16px; }
+  .reader-settings-row { gap: 12px; }
+  .reader-settings-range { width: 60%; }
+}
