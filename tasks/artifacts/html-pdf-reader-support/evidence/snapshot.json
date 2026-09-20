@@ -1,0 +1,23 @@
+{
+  "head": "142352f73d7b474f8b8334ce6db9b36aa2f84405",
+  "branch": "main",
+  "files": {
+    "src/main.ts": "a07c6aab6d05386f7b06d128bb0877cfd27cc58fca95b1dc6dc3c83c516302f1",
+    "src/platform.ts": "f14c6f4dee92317f189b70d903676c00acaa0116578238743c190e15bcea385a",
+    "src-tauri/src/main.rs": "5087b62e80479014034602bd6669e302bc6c2fb4b714f949dd1f1d24cef9522d",
+    "src-tauri/src/native_picker.rs": "278180c7ad7be933748c98289e296a544ba5443b3d41475d50812a157fcec90f",
+    "public/markdown.css": "9a4581363c6b9e03860cdf455d705e8b00d5c39b8fbd4eac62b86fd588d54d46",
+    "README.md": "f53a5db07d0d2dc8c3519eeab220d75358c9325497cb663f1eda8fa18cedf75f",
+    "package.json": "6ca08414211997b207a877942bf2a6d69b3fc1175cdea1bf1d2154200e2343a2",
+    "package-lock.json": "3f4cb615f5c530f7277e0b50d8edf74d42308fbbe83db8987819620b7f83cf7e",
+    "scripts/build.mjs": "60775a8974111bb9aa95a25a5321138172dee08b2c66e27157200a5e322a3559",
+    "src-tauri/tauri.conf.json": "76df8e8bce07cdd9b38d742fd32868688388a276e52e509f532a4c4449a96428",
+    "src/pdf.ts": "1cecbbe85181622b767c2c64523e8d1538fca04bea31246fde9682d6b02caa8a",
+    "src/json.ts": "ec10168e4963f035d0324ee06c37c187058e9ff4aa69716c72179535289bcbd5",
+    "src/search.ts": "6e011b3ac5267dac8e77a029d9d748c6b0c0f4def354398eb38a5250fce9349b",
+    "src/settings.ts": "875f58aed97f073a68c69b57e27dfefda452a53dfe21348103212d1d75ee0e20",
+    "src-tauri/Cargo.toml": "037158aab33e622b2748d0181abe65fcdc0d38369540d4ec5c1e3fd89174f042",
+    "src-tauri/Cargo.lock": "fa3da2d5b55fc1424e222ff43824d2de19c3b9b489209fe1a8fb61c77f9c8144",
+    "public/index.html": "0094a2c8367558381175d630d3a5af4aef14642aa2611830340014f4dc3c0ae4"
+  }
+}

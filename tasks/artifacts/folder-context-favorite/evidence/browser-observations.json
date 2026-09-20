@@ -1,0 +1,136 @@
+[
+  {
+    "观察": "根目录菜单",
+    "结果": [
+      "Copy Relative Path",
+      "Copy Name",
+      "Add to Favorite"
+    ]
+  },
+  {
+    "观察": "根目录按目录类型收藏",
+    "结果": [
+      {
+        "kind": "directory",
+        "path": "/preview/root"
+      }
+    ]
+  },
+  {
+    "观察": "收藏不改变当前文档",
+    "结果": "当前正文"
+  },
+  {
+    "观察": "根目录已收藏菜单",
+    "结果": [
+      "Copy Relative Path",
+      "Copy Name",
+      "Remove from Favorites"
+    ]
+  },
+  {
+    "观察": "子目录菜单保留展开折叠",
+    "结果": [
+      "Copy Relative Path",
+      "Copy Name",
+      "Add to Favorite",
+      "Expand Subtree",
+      "Collapse Subtree"
+    ]
+  },
+  {
+    "观察": "子目录路径和类型",
+    "结果": [
+      {
+        "kind": "directory",
+        "path": "/preview/root/sub"
+      },
+      {
+        "kind": "directory",
+        "path": "/preview/root"
+      }
+    ]
+  },
+  {
+    "观察": "右键收藏不展开目录",
+    "结果": false
+  },
+  {
+    "观察": "展开子树",
+    "结果": [
+      true,
+      true
+    ]
+  },
+  {
+    "观察": "折叠子树",
+    "结果": [
+      false,
+      false
+    ]
+  },
+  {
+    "观察": "文件菜单不变",
+    "结果": [
+      "Copy Relative Path",
+      "Copy Name",
+      "Add to Favorites"
+    ]
+  },
+  {
+    "观察": "重新加载后收藏保留",
+    "结果": [
+      {
+        "kind": "directory",
+        "path": "/preview/root/sub"
+      },
+      {
+        "kind": "directory",
+        "path": "/preview/root"
+      }
+    ]
+  },
+  {
+    "观察": "从收藏打开子目录",
+    "结果": {
+      "cmd": "read_directory",
+      "args": {
+        "path": "/preview/root/sub"
+      }
+    }
+  },
+  {
+    "观察": "空目录根菜单",
+    "结果": [
+      "Copy Relative Path",
+      "Copy Name",
+      "Remove from Favorites"
+    ]
+  },
+  {
+    "观察": "目录取消收藏",
+    "结果": [
+      {
+        "kind": "directory",
+        "path": "/preview/root"
+      }
+    ]
+  },
+  {
+    "观察": "空目录再次收藏",
+    "结果": [
+      {
+        "kind": "directory",
+        "path": "/preview/root/sub"
+      },
+      {
+        "kind": "directory",
+        "path": "/preview/root"
+      }
+    ]
+  },
+  {
+    "观察": "浏览器异常",
+    "结果": []
+  }
+]

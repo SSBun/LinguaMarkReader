@@ -1,0 +1,10 @@
+{
+  "snapshot": "sha256:29304082a430c47377e0d274973d48fb29cca6a83a97c802ac4d41791a8f6528",
+  "files": {
+    "src/main.ts": "29304082a430c47377e0d274973d48fb29cca6a83a97c802ac4d41791a8f6528"
+  },
+  "head": "142352f73d7b474f8b8334ce6db9b36aa2f84405",
+  "status": " M src/main.ts\n",
+  "diff": "scope.diff 为任务开始后的独立增量，不包含已有 JSON、搜索、侧栏或图标修改。",
+  "verification": "npm run check、npm run build、git diff --check；browser-observations.json 是 Chrome 浏览器交互与实际 localStorage 观察，原生IPC由可控样例模拟；未运行单元测试，未另做本次原生右键实机验证。"
+}

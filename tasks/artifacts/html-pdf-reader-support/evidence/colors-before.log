@@ -1,0 +1,13 @@
+{"csp":"img-src","blocked":"https://example.com/leak"}
+{"html":"HTML rendered heading","unsafe":false,"scriptRan":false,"outline":true,"imageSource":null}
+{"pdf":"第 1 / 2 页","canvas":[1736,2246],"ink":7092,"text":"PDF first page "}
+{"colors":[{"tag":"INPUT","fg":"rgb(44, 58, 50)","bg":"rgb(30, 35, 48)","border":"rgb(58, 66, 83)","scheme":"normal","opacity":"1","outline":"none","outlineColor":"rgb(44, 58, 50)"},{"tag":"SELECT","fg":"rgb(44, 58, 50)","bg":"rgb(30, 35, 48)","border":"rgb(58, 66, 83)","scheme":"normal","opacity":"1","outline":"none","outlineColor":"rgb(44, 58, 50)"}]}
+{"focus":{"tag":"INPUT","fg":"rgb(44, 58, 50)","bg":"rgb(30, 35, 48)","border":"rgb(58, 66, 83)","scheme":"normal","opacity":"1","outline":"auto","outlineColor":"rgb(0, 103, 244)"}}
+{"disabled":[{"tag":"INPUT","fg":"rgb(44, 58, 50)","bg":"rgb(30, 35, 48)","border":"rgb(58, 66, 83)","scheme":"normal","opacity":"0.45","outline":"auto","outlineColor":"rgb(0, 103, 244)"},{"tag":"SELECT","fg":"rgb(44, 58, 50)","bg":"rgb(30, 35, 48)","border":"rgb(58, 66, 83)","scheme":"normal","opacity":"0.45","outline":"none","outlineColor":"rgb(44, 58, 50)"}]}
+CAPTURE
+{"page2":"PDF second page "}
+{"zoom":"1224px"}
+{"invalid":"无法打开 PDF：文件可能已损坏或格式不受支持。"}
+{"csp":"img-src","blocked":"https://example.com/leak"}
+{"switchBack":"HTML rendered heading","pdfLeft":false}
+DONE:success

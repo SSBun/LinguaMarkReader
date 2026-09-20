@@ -1,0 +1,74 @@
+--- before/src/pdf.ts
++++ after/src/pdf.ts
+@@ -61,6 +61,7 @@
+   let pumping = false;
+   let resizeTimer: number | undefined;
+   let scrollFrame = 0;
++  let positionedScrollTop: number | undefined;
+   let initialSize = { width: 612, height: 792 };
+   const sizes = new Map<number, { width: number; height: number }>();
+   const slots = new Map<number, HTMLElement>();
+@@ -122,7 +123,10 @@
+         const oldHeight = slot.offsetHeight;
+         const above = slot.offsetTop + oldHeight < viewport.scrollTop;
+         sizeSlot(number, slot);
+-        if (above) viewport.scrollTop += slot.offsetHeight - oldHeight;
++        if (above) {
++          viewport.scrollTop += slot.offsetHeight - oldHeight;
++          if (positionedScrollTop !== undefined) positionedScrollTop = viewport.scrollTop;
++        }
+         const view = page.getViewport({ scale: dimensions(number).scale });
+         const ratio = Math.min(window.devicePixelRatio || 1, 2, 4096 / view.width, 4096 / view.height);
+         const canvas = document.createElement("canvas");
+@@ -202,6 +206,12 @@
+     void pump();
+   }, { root: viewport, rootMargin: "600px 0px" });
+ 
++  const positionPage = (): void => {
++    viewport.scrollTop = horizontal() ? 0 : (slots.get(pageNumber)?.offsetTop ?? 12) - 12;
++    // Retain explicit selection even when the browser clamps a final-page jump.
++    // A real change in scroll position releases this anchor for manual reading.
++    positionedScrollTop = viewport.scrollTop;
++  };
+   const rebuild = async (): Promise<void> => {
+     if (!pdf || disposed) return;
+     ++generation;
+@@ -227,7 +237,7 @@
+       fragment.append(slot);
+     }
+     viewport.append(fragment);
+-    viewport.scrollTop = horizontal() ? 0 : (slots.get(pageNumber)?.offsetTop ?? 12) - 12;
++    positionPage();
+     viewport.scrollLeft = 0;
+     nearby.add(pageNumber);
+     pending.add(pageNumber);
+@@ -244,7 +254,7 @@
+     updateControls();
+     if (horizontal()) void rebuild();
+     else {
+-      viewport.scrollTo({ top: (slots.get(number)?.offsetTop ?? 12) - 12, behavior: "instant" });
++      positionPage();
+       nearby.add(number);
+       pending.add(number);
+       void pump();
+@@ -260,12 +270,18 @@
+     scrollFrame = requestAnimationFrame(() => {
+       scrollFrame = 0;
+       if (disposed || horizontal()) return;
+-      const middle = viewport.scrollTop + viewport.clientHeight / 2;
++      if (positionedScrollTop !== undefined && Math.abs(viewport.scrollTop - positionedScrollTop) < 1) return;
++      positionedScrollTop = undefined;
++      // Use the leading reading edge, not the midpoint (which may be several pages ahead).
++      const leading = viewport.scrollTop + 12;
+       let closest = pageNumber;
+       let distance = Infinity;
+       for (const [number, slot] of slots) {
+-        const delta = Math.max(slot.offsetTop - middle, middle - slot.offsetTop - slot.offsetHeight, 0);
++        const delta = Math.max(slot.offsetTop - leading, leading - slot.offsetTop - slot.offsetHeight, 0);
+         if (delta < distance) { closest = number; distance = delta; }
++      }
++      if (viewport.scrollTop > 0 && viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 1) {
++        closest = pdf?.numPages ?? closest;
+       }
+       if (closest !== pageNumber) {
+         pageNumber = closest;

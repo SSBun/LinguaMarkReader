@@ -1,0 +1,3 @@
+{"height":1107,"pageHeight":459}
+{"observations":[{"action":"jump5","expected":5,"actual":5},{"action":"previous","expected":4,"actual":4},{"action":"previous","expected":3,"actual":3},{"action":"previous","expected":2,"actual":2},{"action":"previous","expected":1,"actual":1},{"action":"jumpLast","expected":12,"actual":12},{"action":"previousAtClamp","expected":11,"actual":11},{"action":"horizontal","expected":11,"actual":11},{"action":"vertical","expected":11,"actual":11},{"action":"manualHome","expected":1,"actual":1},{"action":"manualEnd","expected":12,"actual":12},{"action":"jumpFirst","expected":1,"actual":1}],"firstDisabled":true}
+DONE:success

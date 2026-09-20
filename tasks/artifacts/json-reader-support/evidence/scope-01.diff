@@ -1,0 +1,435 @@
+diff --git a/README.md b/README.md
+index 64777f9..fde0cea 100644
+--- a/README.md
++++ b/README.md
+@@ -32,15 +32,16 @@ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+ 
+ ## 阅读能力
+ 
+-- 打开 UTF-8 Markdown，或选择整个阅读目录。
++- 打开 UTF-8 Markdown、JSON，或选择整个阅读目录。
++- JSON 只读格式化、语法高亮、对象和数组折叠展开；保留原始数值及重复键，无效 JSON 显示提示和原文。
+ - Lightmind 风格正文、标题目录、可调整侧栏、固定/整屏阅读宽度、字词计数。
+ - 文件树、当前文件定位、目录展开/折叠、文件右键菜单。
+ - 代码高亮、任务列表、脚注、Alerts、KaTeX、Mermaid 与 ZenUML。
+ - 目录内相对 Markdown 链接、锚点、图片及独立图片预览。
+ - 文件/目录收藏、最近五项、应用重启后恢复上次文档和目录。
+-- macOS：工具栏只有一个“导入”按钮；点击或按 `⌘O`，可在同一个系统窗口选择 Markdown 文件或目录，随后自动打开正文或文件树。取消不会替换当前阅读内容。`⌘⇧O` 仍可直接选择目录。
++- macOS：工具栏只有一个“导入”按钮；点击或按 `⌘O`，可在同一个系统窗口选择 Markdown、JSON 文件或目录，随后自动打开正文或文件树。取消不会替换当前阅读内容。`⌘⇧O` 仍可直接选择目录。
+ - Windows/Linux 暂保留原文件选择器（导入按钮或 `Ctrl+O`），目录使用 `Ctrl+Shift+O`；这些平台尚未提供同窗混合选择，亦未实机验证。
+-- 侧栏显隐与内容模式使用独立图标入口；内容菜单可切换文件树和文章目录。按 `⌘R` 重新读取当前打开文件的最新内容，不刷新整个应用窗口。
++- 侧栏显隐与内容模式使用独立图标入口；点击内容模式按钮直接在文件树和文章目录之间切换，不弹出菜单；只有一种内容可用时禁用切换按钮。按 `⌘R` 重新读取当前打开文件的最新内容，不刷新整个应用窗口。
+ - 固定 58 px 高度的工具栏：左侧为侧栏与文件入口，中间为文档名，右侧为阅读宽度、收藏、收藏列表与设置。按钮使用统一的定宽图标，不随窗口宽度换行；长文档名省略展示，悬停可查看完整路径。
+ - 窗口外层不参与滚动或回弹，正文使用工具栏下方的独立滚动区域，侧栏也保持独立。阅读位置保存/恢复和目录跳转基于正文区域；聚焦正文或工具栏时可用 PageUp/PageDown、Home/End 阅读，设置和收藏模态窗口打开时锁住正文滚动。
+ 
+diff --git a/public/markdown.css b/public/markdown.css
+index 76acbe0..0365708 100644
+--- a/public/markdown.css
++++ b/public/markdown.css
+@@ -2731,62 +2731,11 @@ html.linguamark-reload-scroll-animation .linguamark-markdown-content {
+     gap: 6px;
+ }
+ 
+-.linguamark-markdown-sidebar-menu {
+-    position: relative;
+-    display: grid;
+-    place-items: center;
+-    width: 34px;
+-    height: 34px;
+-    box-sizing: border-box;
+-    padding: 0;
+-    border: 1px solid transparent;
+-    border-radius: var(--radius);
+-    background: transparent;
+-    color: var(--fg-muted);
+-    font: inherit;
+-    cursor: pointer;
+-}
+-
+-.linguamark-markdown-sidebar-menu:not(.is-unavailable):hover,
+-.linguamark-markdown-sidebar-menu:focus-within {
+-    border-color: var(--accent);
+-    background: var(--bg-quote);
+-}
+-
+-.linguamark-markdown-sidebar-menu:focus-within {
+-    outline: 2px solid var(--accent);
+-    outline-offset: 2px;
+-}
+-
+-.linguamark-markdown-sidebar-menu.is-unavailable {
+-    opacity: 0.45;
+-    cursor: default;
+-}
+-
+ .linguamark-markdown-toolbar button[aria-expanded="true"] {
+     background: var(--bg-soft);
+     color: var(--accent-deep);
+ }
+ 
+-.linguamark-markdown-sidebar-select {
+-    position: absolute;
+-    inset: 0;
+-    width: 100%;
+-    height: 100%;
+-    margin: 0;
+-    opacity: 0;
+-    cursor: pointer;
+-}
+-
+-.linguamark-markdown-sidebar-select:disabled {
+-    cursor: default;
+-}
+-
+-.linguamark-markdown-sidebar-select option {
+-    background: var(--bg-write);
+-    color: var(--fg-main);
+-}
+-
+ .linguamark-markdown-directory-button {
+     min-height: 38px;
+     padding: 0 12px;
+@@ -3289,10 +3238,15 @@ body.linguamark-markdown-page:not(.linguamark-toc-open) .linguamark-markdown-toc
+ }
+ 
+ .linguamark-directory-toolbar-button {
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    box-sizing: border-box;
++    width: 30px;
++    height: 30px;
+     min-height: 30px;
+-    flex: 1;
+-    padding: 0 8px;
+-    font-size: 11px;
++    flex: none;
++    padding: 0;
+ }
+ 
+ .linguamark-directory-toolbar-button:disabled {
+@@ -3762,6 +3716,44 @@ body.linguamark-markdown-page.linguamark-full-width #write {
+     }
+ }
+ 
++#write .json-tree {
++    padding: 20px;
++    overflow-x: auto;
++    border-radius: var(--radius);
++    background: var(--code-bg);
++    color: var(--code-fg);
++    font-family: var(--font-mono);
++    font-size: 14px;
++    line-height: 1.7;
++    white-space: pre;
++    tab-size: 2;
++}
++
++#write .json-tree summary {
++    cursor: pointer;
++    width: fit-content;
++}
++
++#write .json-tree summary:focus-visible {
++    outline: 2px solid var(--cm-def);
++    outline-offset: 2px;
++}
++
++#write .json-children {
++    padding-left: 2ch;
++    border-left: 1px solid var(--code-line);
++}
++
++#write .json-tree details[open] > summary > .json-collapsed {
++    display: none;
++}
++
++#write .json-key { color: var(--cm-def); }
++#write .json-string { color: var(--cm-string); }
++#write .json-number { color: var(--cm-number); }
++#write .json-literal { color: var(--cm-keyword); }
++#write .linguamark-json-error { color: var(--accent-deep); }
++
+ @media (prefers-reduced-motion: reduce) {
+     html.linguamark-reload-scroll-animation .linguamark-markdown-content {
+         scroll-behavior: auto;
+diff --git a/src-tauri/src/main.rs b/src-tauri/src/main.rs
+index f61e65c..74cf8ff 100644
+--- a/src-tauri/src/main.rs
++++ b/src-tauri/src/main.rs
+@@ -107,7 +107,7 @@ async fn pick_entry(
+             let _ = window;
+             app.dialog()
+                 .file()
+-                .add_filter("Markdown", &["md", "MD"])
++                .add_filter("Markdown / JSON", &["md", "MD", "json", "JSON"])
+                 .blocking_pick_file()
+                 .map(|path| path.into_path().map_err(|_| "不支持此文件地址"))
+                 .transpose()?
+@@ -116,8 +116,10 @@ async fn pick_entry(
+             .map(|path| {
+                 let canonical = path.canonicalize().map_err(|_| "无法访问所选路径")?;
+                 let directory = canonical.is_dir();
+-                if !directory && (!canonical.is_file() || file_kind(&canonical) != "markdown") {
+-                    return Err("请选择 Markdown 文件或目录".into());
++                if !directory
++                    && (!canonical.is_file() || !matches!(file_kind(&canonical), "markdown" | "json"))
++                {
++                    return Err("请选择 Markdown、JSON 文件或目录".into());
+                 }
+                 let path = app.state::<Access>().grant(&canonical, directory)?;
+                 Ok(SelectedEntry {
+@@ -155,6 +157,7 @@ fn file_kind(path: &Path) -> &'static str {
+         .as_str()
+     {
+         "md" => "markdown",
++        "json" => "json",
+         "png" | "jpg" | "jpeg" | "gif" | "webp" | "avif" | "svg" => "image",
+         _ => "other",
+     }
+@@ -167,6 +170,10 @@ enum Content {
+         path: String,
+         text: String,
+     },
++    Json {
++        path: String,
++        text: String,
++    },
+     Image {
+         path: String,
+         #[serde(rename = "dataUrl")]
+@@ -194,9 +201,13 @@ async fn read_file(path: String, app: tauri::AppHandle) -> Result<Content, Strin
+         if bytes.len() as u64 > MAX_FILE_BYTES {
+             return Err("文件超过 32 MiB".into());
+         }
+-        if kind == "markdown" {
+-            let text = String::from_utf8(bytes).map_err(|_| "Markdown 文件必须使用 UTF-8 编码")?;
+-            Ok(Content::Markdown { path, text })
++        if matches!(kind, "markdown" | "json") {
++            let text = String::from_utf8(bytes).map_err(|_| "文本文件必须使用 UTF-8 编码")?;
++            if kind == "json" {
++                Ok(Content::Json { path, text })
++            } else {
++                Ok(Content::Markdown { path, text })
++            }
+         } else {
+             let extension = canonical
+                 .extension()
+diff --git a/src-tauri/src/native_picker.rs b/src-tauri/src/native_picker.rs
+index 9d81a20..85e0f26 100644
+--- a/src-tauri/src/native_picker.rs
++++ b/src-tauri/src/native_picker.rs
+@@ -19,17 +19,21 @@ pub fn pick_entry(window: tauri::WebviewWindow) -> Result<Option<PathBuf>, Strin
+ fn select_entry() -> Result<Option<PathBuf>, String> {
+     let main_thread = MainThreadMarker::new().ok_or("系统选择器需要主线程")?;
+     let panel = NSOpenPanel::openPanel(main_thread);
+-    panel.setTitle(Some(&NSString::from_str("导入 Markdown 文件或目录")));
++    panel.setTitle(Some(&NSString::from_str("导入 Markdown、JSON 文件或目录")));
+     panel.setPrompt(Some(&NSString::from_str("导入")));
+-    panel.setMessage(Some(&NSString::from_str("选择一个 Markdown 文件或文件夹")));
++    panel.setMessage(Some(&NSString::from_str("选择一个 Markdown、JSON 文件或文件夹")));
+     panel.setCanChooseFiles(true);
+     panel.setCanChooseDirectories(true);
+     panel.setAllowsMultipleSelection(false);
+     panel.setCanCreateDirectories(false);
+     panel.setAllowsOtherFileTypes(false);
+     panel.setResolvesAliases(true);
+-    let extensions =
+-        NSArray::from_retained_slice(&[NSString::from_str("md"), NSString::from_str("MD")]);
++    let extensions = NSArray::from_retained_slice(&[
++        NSString::from_str("md"),
++        NSString::from_str("MD"),
++        NSString::from_str("json"),
++        NSString::from_str("JSON"),
++    ]);
+     // Match rfd's existing filter API: this app still targets macOS 10.13, before UTType-based panels.
+     #[allow(deprecated)]
+     panel.setAllowedFileTypes(Some(&extensions));
+diff --git a/src/main.ts b/src/main.ts
+index 40ebb74..ffd6373 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -9,6 +9,7 @@ import texmath from "markdown-it-texmath";
+ import mermaid from "mermaid";
+ import { logWarn } from "./debug.ts";
+ import { createToolbarIcon } from "./icons.ts";
++import { createJsonArticle } from "./json.ts";
+ import { applyTypography, createSettingsPage, getSettings, subscribeSettings, updateSettings } from "./settings.ts";
+ import {
+   directoryFileKind, pickEntry, pickDirectory, readFile, readDirectory,
+@@ -141,9 +142,9 @@ function createEmptyViewerArticle(): HTMLElement {
+   message.className = "linguamark-empty-viewer-message";
+   const title = document.createElement("p");
+   title.className = "linguamark-empty-viewer-title";
+-  title.textContent = "打开 Markdown 开始阅读";
++  title.textContent = "打开 Markdown 或 JSON 开始阅读";
+   const description = document.createElement("p");
+-  description.textContent = "点击顶部“导入”，选择 Markdown 文件或阅读目录。";
++  description.textContent = "点击顶部“导入”，选择 Markdown、JSON 文件或阅读目录。";
+   message.append(title, description);
+ 
+   const library = document.createElement("div");
+@@ -374,21 +375,16 @@ function createViewer(article: HTMLElement): ViewerElements {
+   sidebarToggle.className = "linguamark-markdown-directory-button";
+   sidebarToggle.setAttribute("aria-controls", "linguamark-markdown-toc");
+   sidebarToggle.append(createToolbarIcon("sidebar"));
+-  const sidebarControl = document.createElement("label");
+-  sidebarControl.className = "linguamark-markdown-sidebar-menu";
+-  const sidebarSelect = document.createElement("select");
+-  sidebarSelect.className = "linguamark-markdown-sidebar-select";
+-  sidebarSelect.setAttribute("aria-controls", "linguamark-markdown-toc");
+-  sidebarSelect.setAttribute("aria-label", "侧栏显示内容");
+-  const filesOption = new Option("文件树", "files");
+-  const outlineOption = new Option("文章目录", "outline");
+-  sidebarSelect.append(filesOption, outlineOption);
+-  sidebarControl.append(createToolbarIcon("list"), sidebarSelect);
++  const sidebarControl = document.createElement("button");
++  sidebarControl.type = "button";
++  sidebarControl.className = "linguamark-markdown-directory-button";
++  sidebarControl.setAttribute("aria-controls", "linguamark-markdown-toc");
++  sidebarControl.append(createToolbarIcon("list"));
+ 
+   const importButton = document.createElement("button");
+   importButton.type = "button";
+   importButton.className = "linguamark-markdown-directory-button";
+-  importButton.title = "导入 Markdown 文件或目录（⌘O / Ctrl+O）";
++  importButton.title = "导入 Markdown、JSON 文件或目录（⌘O / Ctrl+O）";
+   importButton.setAttribute("aria-label", "导入文件或目录");
+   importButton.append(createToolbarIcon("folder"));
+   const fileName = document.createElement("span");
+@@ -548,11 +544,8 @@ function createViewer(article: HTMLElement): ViewerElements {
+         }
+       }
+     }
+-    filesOption.disabled = !sidebars.files;
+-    outlineOption.disabled = !sidebars.outline;
+-    sidebarSelect.disabled = !sidebars.files && !sidebars.outline;
+-    sidebarControl.classList.toggle("is-unavailable", sidebarSelect.disabled);
+-    sidebarToggle.disabled = sidebarSelect.disabled;
++    sidebarControl.disabled = !sidebars.files || !sidebars.outline;
++    sidebarToggle.disabled = !sidebars.files && !sidebars.outline;
+     resizer.setAttribute("aria-label", `调整${sidebarLabels[sidebarView]}宽度`);
+     shell.classList.toggle("has-no-toc", !activeSidebar);
+   };
+@@ -562,8 +555,9 @@ function createViewer(article: HTMLElement): ViewerElements {
+     sidebarToggle.setAttribute("aria-expanded", String(sidebarOpen));
+     sidebarToggle.title = sidebarOpen ? "隐藏侧栏" : "显示侧栏";
+     sidebarToggle.setAttribute("aria-label", sidebarToggle.title);
+-    sidebarControl.title = `侧栏内容：${sidebarLabels[sidebarView]}`;
+-    sidebarSelect.value = sidebarView;
++    const nextView = sidebarView === "files" ? "outline" : "files";
++    sidebarControl.title = `当前：${sidebarLabels[sidebarView]}；切换到${sidebarLabels[nextView]}`;
++    sidebarControl.setAttribute("aria-label", sidebarControl.title);
+     resizer.tabIndex = sidebarOpen && !narrowScreen.matches ? 0 : -1;
+     backdrop.hidden = !sidebarOpen;
+   };
+@@ -610,9 +604,9 @@ function createViewer(article: HTMLElement): ViewerElements {
+     setSidebarWidth(width);
+   });
+   sidebarToggle.addEventListener("click", () => setSidebarOpen(!sidebarOpen));
+-  sidebarSelect.addEventListener("change", () => {
+-    const view = sidebarSelect.value;
+-    if ((view !== "files" && view !== "outline") || !sidebars[view]) return;
++  sidebarControl.addEventListener("click", () => {
++    const view = sidebarView === "files" ? "outline" : "files";
++    if (!sidebars[view]) return;
+     sidebarView = view;
+     syncSidebar();
+     setSidebarOpen(true);
+@@ -630,8 +624,7 @@ function createViewer(article: HTMLElement): ViewerElements {
+     if (!narrowScreen.matches) setSidebarWidth(sidebarWidth);
+   }, { passive: true });
+   addEventListener("keydown", (event) => {
+-    if (event.key === "Escape" && event.target !== sidebarSelect
+-      && sidebarOpen && !settingsPage.dialog.open) setSidebarOpen(false);
++    if (event.key === "Escape" && sidebarOpen && !settingsPage.dialog.open) setSidebarOpen(false);
+   });
+   setSidebarWidth(defaultSidebarWidth);
+   setSidebar("outline", documentSidebar, true);
+@@ -1129,7 +1122,8 @@ async function openNativeFile(path: string, viewer: ViewerElements, hash?: strin
+         resetLocationHash();
+         trackDocumentRender(article);
+       }
+-    } else renderDirectoryImage(file, viewer);
++    } else if (file.kind === "json") renderJson(file, viewer);
++    else renderDirectoryImage(file, viewer);
+     setViewerCurrentItem(viewer, { kind: "file", path });
+     viewer.setActiveFile(relative ?? "");
+     viewer.content.scrollTo({ top: 0, behavior: "instant" });
+@@ -1204,7 +1198,9 @@ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElem
+     const folders = [...tree.querySelectorAll<HTMLDetailsElement>("details")];
+     const allExpanded = folders.length > 0 && folders.every((folder) => folder.open);
+     folderToggle.disabled = folders.length === 0;
+-    folderToggle.textContent = allExpanded ? "全部折叠" : "全部展开";
++    folderToggle.replaceChildren(createToolbarIcon(allExpanded ? "collapseAll" : "expandAll"));
++    folderToggle.title = allExpanded ? "全部折叠" : "全部展开";
++    folderToggle.setAttribute("aria-label", folderToggle.title);
+     folderToggle.setAttribute("aria-pressed", String(allExpanded));
+   };
+   folderToggle.addEventListener("click", () => {
+@@ -1218,7 +1214,8 @@ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElem
+   const focusButton = document.createElement("button");
+   focusButton.type = "button";
+   focusButton.className = "linguamark-markdown-directory-button linguamark-directory-toolbar-button linguamark-directory-focus-button";
+-  focusButton.textContent = "定位当前文件";
++  focusButton.append(createToolbarIcon("locate"));
++  focusButton.setAttribute("aria-label", "定位当前文件");
+   focusButton.title = "在文件列表中定位当前打开的文件";
+   focusButton.disabled = true;
+   focusButton.addEventListener("click", () => {
+@@ -1264,7 +1261,7 @@ function createDirectoryTreeItem(entry: DirectoryTreeEntry, viewer: ViewerElemen
+   const badge = document.createElement("span");
+   badge.className = "linguamark-directory-file-badge";
+   badge.setAttribute("aria-hidden", "true");
+-  badge.textContent = kind === "markdown" ? "MD" : kind === "image" ? "IMG" : "FILE";
++  badge.textContent = kind === "markdown" ? "MD" : kind === "json" ? "JSON" : kind === "image" ? "IMG" : "FILE";
+   const name = document.createElement("span");
+   name.className = "linguamark-directory-file-name";
+   name.textContent = entry.name;
+@@ -1413,6 +1410,21 @@ function renderDirectoryMarkdown(file: Extract<DirectoryFileContent, { kind: "ma
+   }
+ }
+ 
++function renderJson(file: Extract<DirectoryFileContent, { kind: "json" }>, viewer: ViewerElements): void {
++  const article = createJsonArticle(file.text);
++  ++directoryRenderSequence;
++  ++diagramRenderSequence;
++  viewer.content.replaceChildren(article);
++  viewer.setSidebar("outline", undefined);
++  viewer.setContentCount(file.text);
++  viewer.setPath(file.path);
++  replaceCustomStyle("");
++  document.title = file.path.split("/").at(-1) || "JSON";
++  documentRenderReady = Promise.resolve();
++  resetLocationHash();
++  dispatchEvent(new CustomEvent("linguamark:content-replaced"));
++}
++
+ function renderDirectoryImage(file: Extract<DirectoryFileContent, { kind: "image" }>, viewer: ViewerElements): void {
+   directoryRenderSequence += 1;
+   diagramRenderSequence += 1;
+diff --git a/src/platform.ts b/src/platform.ts
+index 67879d0..f17257a 100644
+--- a/src/platform.ts
++++ b/src/platform.ts
+@@ -1,6 +1,6 @@
+ import { invoke } from "@tauri-apps/api/core";
+ 
+-export type DirectoryFileKind = "markdown" | "image" | "other";
++export type DirectoryFileKind = "markdown" | "json" | "image" | "other";
+ export interface DirectoryTreeEntry {
+   name: string;
+   path: string;
+@@ -15,10 +15,12 @@ export interface DirectoryBrowserState {
+ }
+ export type DirectoryFileContent =
+   | { kind: "markdown"; path: string; text: string }
++  | { kind: "json"; path: string; text: string }
+   | { kind: "image"; path: string; dataUrl: string };
+ 
+ export function directoryFileKind(path: string): DirectoryFileKind {
+   if (/\.md$/iu.test(path)) return "markdown";
++  if (/\.json$/iu.test(path)) return "json";
+   return /\.(png|jpe?g|gif|webp|avif|svg)$/iu.test(path) ? "image" : "other";
+ }
+ 

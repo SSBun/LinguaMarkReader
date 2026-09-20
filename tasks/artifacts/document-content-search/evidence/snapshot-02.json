@@ -1,0 +1,15 @@
+{
+  "snapshot": "sha256:6ff2a814314af914b96ec473a389595ed99df1da4b7df8546b5ad8f847cadbb8",
+  "head": "142352f73d7b474f8b8334ce6db9b36aa2f84405",
+  "files": {
+    "src/main.ts": "e7769c18eef30a48af9f8d2c3359c4b41887e5406c037654d5afa35b4a304025",
+    "src/json.ts": "ec10168e4963f035d0324ee06c37c187058e9ff4aa69716c72179535289bcbd5",
+    "public/markdown.css": "87e27d9b75e72a90f8726501aa96f46bebb35687663e03ad08da6ba37d27f5c2",
+    "README.md": "ea074e7bd065150a330932ef06e485c8ce85b5a7c503f2d54fa67bfb0bf89e4c",
+    "src/search.ts": "6e011b3ac5267dac8e77a029d9d748c6b0c0f4def354398eb38a5250fce9349b"
+  },
+  "status": " M README.md\n M public/markdown.css\n M src/main.ts\n?? src/json.ts\n?? src/search.ts\n",
+  "nativeBinarySha256": "9a5b47fe62640efb1c3f10cff728d08fa24a76d1e9d884ff02968bb86896a1d6",
+  "nativeConfiguration": "仅使用不同 identifier 隔离本次预览授权记录，源代码/前端构建不变；临时复制可执行文件以使用独立进程名。",
+  "limitations": "未运行单元测试；未验证 Windows/Linux 或超大文档性能；搜索排除图片、SVG、数学公式。"
+}

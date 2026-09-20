@@ -2731,60 +2731,9 @@ html.linguamark-reload-scroll-animation .linguamark-markdown-content {
     gap: 6px;
 }
 
-.linguamark-markdown-sidebar-menu {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    box-sizing: border-box;
-    padding: 0;
-    border: 1px solid transparent;
-    border-radius: var(--radius);
-    background: transparent;
-    color: var(--fg-muted);
-    font: inherit;
-    cursor: pointer;
-}
-
-.linguamark-markdown-sidebar-menu:not(.is-unavailable):hover,
-.linguamark-markdown-sidebar-menu:focus-within {
-    border-color: var(--accent);
-    background: var(--bg-quote);
-}
-
-.linguamark-markdown-sidebar-menu:focus-within {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
-
-.linguamark-markdown-sidebar-menu.is-unavailable {
-    opacity: 0.45;
-    cursor: default;
-}
-
 .linguamark-markdown-toolbar button[aria-expanded="true"] {
     background: var(--bg-soft);
     color: var(--accent-deep);
-}
-
-.linguamark-markdown-sidebar-select {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.linguamark-markdown-sidebar-select:disabled {
-    cursor: default;
-}
-
-.linguamark-markdown-sidebar-select option {
-    background: var(--bg-write);
-    color: var(--fg-main);
 }
 
 .linguamark-markdown-directory-button {
@@ -3289,10 +3238,15 @@ body.linguamark-markdown-page:not(.linguamark-toc-open) .linguamark-markdown-toc
 }
 
 .linguamark-directory-toolbar-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 30px;
+    height: 30px;
     min-height: 30px;
-    flex: 1;
-    padding: 0 8px;
-    font-size: 11px;
+    flex: none;
+    padding: 0;
 }
 
 .linguamark-directory-toolbar-button:disabled {
@@ -3761,6 +3715,210 @@ body.linguamark-markdown-page.linguamark-full-width #write {
         box-shadow: none;
     }
 }
+
+.linguamark-document-search {
+    position: fixed;
+    top: 66px;
+    right: 18px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-sizing: border-box;
+    max-width: calc(100vw - 36px);
+    padding: 8px;
+    border: 1px solid var(--accent-soft);
+    border-radius: var(--radius);
+    background: var(--bg-write);
+    color: var(--fg-main);
+    box-shadow: var(--shadow);
+    font: 14px/1.4 var(--font-body);
+}
+
+.linguamark-document-search[hidden] { display: none; }
+
+.linguamark-document-search input {
+    width: 200px;
+    min-width: 60px;
+    padding: 7px;
+    border: 1px solid var(--accent-soft);
+    border-radius: var(--radius-sm);
+    background: var(--bg-page);
+    color: var(--fg-main);
+    font: inherit;
+}
+
+.linguamark-document-search input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.linguamark-document-search output {
+    min-width: 65px;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.linguamark-document-search button {
+    flex: none;
+    min-height: 32px;
+    padding: 0 10px;
+}
+
+.linguamark-document-search button:disabled { cursor: default; }
+
+#write mark[data-document-search] {
+    padding: 0;
+    border-radius: 2px;
+    background: var(--accent-warm);
+    color: var(--fg-heading);
+}
+
+#write mark[data-document-search].is-current {
+    background: var(--cm-type);
+    color: var(--fg-heading);
+    outline: 2px solid var(--accent-deep);
+}
+
+#write .json-tree {
+    padding: 20px;
+    overflow-x: auto;
+    border-radius: var(--radius);
+    background: var(--code-bg);
+    color: var(--code-fg);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre;
+    tab-size: 2;
+}
+
+#write .json-tree summary {
+    cursor: pointer;
+    width: fit-content;
+}
+
+#write .json-tree summary:focus-visible {
+    outline: 2px solid var(--cm-def);
+    outline-offset: 2px;
+}
+
+#write .json-children {
+    padding-left: 2ch;
+    border-left: 1px solid var(--code-line);
+}
+
+#write .json-tree details[open] > summary > .json-collapsed {
+    display: none;
+}
+
+#write .json-key { color: var(--cm-def); }
+#write .json-string { color: var(--cm-string); }
+#write .json-number { color: var(--cm-number); }
+#write .json-literal { color: var(--cm-keyword); }
+#write .linguamark-json-error { color: var(--accent-deep); }
+
+body.linguamark-markdown-page #write.linguamark-pdf {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+    overflow: hidden;
+    border-radius: 0;
+}
+
+#write .linguamark-pdf-toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 0;
+    background: var(--bg-write);
+    border-bottom: 1px solid var(--bg-soft);
+}
+
+#write .linguamark-pdf-toolbar [role="status"] {
+    font-size: 14px;
+    color: var(--fg-muted);
+}
+
+#write .linguamark-pdf-toolbar input,
+#write .linguamark-pdf-toolbar select {
+    min-height: 32px;
+    color-scheme: light;
+    color: var(--fg-main);
+    background: var(--bg-write);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font: inherit;
+}
+
+#write .linguamark-pdf-toolbar input { width: 5em; }
+
+#write .linguamark-pdf-toolbar input:enabled:hover,
+#write .linguamark-pdf-toolbar select:enabled:hover {
+    background: var(--bg-quote);
+}
+
+#write .linguamark-pdf-toolbar input:focus-visible,
+#write .linguamark-pdf-toolbar select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+#write .linguamark-pdf-toolbar :disabled { opacity: 0.45; cursor: default; }
+#write .linguamark-pdf-toolbar input:disabled,
+#write .linguamark-pdf-toolbar select:disabled {
+    opacity: 1;
+    color: var(--fg-muted);
+    -webkit-text-fill-color: var(--fg-muted);
+    background: var(--bg-soft);
+}
+
+#write .linguamark-pdf-viewport {
+    position: relative;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    overflow-anchor: none;
+    scrollbar-gutter: stable;
+    padding: 12px;
+    background: #e5e5e5;
+}
+
+#write .linguamark-pdf-viewport:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+#write .linguamark-pdf-page {
+    position: relative;
+    margin: 0 auto 16px;
+    background: white;
+    color: #333;
+}
+
+#write .linguamark-pdf-page:last-child { margin-bottom: 0; }
+#write .linguamark-pdf-placeholder { padding: 12px; display: inline-block; }
+
+#write .linguamark-pdf-viewport canvas {
+    display: block;
+    background: white;
+}
+
+#write .linguamark-pdf-text {
+    flex: 0 0 auto;
+    max-height: 30%;
+    overflow: auto;
+    margin: 0;
+    padding: 8px 0;
+}
+#write .linguamark-pdf-text summary { cursor: pointer; }
+#write .linguamark-pdf-text pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 @media (prefers-reduced-motion: reduce) {
     html.linguamark-reload-scroll-animation .linguamark-markdown-content {

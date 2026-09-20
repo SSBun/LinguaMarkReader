@@ -1,0 +1,25 @@
+
+> linguamark-desktop-reader@0.2.0 check
+> tsc --noEmit
+
+
+> linguamark-desktop-reader@0.2.0 build
+> node scripts/build.mjs
+
+   Compiling linguamark-reader v0.2.0 (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.99s
+   Compiling linguamark-reader v0.2.0 (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.34s
+
+> linguamark-desktop-reader@0.2.0 build:desktop
+> tauri build --no-bundle
+
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `npm run build`
+
+> linguamark-desktop-reader@0.2.0 build
+> node scripts/build.mjs
+
+   Compiling linguamark-reader v0.2.0 (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri)
+    Finished `release` profile [optimized] target(s) in 21.90s
+       Built application at: /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/release/linguamark-reader

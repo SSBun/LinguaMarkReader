@@ -22,3 +22,9 @@ await build({
   target: ["safari17", "chrome120"],
 });
 await cp("public", "dist", { recursive: true });
+await mkdir("dist/pdfjs", { recursive: true });
+await cp("node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs", "dist/pdfjs/pdf.worker.min.mjs");
+for (const directory of ["cmaps", "standard_fonts", "wasm", "iccs"]) {
+  await cp(`node_modules/pdfjs-dist/${directory}`, `dist/pdfjs/${directory}`, { recursive: true });
+}
+await cp("node_modules/pdfjs-dist/LICENSE", "dist/pdfjs/LICENSE");

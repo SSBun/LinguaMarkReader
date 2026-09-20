@@ -1,0 +1,18 @@
+{
+  "head": "142352f73d7b474f8b8334ce6db9b36aa2f84405",
+  "branch": "main",
+  "files": {
+    "src/pdf.ts": "92a7e98f3cf9dccca8794dbc1d3bb5a4db2144a27ac2542d0d0cdc27f740ecde",
+    "src/main.ts": "66fe3aeb6b3de9c84b767f09f9f23359a36a013143c0ce79648dac9fbd705d67",
+    "public/markdown.css": "0c81b9d90a0a75226b4b96627b6b11401b807f308322e6a7affcb7be1d312c7e",
+    "README.md": "e23d9789a544f05713238c72d8bdb890860f896c511b9fb2d0c0690571d02455",
+    "src/search.ts": "6e011b3ac5267dac8e77a029d9d748c6b0c0f4def354398eb38a5250fce9349b",
+    "src/platform.ts": "f14c6f4dee92317f189b70d903676c00acaa0116578238743c190e15bcea385a",
+    "src/settings.ts": "875f58aed97f073a68c69b57e27dfefda452a53dfe21348103212d1d75ee0e20",
+    "src-tauri/src/main.rs": "5087b62e80479014034602bd6669e302bc6c2fb4b714f949dd1f1d24cef9522d",
+    "src-tauri/tauri.conf.json": "76df8e8bce07cdd9b38d742fd32868688388a276e52e509f532a4c4449a96428",
+    "scripts/build.mjs": "60775a8974111bb9aa95a25a5321138172dee08b2c66e27157200a5e322a3559",
+    "package.json": "6ca08414211997b207a877942bf2a6d69b3fc1175cdea1bf1d2154200e2343a2",
+    "package-lock.json": "3f4cb615f5c530f7277e0b50d8edf74d42308fbbe83db8987819620b7f83cf7e"
+  }
+}

@@ -1,0 +1,42 @@
+--- before/public/markdown.css
++++ after/public/markdown.css
+@@ -3829,16 +3829,36 @@
+ #write .linguamark-pdf-toolbar input,
+ #write .linguamark-pdf-toolbar select {
+     min-height: 32px;
+-    color: inherit;
+-    background: var(--code-bg);
+-    border: 1px solid var(--code-line);
++    color-scheme: light;
++    color: var(--fg-main);
++    background: var(--bg-write);
++    border: 1px solid var(--accent);
+     border-radius: 6px;
+     padding: 4px 8px;
+     font: inherit;
+ }
+ 
+ #write .linguamark-pdf-toolbar input { width: 5em; }
++
++#write .linguamark-pdf-toolbar input:enabled:hover,
++#write .linguamark-pdf-toolbar select:enabled:hover {
++    background: var(--bg-quote);
++}
++
++#write .linguamark-pdf-toolbar input:focus-visible,
++#write .linguamark-pdf-toolbar select:focus-visible {
++    outline: 2px solid var(--accent);
++    outline-offset: 2px;
++}
++
+ #write .linguamark-pdf-toolbar :disabled { opacity: 0.45; cursor: default; }
++#write .linguamark-pdf-toolbar input:disabled,
++#write .linguamark-pdf-toolbar select:disabled {
++    opacity: 1;
++    color: var(--fg-muted);
++    -webkit-text-fill-color: var(--fg-muted);
++    background: var(--bg-soft);
++}
+ 
+ #write .linguamark-pdf-viewport {
+     overflow: auto;

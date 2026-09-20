@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-20
+
+### 新增
+
+- 支持 JSON 只读格式化、语法高亮与对象/数组折叠，保留原始数值和重复键。
+- 支持 HTML/HTM 静态阅读、标题目录及授权目录内的相对资源，不执行文档脚本。
+- 支持 PDF 离线阅读、页码跳转、缩放与当前页文本提取。
+- PDF 工具栏固定在阅读区顶部，可在纵向连续滚动与横向单页翻页之间切换，切换保留当前页；纵向按需加载附近页面。
+- 支持使用 ⌘F / Ctrl+F 搜索正文，以及通过文件夹右键菜单管理收藏。
+
+### 改进
+
+- 侧栏内容按钮直接切换文件树与文章目录，文件树操作按钮采用图标。
+- PDF 页码和缩放控件采用与阅读器一致的浅色配色，并提供清晰的聚焦和禁用状态。
+
+### 修复
+
+- 修复 WebKit 中 PDF 文本流读取的兼容性问题。
+- 修复高窗口与较小缩放下，PDF 纵向跳页、连续上一页及首尾页码被滚动回调覆盖的问题。
+
+### 发布说明
+
+- 本次仍仅提供源码及 GitHub 自动生成的源码归档，不包含安装包、签名或公证产物。
+- macOS 类型检查、前端构建、原生编译及 Release 构建已验证；PDF/HTML 使用实际构建资源在 WKWebView 中检查，但相关原生选择器与 IPC 使用模拟数据。
+- 未运行测试套件；Windows/Linux、复杂 PDF 与超大页数尚未实机验证。
+- PDF 不提供 OCR；密码文件需先解锁。重新打开时不保存 PDF 页码、阅读模式或缩放。
+
 ## [0.1.0] - 2026-09-18
 
 ### 新增
@@ -22,5 +49,6 @@
 - 已验证 macOS 开发启动；Windows 和 Linux 尚未实机验证。
 - 应用只读，不提供文档编辑、AI、云同步或自动更新。
 
-[Unreleased]: https://github.com/SSBun/LinguaMarkReader/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/SSBun/LinguaMarkReader/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.1.0

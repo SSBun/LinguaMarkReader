@@ -1,0 +1,29 @@
+[
+  {
+    "观察": "仅打开搜索后保留原文节点",
+    "结果": {
+      "sameMark": true,
+      "sameLink": true,
+      "image": true,
+      "bold": true
+    }
+  },
+  {
+    "观察": "搜索关闭后原文子树与事件保留",
+    "结果": {
+      "sameMark": true,
+      "sameLink": true,
+      "html": "<a href=\"https://example.com\">original link</a><b>bold</b><img alt=\"image\">",
+      "clicks": 1,
+      "searchMarks": 0
+    }
+  },
+  {
+    "观察": "Markdown details 定位展开",
+    "结果": true
+  },
+  {
+    "观察": "关闭后还原 details",
+    "结果": false
+  }
+]

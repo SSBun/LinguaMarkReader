@@ -1,0 +1,17 @@
+{"csp":"img-src","blocked":"https://example.com/leak"}
+{"html":"HTML rendered heading","unsafe":false}
+{"initialMode":"vertical","slots":12,"canvases":2,"top":58,"viewportHeight":637,"scrollHeight":14047}
+{"verticalPage":"5","toolbarTop":58,"fixed":true,"canvases":3}
+{"jump":"12","lastDisabled":true}
+{"horizontalPage":"11","fit":{"width":806.234375,"height":623,"viewportWidth":948,"viewportHeight":647,"slots":1},"mode":"horizontal"}
+CAPTURE
+{"arrowNext":"12","lastDisabled":true,"slots":1}
+{"zoom":{"width":1224,"height":1584,"viewportWidth":938,"viewportHeight":637,"slots":1},"scrolled":300,"fixed":true}
+{"returnVertical":"12","slots":12}
+{"rapidSwitch":"horizontal","page":"1","slots":1}
+{"resizeFit":{"width":481.40625,"height":623,"viewportWidth":608,"viewportHeight":647,"slots":1}}
+{"textOpenFit":{"width":408,"height":528,"viewportWidth":608,"viewportHeight":552,"slots":1},"text":"PDF page 1 "}
+{"invalid":"无法打开 PDF：文件可能已损坏或格式不受支持。"}
+{"csp":"img-src","blocked":"https://example.com/leak"}
+{"switchBack":"HTML rendered heading","pdfLeft":false}
+DONE:success

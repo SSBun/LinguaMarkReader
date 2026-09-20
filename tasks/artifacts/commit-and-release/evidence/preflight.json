@@ -1,0 +1,5 @@
+{
+  "checked_files": 94,
+  "sensitive_pattern_hits": [],
+  "limitations": "规则扫描不能证明不存在所有秘密；截图已确认是阅读器合成验证样例，任务记录含本机路径。原始证据diff/PDF/txt有结构性空白，保持原字节；排除原始证据后的staged whitespace检查通过。"
+}

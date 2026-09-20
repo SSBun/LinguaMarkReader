@@ -9,6 +9,9 @@ import texmath from "markdown-it-texmath";
 import mermaid from "mermaid";
 import { logWarn } from "./debug.ts";
 import { createToolbarIcon } from "./icons.ts";
+import { createJsonArticle } from "./json.ts";
+import { createPdfArticle } from "./pdf.ts";
+import { initializeDocumentSearch } from "./search.ts";
 import { applyTypography, createSettingsPage, getSettings, subscribeSettings, updateSettings } from "./settings.ts";
 import {
   directoryFileKind, pickEntry, pickDirectory, readFile, readDirectory,
@@ -105,6 +108,7 @@ let pickerOpen = false;
 let restoringSession = false;
 let restoreScrollCancelled = false;
 let documentRenderReady: Promise<void> = Promise.resolve();
+let disposePdf: (() => void) | undefined;
 renderStandaloneViewer();
 
 function contentCount(source: string): number {
@@ -141,9 +145,9 @@ function createEmptyViewerArticle(): HTMLElement {
   message.className = "linguamark-empty-viewer-message";
   const title = document.createElement("p");
   title.className = "linguamark-empty-viewer-title";
-  title.textContent = "打开 Markdown 开始阅读";
+  title.textContent = "打开 Markdown、JSON、HTML 或 PDF 开始阅读";
   const description = document.createElement("p");
-  description.textContent = "点击顶部“导入”，选择 Markdown 文件或阅读目录。";
+  description.textContent = "点击顶部“导入”，选择 Markdown、JSON、HTML、PDF 文件或阅读目录。";
   message.append(title, description);
 
   const library = document.createElement("div");
@@ -158,10 +162,11 @@ function createEmptyViewerArticle(): HTMLElement {
   return article;
 }
 
-function createArticle(source: string): { article: HTMLElement; customCss: string } {
-  const { body, frontMatter } = splitFrontMatter(source);
+function createArticle(source: string, kind: "markdown" | "html" = "markdown"): { article: HTMLElement; customCss: string } {
+  const { body, frontMatter } = kind === "markdown" ? splitFrontMatter(source) : { body: source, frontMatter: undefined };
   const template = document.createElement("template");
-  template.innerHTML = `${frontMatter ? `<pre class="md-meta-block">${escapeHtml(frontMatter)}</pre>` : ""}${markdown.render(body)}`;
+  template.innerHTML = kind === "html" ? body
+    : `${frontMatter ? `<pre class="md-meta-block">${escapeHtml(frontMatter)}</pre>` : ""}${markdown.render(body)}`;
 
   const customCss = [...template.content.querySelectorAll("style")]
     .map((style) => style.textContent ?? "")
@@ -184,9 +189,11 @@ function createArticle(source: string): { article: HTMLElement; customCss: strin
   article.id = "write";
   article.append(clean);
   secureInteractiveContent(article);
-  decorateAlerts(article);
-  decorateMath(article);
-  prepareDiagrams(article);
+  if (kind === "markdown") {
+    decorateAlerts(article);
+    decorateMath(article);
+    prepareDiagrams(article);
+  }
   return { article, customCss };
 }
 
@@ -374,21 +381,16 @@ function createViewer(article: HTMLElement): ViewerElements {
   sidebarToggle.className = "linguamark-markdown-directory-button";
   sidebarToggle.setAttribute("aria-controls", "linguamark-markdown-toc");
   sidebarToggle.append(createToolbarIcon("sidebar"));
-  const sidebarControl = document.createElement("label");
-  sidebarControl.className = "linguamark-markdown-sidebar-menu";
-  const sidebarSelect = document.createElement("select");
-  sidebarSelect.className = "linguamark-markdown-sidebar-select";
-  sidebarSelect.setAttribute("aria-controls", "linguamark-markdown-toc");
-  sidebarSelect.setAttribute("aria-label", "侧栏显示内容");
-  const filesOption = new Option("文件树", "files");
-  const outlineOption = new Option("文章目录", "outline");
-  sidebarSelect.append(filesOption, outlineOption);
-  sidebarControl.append(createToolbarIcon("list"), sidebarSelect);
+  const sidebarControl = document.createElement("button");
+  sidebarControl.type = "button";
+  sidebarControl.className = "linguamark-markdown-directory-button";
+  sidebarControl.setAttribute("aria-controls", "linguamark-markdown-toc");
+  sidebarControl.append(createToolbarIcon("list"));
 
   const importButton = document.createElement("button");
   importButton.type = "button";
   importButton.className = "linguamark-markdown-directory-button";
-  importButton.title = "导入 Markdown 文件或目录（⌘O / Ctrl+O）";
+  importButton.title = "导入 Markdown、JSON、HTML、PDF 文件或目录（⌘O / Ctrl+O）";
   importButton.setAttribute("aria-label", "导入文件或目录");
   importButton.append(createToolbarIcon("folder"));
   const fileName = document.createElement("span");
@@ -548,11 +550,8 @@ function createViewer(article: HTMLElement): ViewerElements {
         }
       }
     }
-    filesOption.disabled = !sidebars.files;
-    outlineOption.disabled = !sidebars.outline;
-    sidebarSelect.disabled = !sidebars.files && !sidebars.outline;
-    sidebarControl.classList.toggle("is-unavailable", sidebarSelect.disabled);
-    sidebarToggle.disabled = sidebarSelect.disabled;
+    sidebarControl.disabled = !sidebars.files || !sidebars.outline;
+    sidebarToggle.disabled = !sidebars.files && !sidebars.outline;
     resizer.setAttribute("aria-label", `调整${sidebarLabels[sidebarView]}宽度`);
     shell.classList.toggle("has-no-toc", !activeSidebar);
   };
@@ -562,8 +561,9 @@ function createViewer(article: HTMLElement): ViewerElements {
     sidebarToggle.setAttribute("aria-expanded", String(sidebarOpen));
     sidebarToggle.title = sidebarOpen ? "隐藏侧栏" : "显示侧栏";
     sidebarToggle.setAttribute("aria-label", sidebarToggle.title);
-    sidebarControl.title = `侧栏内容：${sidebarLabels[sidebarView]}`;
-    sidebarSelect.value = sidebarView;
+    const nextView = sidebarView === "files" ? "outline" : "files";
+    sidebarControl.title = `当前：${sidebarLabels[sidebarView]}；切换到${sidebarLabels[nextView]}`;
+    sidebarControl.setAttribute("aria-label", sidebarControl.title);
     resizer.tabIndex = sidebarOpen && !narrowScreen.matches ? 0 : -1;
     backdrop.hidden = !sidebarOpen;
   };
@@ -610,9 +610,9 @@ function createViewer(article: HTMLElement): ViewerElements {
     setSidebarWidth(width);
   });
   sidebarToggle.addEventListener("click", () => setSidebarOpen(!sidebarOpen));
-  sidebarSelect.addEventListener("change", () => {
-    const view = sidebarSelect.value;
-    if ((view !== "files" && view !== "outline") || !sidebars[view]) return;
+  sidebarControl.addEventListener("click", () => {
+    const view = sidebarView === "files" ? "outline" : "files";
+    if (!sidebars[view]) return;
     sidebarView = view;
     syncSidebar();
     setSidebarOpen(true);
@@ -630,8 +630,7 @@ function createViewer(article: HTMLElement): ViewerElements {
     if (!narrowScreen.matches) setSidebarWidth(sidebarWidth);
   }, { passive: true });
   addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && event.target !== sidebarSelect
-      && sidebarOpen && !settingsPage.dialog.open) setSidebarOpen(false);
+    if (event.key === "Escape" && sidebarOpen && !settingsPage.dialog.open) setSidebarOpen(false);
   });
   setSidebarWidth(defaultSidebarWidth);
   setSidebar("outline", documentSidebar, true);
@@ -952,6 +951,7 @@ function createTableOfContents(article: HTMLElement): HTMLElement | undefined {
 }
 
 function initializeNativeNavigation(viewer: ViewerElements): void {
+  initializeDocumentSearch(viewer.content, viewer.shell, () => !pickerOpen);
   let saveScrollTimer: number | undefined;
   viewer.content.addEventListener("scroll", () => {
     if (restoringSession || !viewer.currentItem) return;
@@ -987,13 +987,15 @@ function initializeNativeNavigation(viewer: ViewerElements): void {
       && ["PageDown", "PageUp", "Home", "End"].includes(event.key)
       && !document.querySelector("body > dialog[open]")
       && getComputedStyle(viewer.content).overflowY !== "hidden"
-      && target instanceof Element && (target === document.body || viewer.toolbar.contains(target))
+      && target instanceof Element && (target === document.body || viewer.toolbar.contains(target)
+        || viewer.content.querySelector(".linguamark-pdf-toolbar")?.contains(target))
       && !target.closest("input, textarea, select, [contenteditable]")) {
       event.preventDefault();
+      const scrollContainer = viewer.content.querySelector<HTMLElement>(".linguamark-pdf-viewport") ?? viewer.content;
       if (event.key === "Home" || event.key === "End") {
-        viewer.content.scrollTo({ top: event.key === "Home" ? 0 : viewer.content.scrollHeight, behavior: "auto" });
+        scrollContainer.scrollTo({ top: event.key === "Home" ? 0 : scrollContainer.scrollHeight, behavior: "auto" });
       } else {
-        viewer.content.scrollBy({ top: viewer.content.clientHeight * 0.9 * (event.key === "PageDown" ? 1 : -1), behavior: "auto" });
+        scrollContainer.scrollBy({ top: scrollContainer.clientHeight * 0.9 * (event.key === "PageDown" ? 1 : -1), behavior: "auto" });
       }
     }
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "o") {
@@ -1087,6 +1089,8 @@ async function openNativeDirectory(path: string, viewer: ViewerElements): Promis
   try {
     const state = await readDirectory(path);
     if (sequence !== navigationSequence) return;
+    disposePdf?.();
+    disposePdf = undefined;
     ++directoryRenderSequence;
     ++diagramRenderSequence;
     documentRenderReady = Promise.resolve();
@@ -1114,14 +1118,16 @@ async function openNativeFile(path: string, viewer: ViewerElements, hash?: strin
     const root = viewer.directoryRootName;
     const prefix = root ? `${root.replace(/\/$/u, "")}/` : "";
     const relative = prefix && path.startsWith(prefix) ? path.slice(prefix.length) : undefined;
-    if (file.kind === "markdown") {
+    disposePdf?.();
+    disposePdf = undefined;
+    if (file.kind === "markdown" || file.kind === "html") {
       if (relative) renderDirectoryMarkdown({ ...file, path: relative }, viewer, hash);
       else {
-        const { article, customCss } = createArticle(file.text);
+        const { article, customCss } = createArticle(file.text, file.kind);
         ++directoryRenderSequence;
         disableStandaloneRelativeResources(article);
         viewer.content.replaceChildren(article);
-        viewer.setContentCount(file.text);
+        viewer.setContentCount(file.kind === "html" ? article.textContent ?? "" : file.text);
         viewer.setSidebar("outline", createTableOfContents(article), true);
         viewer.setPath(path);
         replaceCustomStyle(customCss);
@@ -1129,7 +1135,9 @@ async function openNativeFile(path: string, viewer: ViewerElements, hash?: strin
         resetLocationHash();
         trackDocumentRender(article);
       }
-    } else renderDirectoryImage(file, viewer);
+    } else if (file.kind === "json") renderJson(file, viewer);
+    else if (file.kind === "pdf") renderPdf(file, viewer);
+    else renderDirectoryImage(file, viewer);
     setViewerCurrentItem(viewer, { kind: "file", path });
     viewer.setActiveFile(relative ?? "");
     viewer.content.scrollTo({ top: 0, behavior: "instant" });
@@ -1170,7 +1178,18 @@ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElem
   title.className = "linguamark-markdown-toc-title";
   title.textContent = state.rootName?.split("/").filter(Boolean).at(-1) ?? "文件";
   title.title = state.rootName ?? "文件";
+  title.dataset.directoryPath = "";
+  title.tabIndex = 0;
+  title.setAttribute("aria-haspopup", "menu");
   panel.append(title);
+  panel.addEventListener("contextmenu", (event) => {
+    const target = event.target instanceof Element
+      ? event.target.closest<HTMLElement>("[data-directory-path]")
+      : null;
+    if (!target || !panel.contains(target)) return;
+    event.preventDefault();
+    showDirectoryContextMenu(event, target, viewer);
+  });
 
   if (!state.entries || state.entries.length === 0) {
     const empty = document.createElement("p");
@@ -1183,14 +1202,6 @@ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElem
 
   const tree = document.createElement("ul");
   tree.className = "linguamark-directory-list";
-  tree.addEventListener("contextmenu", (event) => {
-    const target = event.target instanceof Element
-      ? event.target.closest<HTMLElement>("[data-directory-path]")
-      : null;
-    if (!target || !tree.contains(target)) return;
-    event.preventDefault();
-    showDirectoryContextMenu(event, target, viewer);
-  });
   for (const entry of state.entries) tree.append(createDirectoryTreeItem(entry, viewer));
 
   const controls = document.createElement("div");
@@ -1204,7 +1215,9 @@ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElem
     const folders = [...tree.querySelectorAll<HTMLDetailsElement>("details")];
     const allExpanded = folders.length > 0 && folders.every((folder) => folder.open);
     folderToggle.disabled = folders.length === 0;
-    folderToggle.textContent = allExpanded ? "全部折叠" : "全部展开";
+    folderToggle.replaceChildren(createToolbarIcon(allExpanded ? "collapseAll" : "expandAll"));
+    folderToggle.title = allExpanded ? "全部折叠" : "全部展开";
+    folderToggle.setAttribute("aria-label", folderToggle.title);
     folderToggle.setAttribute("aria-pressed", String(allExpanded));
   };
   folderToggle.addEventListener("click", () => {
@@ -1218,7 +1231,8 @@ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElem
   const focusButton = document.createElement("button");
   focusButton.type = "button";
   focusButton.className = "linguamark-markdown-directory-button linguamark-directory-toolbar-button linguamark-directory-focus-button";
-  focusButton.textContent = "定位当前文件";
+  focusButton.append(createToolbarIcon("locate"));
+  focusButton.setAttribute("aria-label", "定位当前文件");
   focusButton.title = "在文件列表中定位当前打开的文件";
   focusButton.disabled = true;
   focusButton.addEventListener("click", () => {
@@ -1264,7 +1278,7 @@ function createDirectoryTreeItem(entry: DirectoryTreeEntry, viewer: ViewerElemen
   const badge = document.createElement("span");
   badge.className = "linguamark-directory-file-badge";
   badge.setAttribute("aria-hidden", "true");
-  badge.textContent = kind === "markdown" ? "MD" : kind === "image" ? "IMG" : "FILE";
+  badge.textContent = kind === "markdown" ? "MD" : kind === "json" ? "JSON" : kind === "html" ? "HTML" : kind === "pdf" ? "PDF" : kind === "image" ? "IMG" : "FILE";
   const name = document.createElement("span");
   name.className = "linguamark-directory-file-name";
   name.textContent = entry.name;
@@ -1280,7 +1294,8 @@ function createDirectoryTreeItem(entry: DirectoryTreeEntry, viewer: ViewerElemen
 
 function showDirectoryContextMenu(event: MouseEvent, target: HTMLElement, viewer: ViewerElements): void {
   const relativePath = target.dataset.directoryPath;
-  if (!relativePath) return;
+  const root = viewer.directoryRootName;
+  if (relativePath === undefined || !root) return;
   closeDirectoryContextMenu?.(false);
 
   const menu = document.createElement("div");
@@ -1320,19 +1335,19 @@ function showDirectoryContextMenu(event: MouseEvent, target: HTMLElement, viewer
     });
   };
 
-  addButton("Copy Relative Path", () => copyToClipboard(relativePath));
-  addButton("Copy Name", () => copyToClipboard(relativePath.split("/").at(-1) ?? relativePath));
+  addButton("Copy Relative Path", () => copyToClipboard(relativePath || "."));
+  const item: ViewerItem = {
+    kind: target.dataset.fileKind !== undefined ? "file" : "directory",
+    path: relativePath ? `${root.replace(/\/$/u, "")}/${relativePath}` : root,
+  };
+  addButton("Copy Name", () => copyToClipboard(item.path.split("/").filter(Boolean).at(-1) ?? item.path));
+  const saved = isViewerFavorite(item, viewer);
+  const addLabel = item.kind === "directory" ? "Add to Favorite" : "Add to Favorites";
+  addButton(saved ? "Remove from Favorites" : addLabel, () => {
+    void toggleViewerFavorite(viewer, item);
+  });
 
-  if (target.dataset.fileKind !== undefined) {
-    const item: ViewerItem = {
-      kind: "file",
-      path: viewer.directoryRootName ? `${viewer.directoryRootName}/${relativePath}` : relativePath,
-    };
-    const saved = isViewerFavorite(item, viewer);
-    addButton(saved ? "Remove from Favorites" : "Add to Favorites", () => {
-      void toggleViewerFavorite(viewer, item);
-    });
-  } else {
+  if (item.kind === "directory") {
     const folder = target.closest<HTMLDetailsElement>("details");
     if (folder) {
       const setSubtreeExpanded = (expanded: boolean): void => {
@@ -1393,13 +1408,13 @@ async function readDirectoryFile(path: string, viewer: ViewerElements): Promise<
   return readFile(`${root.replace(/\/$/u, "")}/${path}`);
 }
 
-function renderDirectoryMarkdown(file: Extract<DirectoryFileContent, { kind: "markdown" }>, viewer: ViewerElements, hash?: string): void {
-  const { article, customCss } = createArticle(file.text);
+function renderDirectoryMarkdown(file: Extract<DirectoryFileContent, { kind: "markdown" | "html" }>, viewer: ViewerElements, hash?: string): void {
+  const { article, customCss } = createArticle(file.text, file.kind);
   viewer.setSidebar("outline", createTableOfContents(article));
   const renderId = ++directoryRenderSequence;
   viewer.content.replaceChildren(article);
   const imagesReady = prepareDirectoryDocument(article, file.path, viewer, renderId);
-  viewer.setContentCount(file.text);
+  viewer.setContentCount(file.kind === "html" ? article.textContent ?? "" : file.text);
   viewer.setPath(file.path);
   replaceCustomStyle(customCss);
   document.title = article.querySelector("h1")?.textContent?.trim() || file.path.split("/").at(-1) || "Markdown";
@@ -1411,6 +1426,37 @@ function renderDirectoryMarkdown(file: Extract<DirectoryFileContent, { kind: "ma
       article.querySelector(`#${CSS.escape(decodeURIComponentSafely(hash))}`)?.scrollIntoView();
     }, 0);
   }
+}
+
+function renderJson(file: Extract<DirectoryFileContent, { kind: "json" }>, viewer: ViewerElements): void {
+  const article = createJsonArticle(file.text);
+  ++directoryRenderSequence;
+  ++diagramRenderSequence;
+  viewer.content.replaceChildren(article);
+  viewer.setSidebar("outline", undefined);
+  viewer.setContentCount(file.text);
+  viewer.setPath(file.path);
+  replaceCustomStyle("");
+  document.title = file.path.split("/").at(-1) || "JSON";
+  documentRenderReady = Promise.resolve();
+  resetLocationHash();
+  dispatchEvent(new CustomEvent("linguamark:content-replaced"));
+}
+
+function renderPdf(file: Extract<DirectoryFileContent, { kind: "pdf" }>, viewer: ViewerElements): void {
+  const { article, ready, dispose } = createPdfArticle(file.base64);
+  disposePdf = dispose;
+  ++directoryRenderSequence;
+  ++diagramRenderSequence;
+  viewer.content.replaceChildren(article);
+  viewer.setSidebar("outline", undefined);
+  viewer.setContentCount("");
+  viewer.setPath(file.path);
+  replaceCustomStyle("");
+  document.title = file.path.split("/").at(-1) || "PDF";
+  documentRenderReady = ready;
+  resetLocationHash();
+  dispatchEvent(new CustomEvent("linguamark:content-replaced"));
 }
 
 function renderDirectoryImage(file: Extract<DirectoryFileContent, { kind: "image" }>, viewer: ViewerElements): void {

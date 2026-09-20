@@ -1,0 +1,514 @@
+--- before/src/pdf.ts
++++ after/src/pdf.ts
+@@ -7,16 +7,18 @@
+   const toolbar = document.createElement("div");
+   toolbar.className = "linguamark-pdf-toolbar";
+   toolbar.setAttribute("role", "group");
+-  toolbar.setAttribute("aria-label", "PDF 分页与缩放");
+-  const button = (label: string): HTMLButtonElement => {
++  toolbar.setAttribute("aria-label", "PDF 阅读模式、分页与缩放");
++  const button = (label: string, arrow: string): HTMLButtonElement => {
+     const element = document.createElement("button");
+     element.type = "button";
+     element.className = "linguamark-markdown-directory-button";
+-    element.textContent = label;
++    element.textContent = arrow;
++    element.title = label;
++    element.setAttribute("aria-label", label);
+     return element;
+   };
+-  const previous = button("上一页");
+-  const next = button("下一页");
++  const previous = button("上一页", "←");
++  const next = button("下一页", "→");
+   const pageInput = document.createElement("input");
+   pageInput.type = "number";
+   pageInput.min = "1";
+@@ -24,55 +26,108 @@
+   pageInput.setAttribute("aria-label", "PDF 页码");
+   const total = document.createElement("span");
+   total.setAttribute("aria-hidden", "true");
++  const mode = document.createElement("select");
++  mode.setAttribute("aria-label", "PDF 阅读模式");
++  mode.add(new Option("纵向连续滚动", "vertical"));
++  mode.add(new Option("横向单页翻页", "horizontal"));
+   const zoom = document.createElement("select");
+   zoom.setAttribute("aria-label", "PDF 缩放");
+   for (const [value, label] of [["0", "适合宽度"], ["0.75", "75%"], ["1", "100%"], ["1.5", "150%"], ["2", "200%"]]) {
+     zoom.add(new Option(label, value));
+   }
+-  toolbar.append(previous, pageInput, total, next, zoom);
+-  const status = document.createElement("p");
++  const status = document.createElement("span");
+   status.setAttribute("role", "status");
+   status.textContent = "正在加载 PDF…";
++  toolbar.append(previous, pageInput, total, next, mode, zoom, status);
+   const viewport = document.createElement("div");
+   viewport.className = "linguamark-pdf-viewport";
++  viewport.tabIndex = 0;
++  viewport.setAttribute("role", "region");
++  viewport.setAttribute("aria-label", "PDF 页面阅读区");
+   const text = document.createElement("details");
+   text.className = "linguamark-pdf-text";
+   const summary = document.createElement("summary");
+   summary.textContent = "当前页文本（可复制与搜索）";
+   const textContent = document.createElement("pre");
+   text.append(summary, textContent);
+-  article.append(toolbar, status, viewport, text);
++  article.append(toolbar, viewport, text);
+ 
+   let disposed = false;
+   let loading: PDFDocumentLoadingTask | undefined;
+   let pdf: PDFDocumentProxy | undefined;
+   let rendering: RenderTask | undefined;
+   let pageNumber = 1;
+-  let busy = true;
++  let generation = 0;
++  let pumping = false;
++  let resizeTimer: number | undefined;
++  let scrollFrame = 0;
++  let positionedScrollTop: number | undefined;
++  let initialSize = { width: 612, height: 792 };
++  const sizes = new Map<number, { width: number; height: number }>();
++  const slots = new Map<number, HTMLElement>();
++  const nearby = new Set<number>();
++  const pending = new Set<number>();
++  const rendered = new Set<number>();
++  const pageTexts = new Map<number, string>();
++  const horizontal = (): boolean => mode.value === "horizontal";
+   const updateControls = (): void => {
+-    previous.disabled = busy || !pdf || pageNumber <= 1;
+-    next.disabled = busy || !pdf || pageNumber >= pdf.numPages;
+-    pageInput.disabled = zoom.disabled = busy || !pdf;
++    previous.disabled = !pdf || pageNumber <= 1;
++    next.disabled = !pdf || pageNumber >= pdf.numPages;
++    pageInput.disabled = zoom.disabled = mode.disabled = !pdf;
+     pageInput.value = String(pageNumber);
++    if (pdf) status.textContent = `第 ${pageNumber} / ${pdf.numPages} 页`;
++    textContent.textContent = pageTexts.get(pageNumber) ?? "正在提取当前页文本…";
+   };
+   updateControls();
+ 
+-  const renderPage = async (): Promise<void> => {
+-    if (!pdf || disposed) return;
+-    busy = true;
+-    updateControls();
+-    status.textContent = `正在渲染第 ${pageNumber} 页…`;
+-    viewport.replaceChildren();
+-    textContent.textContent = "";
++  const dimensions = (number: number): { width: number; height: number; scale: number } => {
++    const size = sizes.get(number) ?? initialSize;
++    const fitWidth = Math.max(1, viewport.clientWidth - 24) / size.width;
++    const fitHeight = Math.max(1, viewport.clientHeight - 24) / size.height;
++    const scale = Number(zoom.value) || Math.min(2, fitWidth, horizontal() ? fitHeight : Infinity);
++    return { width: size.width * scale, height: size.height * scale, scale };
++  };
++  const sizeSlot = (number: number, slot: HTMLElement): void => {
++    const { width, height } = dimensions(number);
++    slot.style.width = `${width}px`;
++    slot.style.height = `${height}px`;
++  };
++  const placeholder = (number: number, slot: HTMLElement): void => {
++    const label = document.createElement("span");
++    label.className = "linguamark-pdf-placeholder";
++    label.textContent = `第 ${number} 页`;
++    slot.replaceChildren(label);
++  };
++  const evict = (number: number): void => {
++    const slot = slots.get(number);
++    for (const canvas of slot?.querySelectorAll("canvas") ?? []) {
++      canvas.width = canvas.height = 0;
++    }
++    if (slot) placeholder(number, slot);
++    rendered.delete(number);
++    pageTexts.delete(number);
++    pending.delete(number);
++  };
++
++  const renderPage = async (number: number, token: number): Promise<void> => {
++    const slot = slots.get(number);
++    if (!pdf || !slot) return;
++    const stale = (): boolean => disposed || token !== generation;
+     try {
+-      const page = await pdf.getPage(pageNumber);
+-      if (disposed) return;
++      const page = await pdf.getPage(number);
++      if (stale()) return;
+       try {
+         const natural = page.getViewport({ scale: 1 });
+-        const available = Math.max(240, viewport.clientWidth);
+-        const scale = Number(zoom.value) || Math.min(2, available / natural.width);
+-        const view = page.getViewport({ scale });
+-        // Bound canvas allocation even for unusually large PDF page dimensions.
++        sizes.set(number, { width: natural.width, height: natural.height });
++        // Keep the visible page anchored when an earlier mixed-size page is measured.
++        const oldHeight = slot.offsetHeight;
++        const above = slot.offsetTop + oldHeight < viewport.scrollTop;
++        sizeSlot(number, slot);
++        if (above) {
++          viewport.scrollTop += slot.offsetHeight - oldHeight;
++          if (positionedScrollTop !== undefined) positionedScrollTop = viewport.scrollTop;
++        }
++        const view = page.getViewport({ scale: dimensions(number).scale });
+         const ratio = Math.min(window.devicePixelRatio || 1, 2, 4096 / view.width, 4096 / view.height);
+         const canvas = document.createElement("canvas");
+         canvas.width = Math.max(1, Math.floor(view.width * ratio));
+@@ -80,18 +135,23 @@
+         canvas.style.width = `${view.width}px`;
+         canvas.style.height = `${view.height}px`;
+         canvas.setAttribute("role", "img");
+-        canvas.setAttribute("aria-label", `PDF 第 ${pageNumber} 页，共 ${pdf.numPages} 页`);
+-        viewport.append(canvas);
++        canvas.setAttribute("aria-label", `PDF 第 ${number} 页，共 ${pdf.numPages} 页`);
++        // Render off-DOM so scrolling away can release only completed canvases.
+         rendering = page.render({ canvas, viewport: view, transform: [ratio, 0, 0, ratio, 0, 0] });
+         await rendering.promise;
+-        if (disposed) return;
+-        status.textContent = `第 ${pageNumber} / ${pdf.numPages} 页`;
++        if (stale()) return;
++        if (!nearby.has(number)) {
++          canvas.width = canvas.height = 0;
++          return;
++        }
++        slot.replaceChildren(canvas);
++        rendered.add(number);
+         try {
+           // WebKit supports stream readers before ReadableStream async iteration.
+           const reader: ReadableStreamDefaultReader<Awaited<ReturnType<typeof page.getTextContent>>> = page.streamTextContent().getReader();
+           const chunks: string[] = [];
+           try {
+-            while (!disposed) {
++            while (!stale()) {
+               const { value, done } = await reader.read();
+               if (done) break;
+               chunks.push(value.items.map((item) => "str" in item ? item.str + (item.hasEOL ? "\n" : " ") : "").join(""));
+@@ -99,38 +159,152 @@
+           } finally {
+             reader.releaseLock();
+           }
+-          if (disposed) return;
+-          textContent.textContent = chunks.join("") || "此页没有可提取的文本（可能是扫描件）。";
++          if (!stale() && nearby.has(number)) pageTexts.set(number, chunks.join("") || "此页没有可提取的文本（可能是扫描件）。");
+         } catch {
+-          if (!disposed) textContent.textContent = "无法提取此页文本；仍可阅读上方页面。";
++          if (!stale() && nearby.has(number)) pageTexts.set(number, "无法提取此页文本；仍可阅读页面。");
+         }
++        if (!stale() && number === pageNumber) updateControls();
+       } finally {
+         page.cleanup();
+       }
+     } catch {
+-      if (!disposed) status.textContent = "此页渲染失败，请尝试其他页或重新导入文件。";
++      if (!stale() && nearby.has(number)) {
++        slot.textContent = `第 ${number} 页渲染失败，请重新导入或切换阅读模式重试。`;
++        rendered.add(number);
++        pageTexts.set(number, "此页渲染失败。");
++        if (number === pageNumber) updateControls();
++      }
+     } finally {
+       rendering = undefined;
+-      busy = false;
+-      if (!disposed) updateControls();
+-    }
++    }
++  };
++  const pump = async (): Promise<void> => {
++    if (pumping || disposed) return;
++    pumping = true;
++    try {
++      while (pending.size && !disposed) {
++        const number = pending.has(pageNumber) ? pageNumber : pending.values().next().value!;
++        pending.delete(number);
++        if (nearby.has(number) && !rendered.has(number)) await renderPage(number, generation);
++      }
++    } finally {
++      pumping = false;
++    }
++  };
++  const observer = new IntersectionObserver((entries) => {
++    for (const entry of entries) {
++      const number = Number((entry.target as HTMLElement).dataset.page);
++      if (slots.get(number) !== entry.target) continue;
++      if (entry.isIntersecting) {
++        nearby.add(number);
++        if (!rendered.has(number)) pending.add(number);
++      } else {
++        nearby.delete(number);
++        evict(number);
++      }
++    }
++    void pump();
++  }, { root: viewport, rootMargin: "600px 0px" });
++
++  const positionPage = (): void => {
++    viewport.scrollTop = horizontal() ? 0 : (slots.get(pageNumber)?.offsetTop ?? 12) - 12;
++    // Retain explicit selection even when the browser clamps a final-page jump.
++    // A real change in scroll position releases this anchor for manual reading.
++    positionedScrollTop = viewport.scrollTop;
++  };
++  const rebuild = async (): Promise<void> => {
++    if (!pdf || disposed) return;
++    ++generation;
++    rendering?.cancel();
++    observer.disconnect();
++    for (const number of slots.keys()) evict(number);
++    slots.clear();
++    nearby.clear();
++    pending.clear();
++    viewport.replaceChildren();
++    article.dataset.pdfMode = mode.value;
++    zoom.options[0].text = horizontal() ? "适合页面" : "适合宽度";
++    const start = horizontal() ? pageNumber : 1;
++    const end = horizontal() ? pageNumber : pdf.numPages;
++    const fragment = document.createDocumentFragment();
++    for (let number = start; number <= end; number++) {
++      const slot = document.createElement("div");
++      slot.className = "linguamark-pdf-page";
++      slot.dataset.page = String(number);
++      slots.set(number, slot);
++      sizeSlot(number, slot);
++      placeholder(number, slot);
++      fragment.append(slot);
++    }
++    viewport.append(fragment);
++    positionPage();
++    viewport.scrollLeft = 0;
++    nearby.add(pageNumber);
++    pending.add(pageNumber);
++    for (const slot of slots.values()) observer.observe(slot);
++    updateControls();
++    await pump();
+   };
+   const go = (number: number): void => {
+-    if (busy || !pdf || !Number.isInteger(number) || number < 1 || number > pdf.numPages) {
++    if (!pdf || !Number.isInteger(number) || number < 1 || number > pdf.numPages) {
+       pageInput.value = String(pageNumber);
+       return;
+     }
+     pageNumber = number;
+-    void renderPage();
++    updateControls();
++    if (horizontal()) void rebuild();
++    else {
++      positionPage();
++      nearby.add(number);
++      pending.add(number);
++      void pump();
++    }
+   };
+   previous.addEventListener("click", () => go(pageNumber - 1));
+   next.addEventListener("click", () => go(pageNumber + 1));
+   pageInput.addEventListener("change", () => go(Number(pageInput.value)));
+-  zoom.addEventListener("change", () => { if (!busy) void renderPage(); });
++  mode.addEventListener("change", () => { void rebuild(); });
++  zoom.addEventListener("change", () => { void rebuild(); });
++  viewport.addEventListener("scroll", () => {
++    if (horizontal() || scrollFrame) return;
++    scrollFrame = requestAnimationFrame(() => {
++      scrollFrame = 0;
++      if (disposed || horizontal()) return;
++      if (positionedScrollTop !== undefined && Math.abs(viewport.scrollTop - positionedScrollTop) < 1) return;
++      positionedScrollTop = undefined;
++      // Use the leading reading edge, not the midpoint (which may be several pages ahead).
++      const leading = viewport.scrollTop + 12;
++      let closest = pageNumber;
++      let distance = Infinity;
++      for (const [number, slot] of slots) {
++        const delta = Math.max(slot.offsetTop - leading, leading - slot.offsetTop - slot.offsetHeight, 0);
++        if (delta < distance) { closest = number; distance = delta; }
++      }
++      if (viewport.scrollTop > 0 && viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 1) {
++        closest = pdf?.numPages ?? closest;
++      }
++      if (closest !== pageNumber) {
++        pageNumber = closest;
++        updateControls();
++      }
++    });
++  });
++  let lastWidth = 0;
++  let lastHeight = 0;
++  const resizeObserver = new ResizeObserver(() => {
++    const width = viewport.clientWidth;
++    const height = viewport.clientHeight;
++    if (width === lastWidth && height === lastHeight) return;
++    const needsLayout = lastWidth > 0 && (width !== lastWidth || horizontal());
++    lastWidth = width;
++    lastHeight = height;
++    clearTimeout(resizeTimer);
++    if (needsLayout && pdf && zoom.value === "0") resizeTimer = window.setTimeout(() => { void rebuild(); }, 120);
++  });
++  resizeObserver.observe(viewport);
+ 
+   const ready = (async () => {
+     try {
+-      // Legacy build includes compatibility shims for the supported WebViews.
+       const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist/legacy/build/pdf.mjs");
+       if (disposed) return;
+       const asset = (path: string): string => new URL(`pdfjs/${path}`, document.baseURI).href;
+@@ -146,16 +320,24 @@
+         useWorkerFetch: false,
+         enableXfa: false,
+       });
+-      pdf = await loading.promise;
++      const loaded = await loading.promise;
+       if (disposed) return;
++      const first = await loaded.getPage(1);
++      if (disposed) return;
++      const size = first.getViewport({ scale: 1 });
++      initialSize = { width: size.width, height: size.height };
++      sizes.set(1, initialSize);
++      first.cleanup();
++      pdf = loaded;
+       total.textContent = `/ ${pdf.numPages}`;
+       pageInput.max = String(pdf.numPages);
+-      await renderPage();
++      await rebuild();
+     } catch (error: unknown) {
+       if (disposed) return;
+       status.textContent = error instanceof Error && error.name === "PasswordException"
+         ? "此 PDF 需要密码，请先解锁文件后重新导入。"
+         : "无法打开 PDF：文件可能已损坏或格式不受支持。";
++      textContent.textContent = "没有可用的页面文本。";
+     }
+   })();
+   return {
+@@ -163,7 +345,13 @@
+     ready,
+     dispose: () => {
+       disposed = true;
++      ++generation;
++      clearTimeout(resizeTimer);
++      cancelAnimationFrame(scrollFrame);
++      observer.disconnect();
++      resizeObserver.disconnect();
+       rendering?.cancel();
++      for (const number of slots.keys()) evict(number);
+       void loading?.destroy().catch(() => undefined);
+     },
+   };
+--- before/src/main.ts
++++ after/src/main.ts
+@@ -987,13 +987,15 @@
+       && ["PageDown", "PageUp", "Home", "End"].includes(event.key)
+       && !document.querySelector("body > dialog[open]")
+       && getComputedStyle(viewer.content).overflowY !== "hidden"
+-      && target instanceof Element && (target === document.body || viewer.toolbar.contains(target))
++      && target instanceof Element && (target === document.body || viewer.toolbar.contains(target)
++        || viewer.content.querySelector(".linguamark-pdf-toolbar")?.contains(target))
+       && !target.closest("input, textarea, select, [contenteditable]")) {
+       event.preventDefault();
++      const scrollContainer = viewer.content.querySelector<HTMLElement>(".linguamark-pdf-viewport") ?? viewer.content;
+       if (event.key === "Home" || event.key === "End") {
+-        viewer.content.scrollTo({ top: event.key === "Home" ? 0 : viewer.content.scrollHeight, behavior: "auto" });
++        scrollContainer.scrollTo({ top: event.key === "Home" ? 0 : scrollContainer.scrollHeight, behavior: "auto" });
+       } else {
+-        viewer.content.scrollBy({ top: viewer.content.clientHeight * 0.9 * (event.key === "PageDown" ? 1 : -1), behavior: "auto" });
++        scrollContainer.scrollBy({ top: scrollContainer.clientHeight * 0.9 * (event.key === "PageDown" ? 1 : -1), behavior: "auto" });
+       }
+     }
+     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "o") {
+--- before/public/markdown.css
++++ after/public/markdown.css
+@@ -3818,12 +3818,30 @@
+ #write .json-literal { color: var(--cm-keyword); }
+ #write .linguamark-json-error { color: var(--accent-deep); }
+ 
++body.linguamark-markdown-page #write.linguamark-pdf {
++    display: flex;
++    flex-direction: column;
++    height: 100%;
++    margin: 0 auto;
++    padding: 0 16px;
++    overflow: hidden;
++    border-radius: 0;
++}
++
+ #write .linguamark-pdf-toolbar {
++    flex: 0 0 auto;
+     display: flex;
+     align-items: center;
+     flex-wrap: wrap;
+     gap: 8px;
+-    margin-bottom: 12px;
++    padding: 12px 0;
++    background: var(--bg-write);
++    border-bottom: 1px solid var(--bg-soft);
++}
++
++#write .linguamark-pdf-toolbar [role="status"] {
++    font-size: 14px;
++    color: var(--fg-muted);
+ }
+ 
+ #write .linguamark-pdf-toolbar input,
+@@ -3861,18 +3879,44 @@
+ }
+ 
+ #write .linguamark-pdf-viewport {
++    position: relative;
++    flex: 1 1 0;
++    min-height: 0;
+     overflow: auto;
+-    max-width: 100%;
++    overscroll-behavior: contain;
++    overflow-anchor: none;
++    scrollbar-gutter: stable;
++    padding: 12px;
+     background: #e5e5e5;
+ }
++
++#write .linguamark-pdf-viewport:focus-visible {
++    outline: 2px solid var(--accent);
++    outline-offset: -2px;
++}
++
++#write .linguamark-pdf-page {
++    position: relative;
++    margin: 0 auto 16px;
++    background: white;
++    color: #333;
++}
++
++#write .linguamark-pdf-page:last-child { margin-bottom: 0; }
++#write .linguamark-pdf-placeholder { padding: 12px; display: inline-block; }
+ 
+ #write .linguamark-pdf-viewport canvas {
+     display: block;
+-    margin: 0 auto;
+     background: white;
+ }
+ 
+-#write .linguamark-pdf-text { margin-top: 16px; }
++#write .linguamark-pdf-text {
++    flex: 0 0 auto;
++    max-height: 30%;
++    overflow: auto;
++    margin: 0;
++    padding: 8px 0;
++}
+ #write .linguamark-pdf-text summary { cursor: pointer; }
+ #write .linguamark-pdf-text pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+ 
+--- before/README.md
++++ after/README.md
+@@ -34,7 +34,9 @@
+ 
+ - 打开 UTF-8 Markdown、JSON、HTML（`.html` / `.htm`）与 PDF，或选择整个阅读目录。
+ - HTML 以静态阅读模式渲染正文、标题目录和表格；不执行脚本、不加载外部样式表，目录授权后的相对图片及文档链接可用。不会完整复现依赖 JavaScript 的网页。
+-- PDF 使用随应用打包的 PDF.js 离线渲染，支持上一页/下一页、输入页码、适合宽度和缩放。展开“当前页文本”可复制、搜索可提取的文本；扫描页仍显示页面，但不提供 OCR。需要密码的 PDF 请先解锁。切换或重启后从第一页打开，不保存 PDF 页码。
++- PDF 使用随应用打包的 PDF.js 离线渲染。工具栏固定在阅读区顶部，页面在独立区域滚动；支持左右箭头翻页、输入页码、缩放和阅读模式切换。
++- PDF 默认纵向连续滚动，页码随滚动更新，仅保留可见范围附近的页面画布。横向模式每次只显示一页，点击左/右箭头切页；自动缩放在纵向模式适合宽度、横向模式适合整页，不旋转原文。两种模式切换保留当前页，放大后可在单页内部滚动。
++- 展开 PDF“当前页文本”可复制、搜索可提取的文本；扫描页仍显示页面，但不提供 OCR。需要密码的 PDF 请先解锁。重新打开或重启后从第一页、纵向默认模式开始，不持久保存 PDF 页码、模式或缩放。
+ - JSON 只读格式化、语法高亮、对象和数组折叠展开；保留原始数值及重复键，无效 JSON 显示提示和原文。
+ - `⌘F`（Windows/Linux 为 `Ctrl+F`）搜索当前 Markdown、JSON、HTML 正文或 PDF 当前页提取文本：忽略大小写、高亮匹配、显示位置；`Enter` / `Shift+Enter` 或箭头按钮切换匹配，`Esc` 关闭。JSON 折叠内容也参与搜索，定位时展开，关闭时还原搜索展开的节点；切换文档会关闭搜索。图片、SVG 图表及数学公式不参与文本匹配。
+ - Lightmind 风格正文、标题目录、可调整侧栏、固定/整屏阅读宽度、字词计数。
+@@ -78,7 +80,7 @@
+ ## 代码边界
+ 
+ - `src/main.ts`：由现有扩展阅读器独立迁移的 UI 与渲染逻辑，不含 Chrome API 或 AI 初始化。
+-- `src/pdf.ts`：PDF 分页画布渲染、当前页文本、缩放与加载任务释放。
++- `src/pdf.ts`：PDF 固定工具栏、纵向按需渲染与横向单页模式、当前页文本、缩放与加载任务释放。
+ - `src/platform.ts`：窄 IPC、目录/内容契约、阅读记录存储。
+ - `src-tauri/src/main.rs`：选择结果类型校验、持久只读授权、有限文件读取、目录枚举与外链。
+ - `src-tauri/src/native_picker.rs`：macOS 主线程的 NSOpenPanel 混合选择适配，只返回路径或取消，不持有业务状态。

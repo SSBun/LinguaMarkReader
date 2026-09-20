@@ -1,0 +1,14 @@
+{
+  "snapshot": "sha256:2b1e813a582d659b9624132762c55a2ab3cc8f95b71c9d2942f7cb417a66cda6",
+  "head": "142352f73d7b474f8b8334ce6db9b36aa2f84405",
+  "files": {
+    "src/main.ts": "e7769c18eef30a48af9f8d2c3359c4b41887e5406c037654d5afa35b4a304025",
+    "src/json.ts": "ec10168e4963f035d0324ee06c37c187058e9ff4aa69716c72179535289bcbd5",
+    "public/markdown.css": "87e27d9b75e72a90f8726501aa96f46bebb35687663e03ad08da6ba37d27f5c2",
+    "README.md": "ea074e7bd065150a330932ef06e485c8ce85b5a7c503f2d54fa67bfb0bf89e4c",
+    "src/search.ts": "f7eb6606cc239b82790bb1397bd7928dd1d79364ea563ca949985dd69045fd05"
+  },
+  "status": " M README.md\n M public/markdown.css\n M src/main.ts\n?? src/json.ts\n?? src/search.ts\n",
+  "diff": "scope-01.diff 是相对本任务开始的增量；JSON 支持、侧栏及图标修改是既有内容。",
+  "limitations": "Chrome 浏览器模拟 IPC 验证；未运行单元测试，未验证原生 WebView 与其他平台、超大文档性能。搜索不覆盖图片、SVG 或数学公式。"
+}

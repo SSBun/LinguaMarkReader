@@ -1,0 +1,333 @@
+--- before/src/main.ts
++++ after/src/main.ts
+@@ -10,6 +10,7 @@
+ import { logWarn } from "./debug.ts";
+ import { createToolbarIcon } from "./icons.ts";
+ import { createJsonArticle } from "./json.ts";
++import { initializeDocumentSearch } from "./search.ts";
+ import { applyTypography, createSettingsPage, getSettings, subscribeSettings, updateSettings } from "./settings.ts";
+ import {
+   directoryFileKind, pickEntry, pickDirectory, readFile, readDirectory,
+@@ -945,6 +946,7 @@
+ }
+ 
+ function initializeNativeNavigation(viewer: ViewerElements): void {
++  initializeDocumentSearch(viewer.content, viewer.shell, () => !pickerOpen);
+   let saveScrollTimer: number | undefined;
+   viewer.content.addEventListener("scroll", () => {
+     if (restoringSession || !viewer.currentItem) return;
+--- before/src/json.ts
++++ after/src/json.ts
+@@ -21,6 +21,12 @@
+   }
+ 
+   const tokens = Array.from(text.matchAll(JSON_TOKEN), (match) => match[0]);
++  const pendingChildren = new Set<() => void>();
++  article.addEventListener("linguamark:prepare-search", () => {
++    // Set iteration also visits newly registered descendants, without recursive expansion.
++    for (const populate of pendingChildren) populate();
++    pendingChildren.clear();
++  });
+   const ends = new Map<number, number>();
+   const stack: number[] = [];
+   for (let index = 0; index < tokens.length; index += 1) {
+@@ -66,7 +72,7 @@
+     details.append(summary, children, closing);
+     let populated = false;
+     const populate = (): void => {
+-      if (populated || !details.open) return;
++      if (populated) return;
+       populated = true;
+       for (let index = start + 1; index < end;) {
+         if (tokens[index] === ",") { index += 1; continue; }
+@@ -74,10 +80,13 @@
+         index = appendValue(children, isKey ? index + 2 : index, depth + 1, isKey ? tokens[index] : undefined);
+       }
+     };
+-    details.addEventListener("toggle", populate);
++    pendingChildren.add(populate);
++    details.addEventListener("toggle", () => {
++      if (details.open) populate();
++    });
+     // Lazy child creation bounds initial work for deeply nested documents.
+     details.open = depth < 2;
+-    populate();
++    if (details.open) populate();
+     parent.append(details);
+     return end + 1;
+   };
+--- before/public/markdown.css
++++ after/public/markdown.css
+@@ -3716,6 +3716,70 @@
+     }
+ }
+ 
++.linguamark-document-search {
++    position: fixed;
++    top: 66px;
++    right: 18px;
++    z-index: 40;
++    display: flex;
++    align-items: center;
++    gap: 6px;
++    box-sizing: border-box;
++    max-width: calc(100vw - 36px);
++    padding: 8px;
++    border: 1px solid var(--accent-soft);
++    border-radius: var(--radius);
++    background: var(--bg-write);
++    color: var(--fg-main);
++    box-shadow: var(--shadow);
++    font: 14px/1.4 var(--font-body);
++}
++
++.linguamark-document-search[hidden] { display: none; }
++
++.linguamark-document-search input {
++    width: 200px;
++    min-width: 60px;
++    padding: 7px;
++    border: 1px solid var(--accent-soft);
++    border-radius: var(--radius-sm);
++    background: var(--bg-page);
++    color: var(--fg-main);
++    font: inherit;
++}
++
++.linguamark-document-search input:focus-visible {
++    outline: 2px solid var(--accent);
++    outline-offset: 1px;
++}
++
++.linguamark-document-search output {
++    min-width: 65px;
++    white-space: nowrap;
++    text-align: center;
++}
++
++.linguamark-document-search button {
++    flex: none;
++    min-height: 32px;
++    padding: 0 10px;
++}
++
++.linguamark-document-search button:disabled { cursor: default; }
++
++#write mark[data-document-search] {
++    padding: 0;
++    border-radius: 2px;
++    background: var(--accent-warm);
++    color: var(--fg-heading);
++}
++
++#write mark[data-document-search].is-current {
++    background: var(--cm-type);
++    color: var(--fg-heading);
++    outline: 2px solid var(--accent-deep);
++}
++
+ #write .json-tree {
+     padding: 20px;
+     overflow-x: auto;
+--- before/README.md
++++ after/README.md
+@@ -34,6 +34,7 @@
+ 
+ - 打开 UTF-8 Markdown、JSON，或选择整个阅读目录。
+ - JSON 只读格式化、语法高亮、对象和数组折叠展开；保留原始数值及重复键，无效 JSON 显示提示和原文。
++- `⌘F`（Windows/Linux 为 `Ctrl+F`）搜索当前 Markdown 或 JSON 的正文文本：忽略大小写、高亮匹配、显示位置；`Enter` / `Shift+Enter` 或箭头按钮切换匹配，`Esc` 关闭。JSON 折叠内容也参与搜索，定位时展开，关闭时还原搜索展开的节点；切换文档会关闭搜索。图片、SVG 图表及数学公式不参与文本匹配。
+ - Lightmind 风格正文、标题目录、可调整侧栏、固定/整屏阅读宽度、字词计数。
+ - 文件树、当前文件定位、目录展开/折叠、文件右键菜单。
+ - 代码高亮、任务列表、脚注、Alerts、KaTeX、Mermaid 与 ZenUML。
+--- before/src/search.ts
++++ after/src/search.ts
+@@ -0,0 +1,189 @@
++interface TextSegment {
++  node: Text;
++  start: number;
++  end: number;
++}
++
++const SEARCH_MARK = "mark[data-document-search]";
++const TEXT_BLOCK = "p, div, li, pre, h1, h2, h3, h4, h5, h6, summary, td, th, dt, dd, blockquote";
++const EXCLUDED_TEXT = "script, style, svg, math, .katex-mathml, .json-collapsed, [hidden], [aria-hidden='true'], button, input, textarea, select";
++
++export function initializeDocumentSearch(content: HTMLElement, shell: HTMLElement, canOpen: () => boolean): void {
++  const panel = document.createElement("div");
++  panel.className = "linguamark-document-search";
++  panel.setAttribute("role", "search");
++  panel.setAttribute("aria-label", "搜索当前文档");
++  panel.hidden = true;
++  const input = document.createElement("input");
++  input.type = "search";
++  input.placeholder = "搜索当前文档";
++  input.setAttribute("aria-label", "搜索当前文档");
++  input.autocomplete = "off";
++  input.spellcheck = false;
++  const count = document.createElement("output");
++  count.setAttribute("aria-live", "polite");
++  const button = (label: string, text: string): HTMLButtonElement => {
++    const element = document.createElement("button");
++    element.type = "button";
++    element.className = "linguamark-markdown-directory-button";
++    element.setAttribute("aria-label", label);
++    element.title = label;
++    element.textContent = text;
++    return element;
++  };
++  const previous = button("上一个匹配（Shift+Enter）", "↑");
++  const next = button("下一个匹配（Enter）", "↓");
++  const dismiss = button("关闭搜索（Esc）", "×");
++  panel.append(input, count, previous, next, dismiss);
++  shell.append(panel);
++
++  let article: HTMLElement | null = null;
++  let matches: HTMLElement[][] = [];
++  let active = -1;
++  let timer: number | undefined;
++  let composing = false;
++  let previousFocus: HTMLElement | null = null;
++  const openedDetails = new Set<HTMLDetailsElement>();
++
++  const clearMarks = (): void => {
++    for (const mark of article?.querySelectorAll(SEARCH_MARK) ?? []) {
++      mark.replaceWith(document.createTextNode(mark.textContent ?? ""));
++    }
++    article?.normalize();
++    matches = [];
++    active = -1;
++  };
++  const updateCount = (): void => {
++    count.textContent = !input.value ? "输入关键词" : matches.length ? `${active + 1} / ${matches.length}` : "无匹配";
++    previous.disabled = next.disabled = matches.length === 0;
++  };
++  const selectMatch = (index: number): void => {
++    for (const mark of matches[active] ?? []) mark.classList.remove("is-current");
++    active = matches.length ? (index + matches.length) % matches.length : -1;
++    for (const mark of matches[active] ?? []) {
++      mark.classList.add("is-current");
++      for (let details = mark.closest("details"); details; details = details.parentElement?.closest("details") ?? null) {
++        if (!details.open) {
++          openedDetails.add(details);
++          details.open = true;
++        }
++      }
++    }
++    matches[active]?.[0]?.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
++    updateCount();
++  };
++  const observe = (): void => observer.observe(content, { childList: true, characterData: true, subtree: true });
++  const search = (): void => {
++    clearTimeout(timer);
++    timer = undefined;
++    observer.disconnect();
++    clearMarks();
++    if (article && input.value) {
++      article.dispatchEvent(new Event("linguamark:prepare-search"));
++      const segments: TextSegment[] = [];
++      const walker = document.createTreeWalker(article, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
++      let text = "";
++      let block: Element | null = null;
++      for (let candidate = walker.nextNode(); candidate; candidate = walker.nextNode()) {
++        if (candidate instanceof HTMLBRElement) text += "\n";
++        if (!(candidate instanceof Text)) continue;
++        const node = candidate;
++        const parent = node.parentElement;
++        if (!parent || parent.closest(EXCLUDED_TEXT) || !node.data) continue;
++        const nextBlock = parent.closest(TEXT_BLOCK);
++        if (text && nextBlock !== block) text += "\n";
++        block = nextBlock;
++        const start = text.length;
++        text += node.data;
++        segments.push({ node, start, end: text.length });
++      }
++      // Use regex indices in the original text: lowercasing can change Unicode string length.
++      const pattern = new RegExp(input.value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"), "giu");
++      const hits = Array.from(text.matchAll(pattern), (match) => ({ start: match.index, end: match.index + match[0].length }));
++      matches = hits.map(() => []);
++      let firstHit = 0;
++      for (const segment of segments) {
++        while (firstHit < hits.length && hits[firstHit].end <= segment.start) firstHit += 1;
++        if (firstHit === hits.length || hits[firstHit].start >= segment.end) continue;
++        const fragment = document.createDocumentFragment();
++        let offset = 0;
++        for (let index = firstHit; index < hits.length && hits[index].start < segment.end; index += 1) {
++          const start = Math.max(0, hits[index].start - segment.start);
++          const end = Math.min(segment.node.length, hits[index].end - segment.start);
++          fragment.append(segment.node.data.slice(offset, start));
++          const mark = document.createElement("mark");
++          mark.dataset.documentSearch = "";
++          mark.textContent = segment.node.data.slice(start, end);
++          fragment.append(mark);
++          matches[index].push(mark);
++          offset = end;
++        }
++        fragment.append(segment.node.data.slice(offset));
++        segment.node.replaceWith(fragment);
++      }
++    }
++    selectMatch(0);
++    observe();
++  };
++  const close = (restoreFocus = true): void => {
++    clearTimeout(timer);
++    observer.disconnect();
++    clearMarks();
++    for (const details of openedDetails) details.open = false;
++    openedDetails.clear();
++    panel.hidden = true;
++    if (restoreFocus) (previousFocus?.isConnected ? previousFocus : content).focus({ preventScroll: true });
++    article = null;
++  };
++  const observer = new MutationObserver(() => {
++    if (content.querySelector("#write") !== article) {
++      close(false);
++      return;
++    }
++    clearTimeout(timer);
++    timer = window.setTimeout(search, 120);
++  });
++
++  input.addEventListener("compositionstart", () => { composing = true; clearTimeout(timer); });
++  input.addEventListener("compositionend", () => { composing = false; search(); });
++  input.addEventListener("input", () => {
++    clearTimeout(timer);
++    if (!composing) timer = window.setTimeout(search, 120);
++  });
++  const navigate = (direction: number): void => {
++    if (timer !== undefined) {
++      search();
++      if (direction < 0) selectMatch(matches.length - 1);
++    } else selectMatch(active + direction);
++  };
++  previous.addEventListener("click", () => navigate(-1));
++  next.addEventListener("click", () => navigate(1));
++  dismiss.addEventListener("click", () => close());
++  panel.addEventListener("keydown", (event) => {
++    if (event.key !== "Enter" || event.isComposing || composing || event.target !== input) return;
++    event.preventDefault();
++    navigate(event.shiftKey ? -1 : 1);
++  });
++  addEventListener("keydown", (event) => {
++    if (document.querySelector("body > dialog[open]") || !canOpen()) return;
++    if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "f") {
++      event.preventDefault();
++      event.stopImmediatePropagation();
++      const current = content.querySelector<HTMLElement>("#write");
++      if (!current || current.matches(".linguamark-empty-viewer, .linguamark-directory-image-preview")) return;
++      if (panel.hidden) {
++        article = current;
++        previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
++        panel.hidden = false;
++        search();
++      }
++      input.focus();
++      input.select();
++    } else if (event.key === "Escape" && !event.isComposing && !composing && !panel.hidden) {
++      event.preventDefault();
++      event.stopImmediatePropagation();
++      close();
++    }
++  }, { capture: true });
++  updateCount();
++}

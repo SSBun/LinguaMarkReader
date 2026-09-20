@@ -1,0 +1,16 @@
+{
+  "snapshot": "sha256:34a28a8a892221c9f6f6fe481c647d90df57e812d0b3d81a94d2439cc6bec4dc",
+  "head": "142352f73d7b474f8b8334ce6db9b36aa2f84405",
+  "files": {
+    "README.md": "4f5b11e6f549bf8688f5488e67a8fe73339c6cf038f2442996a96b52b6567906",
+    "public/markdown.css": "201347bb68eace710277d0c33391a67988c618be6f443706ad0caa9e623e3ab5",
+    "src/json.ts": "0f199d3cc2e528343e211c4f665febdb36b8444b8c3522664f0880541ddf919a",
+    "src/main.ts": "a5346a29146aebd9c462b4c71fd8cce6238b0ecd5a027b14e512e24d068a1690",
+    "src/platform.ts": "2a4561076db5cdf8ea9d072c4bd2e94d852d78d577473e14b2a76083b2f82a55",
+    "src-tauri/src/main.rs": "12e80cb623f5a3b030e65e51a4b163d88d602c22897feb485c60c836076378a4",
+    "src-tauri/src/native_picker.rs": "c17fc82e893d7b3d06aa474ff0899cd2b53e0510b7b790df994eb5ffb3c11f2f"
+  },
+  "status": " M README.md\n M public/markdown.css\n M src-tauri/src/main.rs\n M src-tauri/src/native_picker.rs\n M src/main.ts\n M src/platform.ts\n?? src/json.ts\n",
+  "existing_changes": "README 侧栏说明、main.ts 侧栏直接切换及文件树图标、markdown.css 对应工具栏样式为任务开始前已有修改，不属于 JSON 任务。src/icons.ts 已有修改未触碰。",
+  "scope": "仅审查 JSON 导入、识别、渲染、样式和相关说明，以及其调用边界。"
+}

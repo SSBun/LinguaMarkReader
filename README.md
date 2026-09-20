@@ -1,8 +1,8 @@
 # LinguaMark Reader · Tauri
 
-独立的本地 Markdown 阅读器，基于 Tauri 2、TypeScript 和 Rust。项目包含自己的依赖锁、构建脚本、原生应用和静态资源，无需安装原 LinguaMark Chrome 扩展。
+独立的本地只读文档阅读器，支持 Markdown、JSON、HTML 和 PDF，基于 Tauri 2、TypeScript 和 Rust。项目包含自己的依赖锁、构建脚本、原生应用和静态资源，无需安装原 LinguaMark Chrome 扩展。
 
-初始版本为 **0.1.0**。[GitHub Release](https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.1.0) 提供源码归档，本次不提供安装包。
+当前版本为 **0.2.0**。[GitHub Release](https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.2.0) 提供源码归档，本次不提供安装包。
 
 ## 运行
 
@@ -32,15 +32,21 @@ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 
 ## 阅读能力
 
-- 打开 UTF-8 Markdown，或选择整个阅读目录。
+- 打开 UTF-8 Markdown、JSON、HTML（`.html` / `.htm`）与 PDF，或选择整个阅读目录。
+- HTML 以静态阅读模式渲染正文、标题目录和表格；不执行脚本、不加载外部样式表，目录授权后的相对图片及文档链接可用。不会完整复现依赖 JavaScript 的网页。
+- PDF 使用随应用打包的 PDF.js 离线渲染。工具栏固定在阅读区顶部，页面在独立区域滚动；支持左右箭头翻页、输入页码、缩放和阅读模式切换。
+- PDF 默认纵向连续滚动，页码随滚动更新，仅保留可见范围附近的页面画布。横向模式每次只显示一页，点击左/右箭头切页；自动缩放在纵向模式适合宽度、横向模式适合整页，不旋转原文。两种模式切换保留当前页，放大后可在单页内部滚动。
+- 展开 PDF“当前页文本”可复制、搜索可提取的文本；扫描页仍显示页面，但不提供 OCR。需要密码的 PDF 请先解锁。重新打开或重启后从第一页、纵向默认模式开始，不持久保存 PDF 页码、模式或缩放。
+- JSON 只读格式化、语法高亮、对象和数组折叠展开；保留原始数值及重复键，无效 JSON 显示提示和原文。
+- `⌘F`（Windows/Linux 为 `Ctrl+F`）搜索当前 Markdown、JSON、HTML 正文或 PDF 当前页提取文本：忽略大小写、高亮匹配、显示位置；`Enter` / `Shift+Enter` 或箭头按钮切换匹配，`Esc` 关闭。JSON 折叠内容也参与搜索，定位时展开，关闭时还原搜索展开的节点；切换文档会关闭搜索。图片、SVG 图表及数学公式不参与文本匹配。
 - Lightmind 风格正文、标题目录、可调整侧栏、固定/整屏阅读宽度、字词计数。
 - 文件树、当前文件定位、目录展开/折叠、文件右键菜单。
 - 代码高亮、任务列表、脚注、Alerts、KaTeX、Mermaid 与 ZenUML。
-- 目录内相对 Markdown 链接、锚点、图片及独立图片预览。
+- 目录内相对 Markdown / HTML / JSON / PDF 链接、锚点、图片及独立图片预览。
 - 文件/目录收藏、最近五项、应用重启后恢复上次文档和目录。
-- macOS：工具栏只有一个“导入”按钮；点击或按 `⌘O`，可在同一个系统窗口选择 Markdown 文件或目录，随后自动打开正文或文件树。取消不会替换当前阅读内容。`⌘⇧O` 仍可直接选择目录。
+- macOS：工具栏只有一个“导入”按钮；点击或按 `⌘O`，可在同一个系统窗口选择 Markdown、JSON、HTML、PDF 文件或目录，随后自动打开正文或文件树。取消不会替换当前阅读内容。`⌘⇧O` 仍可直接选择目录。
 - Windows/Linux 暂保留原文件选择器（导入按钮或 `Ctrl+O`），目录使用 `Ctrl+Shift+O`；这些平台尚未提供同窗混合选择，亦未实机验证。
-- 侧栏显隐与内容模式使用独立图标入口；内容菜单可切换文件树和文章目录。按 `⌘R` 重新读取当前打开文件的最新内容，不刷新整个应用窗口。
+- 侧栏显隐与内容模式使用独立图标入口；点击内容模式按钮直接在文件树和文章目录之间切换，不弹出菜单；只有一种内容可用时禁用切换按钮。按 `⌘R` 重新读取当前打开文件的最新内容，不刷新整个应用窗口。
 - 固定 58 px 高度的工具栏：左侧为侧栏与文件入口，中间为文档名，右侧为阅读宽度、收藏、收藏列表与设置。按钮使用统一的定宽图标，不随窗口宽度换行；长文档名省略展示，悬停可查看完整路径。
 - 窗口外层不参与滚动或回弹，正文使用工具栏下方的独立滚动区域，侧栏也保持独立。阅读位置保存/恢复和目录跳转基于正文区域；聚焦正文或工具栏时可用 PageUp/PageDown、Home/End 阅读，设置和收藏模态窗口打开时锁住正文滚动。
 
@@ -74,6 +80,7 @@ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 ## 代码边界
 
 - `src/main.ts`：由现有扩展阅读器独立迁移的 UI 与渲染逻辑，不含 Chrome API 或 AI 初始化。
+- `src/pdf.ts`：PDF 固定工具栏、纵向按需渲染与横向单页模式、当前页文本、缩放与加载任务释放。
 - `src/platform.ts`：窄 IPC、目录/内容契约、阅读记录存储。
 - `src-tauri/src/main.rs`：选择结果类型校验、持久只读授权、有限文件读取、目录枚举与外链。
 - `src-tauri/src/native_picker.rs`：macOS 主线程的 NSOpenPanel 混合选择适配，只返回路径或取消，不持有业务状态。

@@ -1,0 +1,79 @@
+--- before/src/main.ts
++++ after/src/main.ts
+@@ -1166,7 +1166,18 @@
+   title.className = "linguamark-markdown-toc-title";
+   title.textContent = state.rootName?.split("/").filter(Boolean).at(-1) ?? "文件";
+   title.title = state.rootName ?? "文件";
++  title.dataset.directoryPath = "";
++  title.tabIndex = 0;
++  title.setAttribute("aria-haspopup", "menu");
+   panel.append(title);
++  panel.addEventListener("contextmenu", (event) => {
++    const target = event.target instanceof Element
++      ? event.target.closest<HTMLElement>("[data-directory-path]")
++      : null;
++    if (!target || !panel.contains(target)) return;
++    event.preventDefault();
++    showDirectoryContextMenu(event, target, viewer);
++  });
+ 
+   if (!state.entries || state.entries.length === 0) {
+     const empty = document.createElement("p");
+@@ -1179,14 +1190,6 @@
+ 
+   const tree = document.createElement("ul");
+   tree.className = "linguamark-directory-list";
+-  tree.addEventListener("contextmenu", (event) => {
+-    const target = event.target instanceof Element
+-      ? event.target.closest<HTMLElement>("[data-directory-path]")
+-      : null;
+-    if (!target || !tree.contains(target)) return;
+-    event.preventDefault();
+-    showDirectoryContextMenu(event, target, viewer);
+-  });
+   for (const entry of state.entries) tree.append(createDirectoryTreeItem(entry, viewer));
+ 
+   const controls = document.createElement("div");
+@@ -1279,7 +1282,8 @@
+ 
+ function showDirectoryContextMenu(event: MouseEvent, target: HTMLElement, viewer: ViewerElements): void {
+   const relativePath = target.dataset.directoryPath;
+-  if (!relativePath) return;
++  const root = viewer.directoryRootName;
++  if (relativePath === undefined || !root) return;
+   closeDirectoryContextMenu?.(false);
+ 
+   const menu = document.createElement("div");
+@@ -1319,19 +1323,19 @@
+     });
+   };
+ 
+-  addButton("Copy Relative Path", () => copyToClipboard(relativePath));
+-  addButton("Copy Name", () => copyToClipboard(relativePath.split("/").at(-1) ?? relativePath));
+-
+-  if (target.dataset.fileKind !== undefined) {
+-    const item: ViewerItem = {
+-      kind: "file",
+-      path: viewer.directoryRootName ? `${viewer.directoryRootName}/${relativePath}` : relativePath,
+-    };
+-    const saved = isViewerFavorite(item, viewer);
+-    addButton(saved ? "Remove from Favorites" : "Add to Favorites", () => {
+-      void toggleViewerFavorite(viewer, item);
+-    });
+-  } else {
++  addButton("Copy Relative Path", () => copyToClipboard(relativePath || "."));
++  const item: ViewerItem = {
++    kind: target.dataset.fileKind !== undefined ? "file" : "directory",
++    path: relativePath ? `${root.replace(/\/$/u, "")}/${relativePath}` : root,
++  };
++  addButton("Copy Name", () => copyToClipboard(item.path.split("/").filter(Boolean).at(-1) ?? item.path));
++  const saved = isViewerFavorite(item, viewer);
++  const addLabel = item.kind === "directory" ? "Add to Favorite" : "Add to Favorites";
++  addButton(saved ? "Remove from Favorites" : addLabel, () => {
++    void toggleViewerFavorite(viewer, item);
++  });
++
++  if (item.kind === "directory") {
+     const folder = target.closest<HTMLDetailsElement>("details");
+     if (folder) {
+       const setSubtreeExpanded = (expanded: boolean): void => {

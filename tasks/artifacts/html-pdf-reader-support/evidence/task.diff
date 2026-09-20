@@ -1,0 +1,839 @@
+--- before/src/main.ts
++++ after/src/main.ts
+@@ -10,6 +10,7 @@
+ import { logWarn } from "./debug.ts";
+ import { createToolbarIcon } from "./icons.ts";
+ import { createJsonArticle } from "./json.ts";
++import { createPdfArticle } from "./pdf.ts";
+ import { initializeDocumentSearch } from "./search.ts";
+ import { applyTypography, createSettingsPage, getSettings, subscribeSettings, updateSettings } from "./settings.ts";
+ import {
+@@ -107,6 +108,7 @@
+ let restoringSession = false;
+ let restoreScrollCancelled = false;
+ let documentRenderReady: Promise<void> = Promise.resolve();
++let disposePdf: (() => void) | undefined;
+ renderStandaloneViewer();
+ 
+ function contentCount(source: string): number {
+@@ -143,9 +145,9 @@
+   message.className = "linguamark-empty-viewer-message";
+   const title = document.createElement("p");
+   title.className = "linguamark-empty-viewer-title";
+-  title.textContent = "打开 Markdown 或 JSON 开始阅读";
++  title.textContent = "打开 Markdown、JSON、HTML 或 PDF 开始阅读";
+   const description = document.createElement("p");
+-  description.textContent = "点击顶部“导入”，选择 Markdown、JSON 文件或阅读目录。";
++  description.textContent = "点击顶部“导入”，选择 Markdown、JSON、HTML、PDF 文件或阅读目录。";
+   message.append(title, description);
+ 
+   const library = document.createElement("div");
+@@ -160,10 +162,11 @@
+   return article;
+ }
+ 
+-function createArticle(source: string): { article: HTMLElement; customCss: string } {
+-  const { body, frontMatter } = splitFrontMatter(source);
++function createArticle(source: string, kind: "markdown" | "html" = "markdown"): { article: HTMLElement; customCss: string } {
++  const { body, frontMatter } = kind === "markdown" ? splitFrontMatter(source) : { body: source, frontMatter: undefined };
+   const template = document.createElement("template");
+-  template.innerHTML = `${frontMatter ? `<pre class="md-meta-block">${escapeHtml(frontMatter)}</pre>` : ""}${markdown.render(body)}`;
++  template.innerHTML = kind === "html" ? body
++    : `${frontMatter ? `<pre class="md-meta-block">${escapeHtml(frontMatter)}</pre>` : ""}${markdown.render(body)}`;
+ 
+   const customCss = [...template.content.querySelectorAll("style")]
+     .map((style) => style.textContent ?? "")
+@@ -186,9 +189,11 @@
+   article.id = "write";
+   article.append(clean);
+   secureInteractiveContent(article);
+-  decorateAlerts(article);
+-  decorateMath(article);
+-  prepareDiagrams(article);
++  if (kind === "markdown") {
++    decorateAlerts(article);
++    decorateMath(article);
++    prepareDiagrams(article);
++  }
+   return { article, customCss };
+ }
+ 
+@@ -385,7 +390,7 @@
+   const importButton = document.createElement("button");
+   importButton.type = "button";
+   importButton.className = "linguamark-markdown-directory-button";
+-  importButton.title = "导入 Markdown、JSON 文件或目录（⌘O / Ctrl+O）";
++  importButton.title = "导入 Markdown、JSON、HTML、PDF 文件或目录（⌘O / Ctrl+O）";
+   importButton.setAttribute("aria-label", "导入文件或目录");
+   importButton.append(createToolbarIcon("folder"));
+   const fileName = document.createElement("span");
+@@ -1082,6 +1087,8 @@
+   try {
+     const state = await readDirectory(path);
+     if (sequence !== navigationSequence) return;
++    disposePdf?.();
++    disposePdf = undefined;
+     ++directoryRenderSequence;
+     ++diagramRenderSequence;
+     documentRenderReady = Promise.resolve();
+@@ -1109,14 +1116,16 @@
+     const root = viewer.directoryRootName;
+     const prefix = root ? `${root.replace(/\/$/u, "")}/` : "";
+     const relative = prefix && path.startsWith(prefix) ? path.slice(prefix.length) : undefined;
+-    if (file.kind === "markdown") {
++    disposePdf?.();
++    disposePdf = undefined;
++    if (file.kind === "markdown" || file.kind === "html") {
+       if (relative) renderDirectoryMarkdown({ ...file, path: relative }, viewer, hash);
+       else {
+-        const { article, customCss } = createArticle(file.text);
++        const { article, customCss } = createArticle(file.text, file.kind);
+         ++directoryRenderSequence;
+         disableStandaloneRelativeResources(article);
+         viewer.content.replaceChildren(article);
+-        viewer.setContentCount(file.text);
++        viewer.setContentCount(file.kind === "html" ? article.textContent ?? "" : file.text);
+         viewer.setSidebar("outline", createTableOfContents(article), true);
+         viewer.setPath(path);
+         replaceCustomStyle(customCss);
+@@ -1125,6 +1134,7 @@
+         trackDocumentRender(article);
+       }
+     } else if (file.kind === "json") renderJson(file, viewer);
++    else if (file.kind === "pdf") renderPdf(file, viewer);
+     else renderDirectoryImage(file, viewer);
+     setViewerCurrentItem(viewer, { kind: "file", path });
+     viewer.setActiveFile(relative ?? "");
+@@ -1266,7 +1276,7 @@
+   const badge = document.createElement("span");
+   badge.className = "linguamark-directory-file-badge";
+   badge.setAttribute("aria-hidden", "true");
+-  badge.textContent = kind === "markdown" ? "MD" : kind === "json" ? "JSON" : kind === "image" ? "IMG" : "FILE";
++  badge.textContent = kind === "markdown" ? "MD" : kind === "json" ? "JSON" : kind === "html" ? "HTML" : kind === "pdf" ? "PDF" : kind === "image" ? "IMG" : "FILE";
+   const name = document.createElement("span");
+   name.className = "linguamark-directory-file-name";
+   name.textContent = entry.name;
+@@ -1396,13 +1406,13 @@
+   return readFile(`${root.replace(/\/$/u, "")}/${path}`);
+ }
+ 
+-function renderDirectoryMarkdown(file: Extract<DirectoryFileContent, { kind: "markdown" }>, viewer: ViewerElements, hash?: string): void {
+-  const { article, customCss } = createArticle(file.text);
++function renderDirectoryMarkdown(file: Extract<DirectoryFileContent, { kind: "markdown" | "html" }>, viewer: ViewerElements, hash?: string): void {
++  const { article, customCss } = createArticle(file.text, file.kind);
+   viewer.setSidebar("outline", createTableOfContents(article));
+   const renderId = ++directoryRenderSequence;
+   viewer.content.replaceChildren(article);
+   const imagesReady = prepareDirectoryDocument(article, file.path, viewer, renderId);
+-  viewer.setContentCount(file.text);
++  viewer.setContentCount(file.kind === "html" ? article.textContent ?? "" : file.text);
+   viewer.setPath(file.path);
+   replaceCustomStyle(customCss);
+   document.title = article.querySelector("h1")?.textContent?.trim() || file.path.split("/").at(-1) || "Markdown";
+@@ -1427,6 +1437,22 @@
+   replaceCustomStyle("");
+   document.title = file.path.split("/").at(-1) || "JSON";
+   documentRenderReady = Promise.resolve();
++  resetLocationHash();
++  dispatchEvent(new CustomEvent("linguamark:content-replaced"));
++}
++
++function renderPdf(file: Extract<DirectoryFileContent, { kind: "pdf" }>, viewer: ViewerElements): void {
++  const { article, ready, dispose } = createPdfArticle(file.base64);
++  disposePdf = dispose;
++  ++directoryRenderSequence;
++  ++diagramRenderSequence;
++  viewer.content.replaceChildren(article);
++  viewer.setSidebar("outline", undefined);
++  viewer.setContentCount("");
++  viewer.setPath(file.path);
++  replaceCustomStyle("");
++  document.title = file.path.split("/").at(-1) || "PDF";
++  documentRenderReady = ready;
+   resetLocationHash();
+   dispatchEvent(new CustomEvent("linguamark:content-replaced"));
+ }
+--- before/src/platform.ts
++++ after/src/platform.ts
+@@ -1,6 +1,6 @@
+ import { invoke } from "@tauri-apps/api/core";
+ 
+-export type DirectoryFileKind = "markdown" | "json" | "image" | "other";
++export type DirectoryFileKind = "markdown" | "json" | "html" | "pdf" | "image" | "other";
+ export interface DirectoryTreeEntry {
+   name: string;
+   path: string;
+@@ -16,11 +16,15 @@
+ export type DirectoryFileContent =
+   | { kind: "markdown"; path: string; text: string }
+   | { kind: "json"; path: string; text: string }
++  | { kind: "html"; path: string; text: string }
++  | { kind: "pdf"; path: string; base64: string }
+   | { kind: "image"; path: string; dataUrl: string };
+ 
+ export function directoryFileKind(path: string): DirectoryFileKind {
+   if (/\.md$/iu.test(path)) return "markdown";
+   if (/\.json$/iu.test(path)) return "json";
++  if (/\.html?$/iu.test(path)) return "html";
++  if (/\.pdf$/iu.test(path)) return "pdf";
+   return /\.(png|jpe?g|gif|webp|avif|svg)$/iu.test(path) ? "image" : "other";
+ }
+ 
+--- before/src-tauri/src/main.rs
++++ after/src-tauri/src/main.rs
+@@ -107,7 +107,7 @@
+             let _ = window;
+             app.dialog()
+                 .file()
+-                .add_filter("Markdown / JSON", &["md", "MD", "json", "JSON"])
++                .add_filter("Markdown / JSON / HTML / PDF", &["md", "MD", "json", "JSON", "html", "HTML", "htm", "HTM", "pdf", "PDF"])
+                 .blocking_pick_file()
+                 .map(|path| path.into_path().map_err(|_| "不支持此文件地址"))
+                 .transpose()?
+@@ -117,9 +117,9 @@
+                 let canonical = path.canonicalize().map_err(|_| "无法访问所选路径")?;
+                 let directory = canonical.is_dir();
+                 if !directory
+-                    && (!canonical.is_file() || !matches!(file_kind(&canonical), "markdown" | "json"))
++                    && (!canonical.is_file() || !matches!(file_kind(&canonical), "markdown" | "json" | "html" | "pdf"))
+                 {
+-                    return Err("请选择 Markdown、JSON 文件或目录".into());
++                    return Err("请选择 Markdown、JSON、HTML、PDF 文件或目录".into());
+                 }
+                 let path = app.state::<Access>().grant(&canonical, directory)?;
+                 Ok(SelectedEntry {
+@@ -158,6 +158,8 @@
+     {
+         "md" => "markdown",
+         "json" => "json",
++        "html" | "htm" => "html",
++        "pdf" => "pdf",
+         "png" | "jpg" | "jpeg" | "gif" | "webp" | "avif" | "svg" => "image",
+         _ => "other",
+     }
+@@ -174,6 +176,14 @@
+         path: String,
+         text: String,
+     },
++    Html {
++        path: String,
++        text: String,
++    },
++    Pdf {
++        path: String,
++        base64: String,
++    },
+     Image {
+         path: String,
+         #[serde(rename = "dataUrl")]
+@@ -201,9 +211,13 @@
+         if bytes.len() as u64 > MAX_FILE_BYTES {
+             return Err("文件超过 32 MiB".into());
+         }
+-        if matches!(kind, "markdown" | "json") {
++        if kind == "pdf" {
++            Ok(Content::Pdf { path, base64: STANDARD.encode(bytes) })
++        } else if matches!(kind, "markdown" | "json" | "html") {
+             let text = String::from_utf8(bytes).map_err(|_| "文本文件必须使用 UTF-8 编码")?;
+-            if kind == "json" {
++            if kind == "html" {
++                Ok(Content::Html { path, text })
++            } else if kind == "json" {
+                 Ok(Content::Json { path, text })
+             } else {
+                 Ok(Content::Markdown { path, text })
+--- before/src-tauri/src/native_picker.rs
++++ after/src-tauri/src/native_picker.rs
+@@ -19,9 +19,9 @@
+ fn select_entry() -> Result<Option<PathBuf>, String> {
+     let main_thread = MainThreadMarker::new().ok_or("系统选择器需要主线程")?;
+     let panel = NSOpenPanel::openPanel(main_thread);
+-    panel.setTitle(Some(&NSString::from_str("导入 Markdown、JSON 文件或目录")));
++    panel.setTitle(Some(&NSString::from_str("导入 Markdown、JSON、HTML、PDF 文件或目录")));
+     panel.setPrompt(Some(&NSString::from_str("导入")));
+-    panel.setMessage(Some(&NSString::from_str("选择一个 Markdown、JSON 文件或文件夹")));
++    panel.setMessage(Some(&NSString::from_str("选择一个 Markdown、JSON、HTML、PDF 文件或文件夹")));
+     panel.setCanChooseFiles(true);
+     panel.setCanChooseDirectories(true);
+     panel.setAllowsMultipleSelection(false);
+@@ -33,6 +33,12 @@
+         NSString::from_str("MD"),
+         NSString::from_str("json"),
+         NSString::from_str("JSON"),
++        NSString::from_str("html"),
++        NSString::from_str("HTML"),
++        NSString::from_str("htm"),
++        NSString::from_str("HTM"),
++        NSString::from_str("pdf"),
++        NSString::from_str("PDF"),
+     ]);
+     // Match rfd's existing filter API: this app still targets macOS 10.13, before UTType-based panels.
+     #[allow(deprecated)]
+--- before/public/markdown.css
++++ after/public/markdown.css
+@@ -3818,6 +3818,44 @@
+ #write .json-literal { color: var(--cm-keyword); }
+ #write .linguamark-json-error { color: var(--accent-deep); }
+ 
++#write .linguamark-pdf-toolbar {
++    display: flex;
++    align-items: center;
++    flex-wrap: wrap;
++    gap: 8px;
++    margin-bottom: 12px;
++}
++
++#write .linguamark-pdf-toolbar input,
++#write .linguamark-pdf-toolbar select {
++    min-height: 32px;
++    color: inherit;
++    background: var(--code-bg);
++    border: 1px solid var(--code-line);
++    border-radius: 6px;
++    padding: 4px 8px;
++    font: inherit;
++}
++
++#write .linguamark-pdf-toolbar input { width: 5em; }
++#write .linguamark-pdf-toolbar :disabled { opacity: 0.45; cursor: default; }
++
++#write .linguamark-pdf-viewport {
++    overflow: auto;
++    max-width: 100%;
++    background: #e5e5e5;
++}
++
++#write .linguamark-pdf-viewport canvas {
++    display: block;
++    margin: 0 auto;
++    background: white;
++}
++
++#write .linguamark-pdf-text { margin-top: 16px; }
++#write .linguamark-pdf-text summary { cursor: pointer; }
++#write .linguamark-pdf-text pre { white-space: pre-wrap; overflow-wrap: anywhere; }
++
+ @media (prefers-reduced-motion: reduce) {
+     html.linguamark-reload-scroll-animation .linguamark-markdown-content {
+         scroll-behavior: auto;
+--- before/README.md
++++ after/README.md
+@@ -32,15 +32,17 @@
+ 
+ ## 阅读能力
+ 
+-- 打开 UTF-8 Markdown、JSON，或选择整个阅读目录。
++- 打开 UTF-8 Markdown、JSON、HTML（`.html` / `.htm`）与 PDF，或选择整个阅读目录。
++- HTML 以静态阅读模式渲染正文、标题目录和表格；不执行脚本、不加载外部样式表，目录授权后的相对图片及文档链接可用。不会完整复现依赖 JavaScript 的网页。
++- PDF 使用随应用打包的 PDF.js 离线渲染，支持上一页/下一页、输入页码、适合宽度和缩放。展开“当前页文本”可复制、搜索可提取的文本；扫描页仍显示页面，但不提供 OCR。需要密码的 PDF 请先解锁。切换或重启后从第一页打开，不保存 PDF 页码。
+ - JSON 只读格式化、语法高亮、对象和数组折叠展开；保留原始数值及重复键，无效 JSON 显示提示和原文。
+-- `⌘F`（Windows/Linux 为 `Ctrl+F`）搜索当前 Markdown 或 JSON 的正文文本：忽略大小写、高亮匹配、显示位置；`Enter` / `Shift+Enter` 或箭头按钮切换匹配，`Esc` 关闭。JSON 折叠内容也参与搜索，定位时展开，关闭时还原搜索展开的节点；切换文档会关闭搜索。图片、SVG 图表及数学公式不参与文本匹配。
++- `⌘F`（Windows/Linux 为 `Ctrl+F`）搜索当前 Markdown、JSON、HTML 正文或 PDF 当前页提取文本：忽略大小写、高亮匹配、显示位置；`Enter` / `Shift+Enter` 或箭头按钮切换匹配，`Esc` 关闭。JSON 折叠内容也参与搜索，定位时展开，关闭时还原搜索展开的节点；切换文档会关闭搜索。图片、SVG 图表及数学公式不参与文本匹配。
+ - Lightmind 风格正文、标题目录、可调整侧栏、固定/整屏阅读宽度、字词计数。
+ - 文件树、当前文件定位、目录展开/折叠、文件右键菜单。
+ - 代码高亮、任务列表、脚注、Alerts、KaTeX、Mermaid 与 ZenUML。
+-- 目录内相对 Markdown 链接、锚点、图片及独立图片预览。
++- 目录内相对 Markdown / HTML / JSON / PDF 链接、锚点、图片及独立图片预览。
+ - 文件/目录收藏、最近五项、应用重启后恢复上次文档和目录。
+-- macOS：工具栏只有一个“导入”按钮；点击或按 `⌘O`，可在同一个系统窗口选择 Markdown、JSON 文件或目录，随后自动打开正文或文件树。取消不会替换当前阅读内容。`⌘⇧O` 仍可直接选择目录。
++- macOS：工具栏只有一个“导入”按钮；点击或按 `⌘O`，可在同一个系统窗口选择 Markdown、JSON、HTML、PDF 文件或目录，随后自动打开正文或文件树。取消不会替换当前阅读内容。`⌘⇧O` 仍可直接选择目录。
+ - Windows/Linux 暂保留原文件选择器（导入按钮或 `Ctrl+O`），目录使用 `Ctrl+Shift+O`；这些平台尚未提供同窗混合选择，亦未实机验证。
+ - 侧栏显隐与内容模式使用独立图标入口；点击内容模式按钮直接在文件树和文章目录之间切换，不弹出菜单；只有一种内容可用时禁用切换按钮。按 `⌘R` 重新读取当前打开文件的最新内容，不刷新整个应用窗口。
+ - 固定 58 px 高度的工具栏：左侧为侧栏与文件入口，中间为文档名，右侧为阅读宽度、收藏、收藏列表与设置。按钮使用统一的定宽图标，不随窗口宽度换行；长文档名省略展示，悬停可查看完整路径。
+@@ -76,6 +78,7 @@
+ ## 代码边界
+ 
+ - `src/main.ts`：由现有扩展阅读器独立迁移的 UI 与渲染逻辑，不含 Chrome API 或 AI 初始化。
++- `src/pdf.ts`：PDF 分页画布渲染、当前页文本、缩放与加载任务释放。
+ - `src/platform.ts`：窄 IPC、目录/内容契约、阅读记录存储。
+ - `src-tauri/src/main.rs`：选择结果类型校验、持久只读授权、有限文件读取、目录枚举与外链。
+ - `src-tauri/src/native_picker.rs`：macOS 主线程的 NSOpenPanel 混合选择适配，只返回路径或取消，不持有业务状态。
+--- before/package.json
++++ after/package.json
+@@ -20,7 +20,8 @@
+     "markdown-it-footnote": "^4.0.0",
+     "markdown-it-task-lists": "^2.1.1",
+     "markdown-it-texmath": "^1.0.0",
+-    "mermaid": "^11.17.2"
++    "mermaid": "^11.17.2",
++    "pdfjs-dist": "^6.3.289"
+   },
+   "devDependencies": {
+     "@tauri-apps/cli": "^2.10.1",
+--- before/package-lock.json
++++ after/package-lock.json
+@@ -17,7 +17,8 @@
+         "markdown-it-footnote": "^4.0.0",
+         "markdown-it-task-lists": "^2.1.1",
+         "markdown-it-texmath": "^1.0.0",
+-        "mermaid": "^11.17.2"
++        "mermaid": "^11.17.2",
++        "pdfjs-dist": "^6.3.289"
+       },
+       "devDependencies": {
+         "@tauri-apps/cli": "^2.10.1",
+@@ -2514,6 +2515,268 @@
+       "integrity": "sha512-NOnmBpt5Y2RWbuv0LMzsayp3lVylAHLPUTut412ZA3l+C4uw4ZVkQbjShYCQ8TCpUMdPapr4YjUqLYD6v68j+w==",
+       "license": "MIT"
+     },
++    "node_modules/pdfjs-dist": {
++      "version": "6.3.289",
++      "resolved": "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-6.3.289.tgz",
++      "integrity": "sha512-ZHjSVpDa3D6izMq8/04lvkhkATUmL9px6ChPaXc1k6nU2Mrhlg1/7F0bdUqCwUjw3NsPTfPZsMDUU6ZIcRaeQw==",
++      "license": "Apache-2.0",
++      "engines": {
++        "node": ">=22.13.0 || >=24"
++      },
++      "optionalDependencies": {
++        "@napi-rs/canvas": "^1.0.0"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas/-/canvas-1.0.9.tgz",
++      "integrity": "sha512-QviPdJImDi/jMAvBfqaw+19BndMd/sizXVW3NnpMd3VJGz++QXkOHcP9kWR/smHG0hNjHeyuHFyrx/5lD0oNcQ==",
++      "license": "MIT",
++      "optional": true,
++      "workspaces": [
++        "e2e/*"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      },
++      "optionalDependencies": {
++        "@napi-rs/canvas-android-arm64": "1.0.9",
++        "@napi-rs/canvas-darwin-arm64": "1.0.9",
++        "@napi-rs/canvas-darwin-x64": "1.0.9",
++        "@napi-rs/canvas-linux-arm-gnueabihf": "1.0.9",
++        "@napi-rs/canvas-linux-arm64-gnu": "1.0.9",
++        "@napi-rs/canvas-linux-arm64-musl": "1.0.9",
++        "@napi-rs/canvas-linux-riscv64-gnu": "1.0.9",
++        "@napi-rs/canvas-linux-x64-gnu": "1.0.9",
++        "@napi-rs/canvas-linux-x64-musl": "1.0.9",
++        "@napi-rs/canvas-win32-arm64-msvc": "1.0.9",
++        "@napi-rs/canvas-win32-x64-msvc": "1.0.9"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-android-arm64": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-android-arm64/-/canvas-android-arm64-1.0.9.tgz",
++      "integrity": "sha512-4LGXk2/0HVzE29K8SzML5WubgCp++B1FH3qgl35XmSZE+lLdr6P9VRQEnZ0MCLZMTSuJP41yyhtoiVNEuvrTIA==",
++      "cpu": [
++        "arm64"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-darwin-arm64": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-darwin-arm64/-/canvas-darwin-arm64-1.0.9.tgz",
++      "integrity": "sha512-YNdfLBzY0W/Pep9fo2L6RmoNlNksnn05LRnX66W63R3ij58S25QOTcjdtEt2v8+PnCESzqZsYzUo+QPeIR44NA==",
++      "cpu": [
++        "arm64"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-darwin-x64": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-darwin-x64/-/canvas-darwin-x64-1.0.9.tgz",
++      "integrity": "sha512-ceZQSknTEcy3dOXoekv59LTCkXjvnLsq+VW5PeNNDHEPQbRS5Ervkm1EaDa7WLAjiYWMLuSQTRTHao1dEX4prg==",
++      "cpu": [
++        "x64"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-linux-arm-gnueabihf": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-linux-arm-gnueabihf/-/canvas-linux-arm-gnueabihf-1.0.9.tgz",
++      "integrity": "sha512-XhfI0Wwv4llhd6nnWDtY3kQKjq0r+y1i91PlJlJI24ag2U9WrnwbG1qS3+fDLEyouwEVFchiKkTEHozK+5iUNA==",
++      "cpu": [
++        "arm"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-linux-arm64-gnu": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-linux-arm64-gnu/-/canvas-linux-arm64-gnu-1.0.9.tgz",
++      "integrity": "sha512-012oiYtKaE7i9oxc8q7nraT7kDOpLcaCmFLzVe9Ty34RHDdoDzbWLrVh827CNxYh/EADX1eSikA3ymLjo/nNuw==",
++      "cpu": [
++        "arm64"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-linux-arm64-musl": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-linux-arm64-musl/-/canvas-linux-arm64-musl-1.0.9.tgz",
++      "integrity": "sha512-Ls5UWYFFn63casTZEczbeyEg3vRDRkv9lscuGwfchtY5yLLQhgOB8SN4YGxmfJ5vTaBwZ2YUxBS3NtmjJmFXdA==",
++      "cpu": [
++        "arm64"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-linux-riscv64-gnu": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-linux-riscv64-gnu/-/canvas-linux-riscv64-gnu-1.0.9.tgz",
++      "integrity": "sha512-hLKEGxV7ZiRHqndePTokgDMdBlo/rDfzg7P4p4QIv9pUhuYobnu3R2NIFLCRghG0nwfo+s2sw+c1xZFeCmEAsw==",
++      "cpu": [
++        "riscv64"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-linux-x64-gnu": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-linux-x64-gnu/-/canvas-linux-x64-gnu-1.0.9.tgz",
++      "integrity": "sha512-6kaz3w0QMy77PDWk6rJ1ksIihdad3qzEyX2o2oGT8GwCaypfT5mhjr8buOO5hstyLxcWXDScuz56RsINLtBPIQ==",
++      "cpu": [
++        "x64"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-linux-x64-musl": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-linux-x64-musl/-/canvas-linux-x64-musl-1.0.9.tgz",
++      "integrity": "sha512-xrGvmS3v55hmZ86ls/kBLVNMUTYio3f6Ik0DireemG994VfPAwiA3ZXA0Uf1bByctkB3NQ1Sfb+H5bkdUnnzfQ==",
++      "cpu": [
++        "x64"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-win32-arm64-msvc": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-win32-arm64-msvc/-/canvas-win32-arm64-msvc-1.0.9.tgz",
++      "integrity": "sha512-yjmVS3ArZeRVCP7jqbPq4rpZa/BhTeI7ELE2XqJg3snICQBDevLZyArxswHkiTnT34KRic33/4fLirrHI+SY8A==",
++      "cpu": [
++        "arm64"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
++    "node_modules/pdfjs-dist/node_modules/@napi-rs/canvas-win32-x64-msvc": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@napi-rs/canvas-win32-x64-msvc/-/canvas-win32-x64-msvc-1.0.9.tgz",
++      "integrity": "sha512-QlSYQdMQslB81nlABo9wNfQ6npFhE7/O+saCZdqVGueGanyRk4jCogD5EwQenfP3kIq9e+mm6GreQBjX5MrA8g==",
++      "cpu": [
++        "x64"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">= 10"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/Brooooooklyn"
++      }
++    },
+     "node_modules/points-on-curve": {
+       "version": "0.2.0",
+       "resolved": "https://registry.npmjs.org/points-on-curve/-/points-on-curve-0.2.0.tgz",
+--- before/scripts/build.mjs
++++ after/scripts/build.mjs
+@@ -22,3 +22,9 @@
+   target: ["safari17", "chrome120"],
+ });
+ await cp("public", "dist", { recursive: true });
++await mkdir("dist/pdfjs", { recursive: true });
++await cp("node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs", "dist/pdfjs/pdf.worker.min.mjs");
++for (const directory of ["cmaps", "standard_fonts", "wasm", "iccs"]) {
++  await cp(`node_modules/pdfjs-dist/${directory}`, `dist/pdfjs/${directory}`, { recursive: true });
++}
++await cp("node_modules/pdfjs-dist/LICENSE", "dist/pdfjs/LICENSE");
+--- before/src-tauri/tauri.conf.json
++++ after/src-tauri/tauri.conf.json
+@@ -11,7 +11,7 @@
+   "app": {
+     "windows": [],
+     "security": {
+-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src ipc: http://ipc.localhost; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
++      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+     }
+   },
+   "bundle": {
+--- before/src/pdf.ts
++++ after/src/pdf.ts
+@@ -0,0 +1,170 @@
++import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from "pdfjs-dist";
++
++export function createPdfArticle(base64: string): { article: HTMLElement; ready: Promise<void>; dispose: () => void } {
++  const article = document.createElement("article");
++  article.id = "write";
++  article.className = "linguamark-pdf";
++  const toolbar = document.createElement("div");
++  toolbar.className = "linguamark-pdf-toolbar";
++  toolbar.setAttribute("role", "group");
++  toolbar.setAttribute("aria-label", "PDF 分页与缩放");
++  const button = (label: string): HTMLButtonElement => {
++    const element = document.createElement("button");
++    element.type = "button";
++    element.className = "linguamark-markdown-directory-button";
++    element.textContent = label;
++    return element;
++  };
++  const previous = button("上一页");
++  const next = button("下一页");
++  const pageInput = document.createElement("input");
++  pageInput.type = "number";
++  pageInput.min = "1";
++  pageInput.value = "1";
++  pageInput.setAttribute("aria-label", "PDF 页码");
++  const total = document.createElement("span");
++  total.setAttribute("aria-hidden", "true");
++  const zoom = document.createElement("select");
++  zoom.setAttribute("aria-label", "PDF 缩放");
++  for (const [value, label] of [["0", "适合宽度"], ["0.75", "75%"], ["1", "100%"], ["1.5", "150%"], ["2", "200%"]]) {
++    zoom.add(new Option(label, value));
++  }
++  toolbar.append(previous, pageInput, total, next, zoom);
++  const status = document.createElement("p");
++  status.setAttribute("role", "status");
++  status.textContent = "正在加载 PDF…";
++  const viewport = document.createElement("div");
++  viewport.className = "linguamark-pdf-viewport";
++  const text = document.createElement("details");
++  text.className = "linguamark-pdf-text";
++  const summary = document.createElement("summary");
++  summary.textContent = "当前页文本（可复制与搜索）";
++  const textContent = document.createElement("pre");
++  text.append(summary, textContent);
++  article.append(toolbar, status, viewport, text);
++
++  let disposed = false;
++  let loading: PDFDocumentLoadingTask | undefined;
++  let pdf: PDFDocumentProxy | undefined;
++  let rendering: RenderTask | undefined;
++  let pageNumber = 1;
++  let busy = true;
++  const updateControls = (): void => {
++    previous.disabled = busy || !pdf || pageNumber <= 1;
++    next.disabled = busy || !pdf || pageNumber >= pdf.numPages;
++    pageInput.disabled = zoom.disabled = busy || !pdf;
++    pageInput.value = String(pageNumber);
++  };
++  updateControls();
++
++  const renderPage = async (): Promise<void> => {
++    if (!pdf || disposed) return;
++    busy = true;
++    updateControls();
++    status.textContent = `正在渲染第 ${pageNumber} 页…`;
++    viewport.replaceChildren();
++    textContent.textContent = "";
++    try {
++      const page = await pdf.getPage(pageNumber);
++      if (disposed) return;
++      try {
++        const natural = page.getViewport({ scale: 1 });
++        const available = Math.max(240, viewport.clientWidth);
++        const scale = Number(zoom.value) || Math.min(2, available / natural.width);
++        const view = page.getViewport({ scale });
++        // Bound canvas allocation even for unusually large PDF page dimensions.
++        const ratio = Math.min(window.devicePixelRatio || 1, 2, 4096 / view.width, 4096 / view.height);
++        const canvas = document.createElement("canvas");
++        canvas.width = Math.max(1, Math.floor(view.width * ratio));
++        canvas.height = Math.max(1, Math.floor(view.height * ratio));
++        canvas.style.width = `${view.width}px`;
++        canvas.style.height = `${view.height}px`;
++        canvas.setAttribute("role", "img");
++        canvas.setAttribute("aria-label", `PDF 第 ${pageNumber} 页，共 ${pdf.numPages} 页`);
++        viewport.append(canvas);
++        rendering = page.render({ canvas, viewport: view, transform: [ratio, 0, 0, ratio, 0, 0] });
++        await rendering.promise;
++        if (disposed) return;
++        status.textContent = `第 ${pageNumber} / ${pdf.numPages} 页`;
++        try {
++          // WebKit supports stream readers before ReadableStream async iteration.
++          const reader: ReadableStreamDefaultReader<Awaited<ReturnType<typeof page.getTextContent>>> = page.streamTextContent().getReader();
++          const chunks: string[] = [];
++          try {
++            while (!disposed) {
++              const { value, done } = await reader.read();
++              if (done) break;
++              chunks.push(value.items.map((item) => "str" in item ? item.str + (item.hasEOL ? "\n" : " ") : "").join(""));
++            }
++          } finally {
++            reader.releaseLock();
++          }
++          if (disposed) return;
++          textContent.textContent = chunks.join("") || "此页没有可提取的文本（可能是扫描件）。";
++        } catch {
++          if (!disposed) textContent.textContent = "无法提取此页文本；仍可阅读上方页面。";
++        }
++      } finally {
++        page.cleanup();
++      }
++    } catch {
++      if (!disposed) status.textContent = "此页渲染失败，请尝试其他页或重新导入文件。";
++    } finally {
++      rendering = undefined;
++      busy = false;
++      if (!disposed) updateControls();
++    }
++  };
++  const go = (number: number): void => {
++    if (busy || !pdf || !Number.isInteger(number) || number < 1 || number > pdf.numPages) {
++      pageInput.value = String(pageNumber);
++      return;
++    }
++    pageNumber = number;
++    void renderPage();
++  };
++  previous.addEventListener("click", () => go(pageNumber - 1));
++  next.addEventListener("click", () => go(pageNumber + 1));
++  pageInput.addEventListener("change", () => go(Number(pageInput.value)));
++  zoom.addEventListener("change", () => { if (!busy) void renderPage(); });
++
++  const ready = (async () => {
++    try {
++      // Legacy build includes compatibility shims for the supported WebViews.
++      const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist/legacy/build/pdf.mjs");
++      if (disposed) return;
++      const asset = (path: string): string => new URL(`pdfjs/${path}`, document.baseURI).href;
++      GlobalWorkerOptions.workerSrc = asset("pdf.worker.min.mjs");
++      const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
++      loading = getDocument({
++        data: bytes,
++        cMapUrl: asset("cmaps/"),
++        cMapPacked: true,
++        standardFontDataUrl: asset("standard_fonts/"),
++        wasmUrl: asset("wasm/"),
++        iccUrl: asset("iccs/"),
++        useWorkerFetch: false,
++        enableXfa: false,
++      });
++      pdf = await loading.promise;
++      if (disposed) return;
++      total.textContent = `/ ${pdf.numPages}`;
++      pageInput.max = String(pdf.numPages);
++      await renderPage();
++    } catch (error: unknown) {
++      if (disposed) return;
++      status.textContent = error instanceof Error && error.name === "PasswordException"
++        ? "此 PDF 需要密码，请先解锁文件后重新导入。"
++        : "无法打开 PDF：文件可能已损坏或格式不受支持。";
++    }
++  })();
++  return {
++    article,
++    ready,
++    dispose: () => {
++      disposed = true;
++      rendering?.cancel();
++      void loading?.destroy().catch(() => undefined);
++    },
++  };
++}

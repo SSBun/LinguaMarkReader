@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-export type DirectoryFileKind = "markdown" | "image" | "other";
+export type DirectoryFileKind = "markdown" | "json" | "html" | "pdf" | "image" | "other";
 export interface DirectoryTreeEntry {
   name: string;
   path: string;
@@ -15,10 +15,16 @@ export interface DirectoryBrowserState {
 }
 export type DirectoryFileContent =
   | { kind: "markdown"; path: string; text: string }
+  | { kind: "json"; path: string; text: string }
+  | { kind: "html"; path: string; text: string }
+  | { kind: "pdf"; path: string; base64: string }
   | { kind: "image"; path: string; dataUrl: string };
 
 export function directoryFileKind(path: string): DirectoryFileKind {
   if (/\.md$/iu.test(path)) return "markdown";
+  if (/\.json$/iu.test(path)) return "json";
+  if (/\.html?$/iu.test(path)) return "html";
+  if (/\.pdf$/iu.test(path)) return "pdf";
   return /\.(png|jpe?g|gif|webp|avif|svg)$/iu.test(path) ? "image" : "other";
 }
 

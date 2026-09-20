@@ -1,0 +1,9 @@
+{"csp":"img-src","blocked":"https://example.com/leak"}
+{"html":"HTML rendered heading","unsafe":false,"scriptRan":false,"outline":true,"imageSource":null}
+{"pdf":"第 1 / 2 页","canvas":[1736,2246],"ink":7092,"text":"PDF first page "}
+{"page2":"PDF second page "}
+{"zoom":"1224px"}
+{"invalid":"无法打开 PDF：文件可能已损坏或格式不受支持。"}
+{"csp":"img-src","blocked":"https://example.com/leak"}
+{"switchBack":"HTML rendered heading","pdfLeft":false}
+DONE:success

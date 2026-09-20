@@ -107,7 +107,7 @@ async fn pick_entry(
             let _ = window;
             app.dialog()
                 .file()
-                .add_filter("Markdown", &["md", "MD"])
+                .add_filter("Markdown / JSON / HTML / PDF", &["md", "MD", "json", "JSON", "html", "HTML", "htm", "HTM", "pdf", "PDF"])
                 .blocking_pick_file()
                 .map(|path| path.into_path().map_err(|_| "不支持此文件地址"))
                 .transpose()?
@@ -116,8 +116,10 @@ async fn pick_entry(
             .map(|path| {
                 let canonical = path.canonicalize().map_err(|_| "无法访问所选路径")?;
                 let directory = canonical.is_dir();
-                if !directory && (!canonical.is_file() || file_kind(&canonical) != "markdown") {
-                    return Err("请选择 Markdown 文件或目录".into());
+                if !directory
+                    && (!canonical.is_file() || !matches!(file_kind(&canonical), "markdown" | "json" | "html" | "pdf"))
+                {
+                    return Err("请选择 Markdown、JSON、HTML、PDF 文件或目录".into());
                 }
                 let path = app.state::<Access>().grant(&canonical, directory)?;
                 Ok(SelectedEntry {
@@ -155,6 +157,9 @@ fn file_kind(path: &Path) -> &'static str {
         .as_str()
     {
         "md" => "markdown",
+        "json" => "json",
+        "html" | "htm" => "html",
+        "pdf" => "pdf",
         "png" | "jpg" | "jpeg" | "gif" | "webp" | "avif" | "svg" => "image",
         _ => "other",
     }
@@ -166,6 +171,18 @@ enum Content {
     Markdown {
         path: String,
         text: String,
+    },
+    Json {
+        path: String,
+        text: String,
+    },
+    Html {
+        path: String,
+        text: String,
+    },
+    Pdf {
+        path: String,
+        base64: String,
     },
     Image {
         path: String,
@@ -194,9 +211,17 @@ async fn read_file(path: String, app: tauri::AppHandle) -> Result<Content, Strin
         if bytes.len() as u64 > MAX_FILE_BYTES {
             return Err("文件超过 32 MiB".into());
         }
-        if kind == "markdown" {
-            let text = String::from_utf8(bytes).map_err(|_| "Markdown 文件必须使用 UTF-8 编码")?;
-            Ok(Content::Markdown { path, text })
+        if kind == "pdf" {
+            Ok(Content::Pdf { path, base64: STANDARD.encode(bytes) })
+        } else if matches!(kind, "markdown" | "json" | "html") {
+            let text = String::from_utf8(bytes).map_err(|_| "文本文件必须使用 UTF-8 编码")?;
+            if kind == "html" {
+                Ok(Content::Html { path, text })
+            } else if kind == "json" {
+                Ok(Content::Json { path, text })
+            } else {
+                Ok(Content::Markdown { path, text })
+            }
         } else {
             let extension = canonical
                 .extension()
