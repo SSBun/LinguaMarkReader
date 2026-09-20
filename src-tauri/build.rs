@@ -6,6 +6,7 @@ fn main() {
             "read_file",
             "read_directory",
             "open_external",
+            "take_opened_file",
         ]),
     ))
     .expect("failed to build Tauri application");

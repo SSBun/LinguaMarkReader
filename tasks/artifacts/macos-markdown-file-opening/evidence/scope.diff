@@ -1,0 +1,313 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8b5ab9a..5717245 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -11,6 +11,7 @@
+ - 支持 PDF 离线阅读、页码跳转、缩放与当前页文本提取。
+ - PDF 工具栏固定在阅读区顶部，可在纵向连续滚动与横向单页翻页之间切换，切换保留当前页；纵向按需加载附近页面。
+ - 支持使用 ⌘F / Ctrl+F 搜索正文，以及通过文件夹右键菜单管理收藏。
++- 支持构建本地 macOS 应用包，并接收 Finder 打开的 `.md` / `.markdown` 文件，覆盖冷启动和已运行状态，仅授权选中的单个文件。
+ 
+ ### 改进
+ 
+@@ -19,13 +20,14 @@
+ 
+ ### 修复
+ 
++- 修复文件树选中行在聚焦或悬停时，文件类型标签浅底白字的对比度问题。
+ - 修复 WebKit 中 PDF 文本流读取的兼容性问题。
+ - 修复高窗口与较小缩放下，PDF 纵向跳页、连续上一页及首尾页码被滚动回调覆盖的问题。
+ 
+ ### 发布说明
+ 
+ - 本次仍仅提供源码及 GitHub 自动生成的源码归档，不包含安装包、签名或公证产物。
+-- macOS 类型检查、前端构建、原生编译及 Release 构建已验证；PDF/HTML 使用实际构建资源在 WKWebView 中检查，但相关原生选择器与 IPC 使用模拟数据。
++- macOS 类型检查、前端构建、原生编译、Release 应用包及 ad-hoc 签名完整性已验证；Markdown 系统打开入口已在真实应用中验证。PDF/HTML 的其他阅读检查使用实际构建资源的 WKWebView，相关选择器与 IPC 使用模拟数据。
+ - 未运行测试套件；Windows/Linux、复杂 PDF 与超大页数尚未实机验证。
+ - PDF 不提供 OCR；密码文件需先解锁。重新打开时不保存 PDF 页码、阅读模式或缩放。
+ 
+diff --git a/README.md b/README.md
+index e69c02c..7ee8daf 100644
+--- a/README.md
++++ b/README.md
+@@ -25,11 +25,16 @@ npm run build
+ # 构建本地可执行程序，不生成安装包、不签名或发布
+ npm run build:desktop
+ 
++# macOS 本地应用包（ad-hoc 签名，不公证、不安装）
++npm run build:mac
++
+ # 原生静态检查（先构建前端）
+ cargo check --manifest-path src-tauri/Cargo.toml
+ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+ ```
+ 
++macOS 应用包生成在 `src-tauri/target/release/bundle/macos/LinguaMark Reader.app`。可复制到“应用程序”后使用；它声明支持 `.md` / `.markdown`，支持 Finder“打开方式”或设为默认应用后的双击打开。应用冷启动和已运行时均接收文件，优先显示系统明确打开的文档；一次打开多个文档时，单窗口显示最后一个。此本地包仅作 ad-hoc 签名，未获 Apple 公证，不属于 Developer ID 分发安装包。
++
+ ## 阅读能力
+ 
+ - 打开 UTF-8 Markdown、JSON、HTML（`.html` / `.htm`）与 PDF，或选择整个阅读目录。
+@@ -68,12 +73,12 @@ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+ ## 安全与限制
+ 
+ - 只读应用，不提供文件写入、删除或任意 shell 执行接口。
+-- Rust 仅接受通过原生选择器授权的文件或目录；规范化后的路径必须仍在授权范围内。目录树不遍历符号链接、设备和 socket。
++- Rust 仅接受用户通过原生选择器授权的文件/目录，或 macOS 系统文件打开事件明确选择的 Markdown 文件；后者只授予该文件，不授予父目录。规范化后的读取路径必须仍在授权范围内。目录树不遍历符号链接、设备和 socket。
+ - 授权记录由原生层保存，收藏和最近浏览通过应用 WebView 的本地存储保存。不会导入或读取 Chrome profile、API Key 或浏览器文件句柄。
+ - 不自动加载远程图片或远程字体；HTTP/HTTPS 链接经用户点击后交给系统浏览器。iframe、脚本、嵌入对象和表单提交被禁用。
+ - 原始 HTML 经 DOMPurify 净化。自定义 CSS 仅在 WebView 支持 `@scope` 时启用并限制在正文；不支持时忽略，不退回无作用域样式。
+ - 单文件上限 32 MiB，目录上限 10000 个条目及 32 层；超限会提示选择更小的文件或目录。
+-- 单窗口版本；不含 AI、编辑、云同步、Chrome 历史迁移、系统文件关联或自动更新。
++- 单窗口版本；不含 AI、编辑、云同步、Chrome 历史迁移或自动更新。文件关联仅声明 Markdown，不抢占其他类型；设置默认打开应用是单独的本机操作。
+ - 当前以非 App Sandbox 的本地运行方式开发，持久路径授权不等于 macOS security-scoped bookmark。若将来改成沙盒发行，应另外实现系统授权恢复。
+ - Tauri 使用系统 WebView；公式图表及 CSS 对旧系统的兼容性需要实际验证，不承诺与所有 Chrome 版本逐像素一致。
+ 
+diff --git a/package.json b/package.json
+index 85e3ec0..661b6ef 100644
+--- a/package.json
++++ b/package.json
+@@ -8,6 +8,7 @@
+     "build": "node scripts/build.mjs",
+     "check": "tsc --noEmit",
+     "build:desktop": "tauri build --no-bundle",
++    "build:mac": "tauri build --bundles app",
+     "tauri": "tauri"
+   },
+   "dependencies": {
+diff --git a/public/markdown.css b/public/markdown.css
+index 9c47769..3a7b74f 100644
+--- a/public/markdown.css
++++ b/public/markdown.css
+@@ -3375,7 +3375,7 @@ body.linguamark-markdown-page:not(.linguamark-toc-open) .linguamark-markdown-toc
+ }
+ 
+ .linguamark-directory-file.is-active .linguamark-directory-file-badge {
+-    background: rgba(250, 247, 239, 0.16);
++    background: var(--accent-deep);
+     color: var(--bg-write);
+ }
+ 
+diff --git a/src-tauri/build.rs b/src-tauri/build.rs
+index a3d8b09..4937b40 100644
+--- a/src-tauri/build.rs
++++ b/src-tauri/build.rs
+@@ -6,6 +6,7 @@ fn main() {
+             "read_file",
+             "read_directory",
+             "open_external",
++            "take_opened_file",
+         ]),
+     ))
+     .expect("failed to build Tauri application");
+diff --git a/src-tauri/capabilities/main.json b/src-tauri/capabilities/main.json
+index 60578a8..d97b171 100644
+--- a/src-tauri/capabilities/main.json
++++ b/src-tauri/capabilities/main.json
+@@ -8,6 +8,9 @@
+     "allow-pick-directory",
+     "allow-read-file",
+     "allow-read-directory",
+-    "allow-open-external"
++    "allow-open-external",
++    "allow-take-opened-file",
++    "core:event:allow-listen",
++    "core:event:allow-unlisten"
+   ]
+ }
+diff --git a/src-tauri/src/main.rs b/src-tauri/src/main.rs
+index 546bbdb..6609147 100644
+--- a/src-tauri/src/main.rs
++++ b/src-tauri/src/main.rs
+@@ -12,6 +12,8 @@ use std::{
+     sync::Mutex,
+ };
+ use tauri::Manager;
++#[cfg(target_os = "macos")]
++use tauri::Emitter;
+ use tauri_plugin_dialog::DialogExt;
+ use tauri_plugin_opener::OpenerExt;
+ 
+@@ -83,6 +85,40 @@ impl Access {
+     }
+ }
+ 
++#[derive(Default)]
++struct PendingOpen(Mutex<Option<tauri::Url>>);
++
++#[tauri::command]
++async fn take_opened_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
++    // The frontend can call this only after setup has initialized Access.
++    tauri::async_runtime::spawn_blocking(move || {
++        let url = app.state::<PendingOpen>().0.lock().map_err(|_| "文件打开状态不可用")?.take();
++        url.map(|url| {
++            let path = url.to_file_path().map_err(|_| "仅支持打开本地 Markdown 文件")?;
++            let canonical = path.canonicalize().map_err(|_| "文件不存在或不可访问")?;
++            if !canonical.is_file() || file_kind(&canonical) != "markdown" {
++                return Err("请从 Finder 打开 Markdown 文件".into());
++            }
++            // Authorize only the system-selected file, never its parent directory.
++            app.state::<Access>().grant(&canonical, false)
++        }).transpose()
++    }).await.map_err(|_| "系统文件打开任务失败")?
++}
++
++#[cfg(target_os = "macos")]
++fn receive_opened_file(app: &tauri::AppHandle, url: tauri::Url) {
++    // macOS can deliver Opened before setup, so do not access grants here.
++    if let Ok(mut pending) = app.state::<PendingOpen>().0.lock() {
++        *pending = Some(url);
++    }
++    // The pending slot also covers events arriving before the frontend listener is ready.
++    let _ = app.emit_to("main", "native-file-opened", ());
++    if let Some(window) = app.get_webview_window("main") {
++        let _ = window.show();
++        let _ = window.set_focus();
++    }
++}
++
+ fn display_path(path: &Path) -> String {
+     path.to_string_lossy().replace('\\', "/")
+ }
+@@ -107,7 +143,7 @@ async fn pick_entry(
+             let _ = window;
+             app.dialog()
+                 .file()
+-                .add_filter("Markdown / JSON / HTML / PDF", &["md", "MD", "json", "JSON", "html", "HTML", "htm", "HTM", "pdf", "PDF"])
++                .add_filter("Markdown / JSON / HTML / PDF", &["md", "MD", "markdown", "MARKDOWN", "json", "JSON", "html", "HTML", "htm", "HTM", "pdf", "PDF"])
+                 .blocking_pick_file()
+                 .map(|path| path.into_path().map_err(|_| "不支持此文件地址"))
+                 .transpose()?
+@@ -156,7 +192,7 @@ fn file_kind(path: &Path) -> &'static str {
+         .to_ascii_lowercase()
+         .as_str()
+     {
+-        "md" => "markdown",
++        "md" | "markdown" => "markdown",
+         "json" => "json",
+         "html" | "htm" => "html",
+         "pdf" => "pdf",
+@@ -346,6 +382,7 @@ fn open_external(url: String, app: tauri::AppHandle) -> Result<(), String> {
+ 
+ fn main() {
+     tauri::Builder::default()
++        .manage(PendingOpen::default())
+         .plugin(tauri_plugin_dialog::init())
+         .plugin(
+             tauri_plugin_opener::Builder::new()
+@@ -397,8 +434,18 @@ fn main() {
+             pick_directory,
+             read_file,
+             read_directory,
+-            open_external
++            open_external,
++            take_opened_file
+         ])
+-        .run(tauri::generate_context!())
+-        .expect("failed to run LinguaMark Reader");
++        .build(tauri::generate_context!())
++        .expect("failed to build LinguaMark Reader")
++        .run(|_app, _event| {
++            #[cfg(target_os = "macos")]
++            if let tauri::RunEvent::Opened { urls } = _event {
++                // A single-window reader displays the last document in a multi-file request.
++                if let Some(url) = urls.into_iter().last() {
++                    receive_opened_file(_app, url);
++                }
++            }
++        });
+ }
+diff --git a/src-tauri/src/native_picker.rs b/src-tauri/src/native_picker.rs
+index 6fe7ae7..ca44c2f 100644
+--- a/src-tauri/src/native_picker.rs
++++ b/src-tauri/src/native_picker.rs
+@@ -31,6 +31,8 @@ fn select_entry() -> Result<Option<PathBuf>, String> {
+     let extensions = NSArray::from_retained_slice(&[
+         NSString::from_str("md"),
+         NSString::from_str("MD"),
++        NSString::from_str("markdown"),
++        NSString::from_str("MARKDOWN"),
+         NSString::from_str("json"),
+         NSString::from_str("JSON"),
+         NSString::from_str("html"),
+diff --git a/src/main.ts b/src/main.ts
+index bed3323..91594d2 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -1,3 +1,4 @@
++import { listen } from "@tauri-apps/api/event";
+ import zenuml from "@mermaid-js/mermaid-zenuml";
+ import DOMPurify from "dompurify";
+ import hljs from "highlight.js/lib/common";
+@@ -14,7 +15,7 @@ import { createPdfArticle } from "./pdf.ts";
+ import { initializeDocumentSearch } from "./search.ts";
+ import { applyTypography, createSettingsPage, getSettings, subscribeSettings, updateSettings } from "./settings.ts";
+ import {
+-  directoryFileKind, pickEntry, pickDirectory, readFile, readDirectory,
++  directoryFileKind, pickEntry, pickDirectory, readFile, readDirectory, takeOpenedFile,
+   readLibrary, writeLibrary, openExternal, errorMessage,
+   type DirectoryBrowserState, type DirectoryFileContent,
+   type DirectoryFileKind, type DirectoryTreeEntry,
+@@ -126,7 +127,7 @@ function renderStandaloneViewer(): void {
+     document.title = "LinguaMark Reader";
+     initializeNativeNavigation(viewer);
+     initializeViewerLibrary(viewer);
+-    if (getSettings().restoreSession) void restoreSession(viewer);
++    void initializeFileOpening(viewer);
+   } catch (error: unknown) {
+     showDirectoryNotice("阅读器初始化失败，请重启应用");
+     document.documentElement.dataset.linguamarkMarkdown = "error";
+@@ -134,6 +135,34 @@ function renderStandaloneViewer(): void {
+   }
+ }
+ 
++async function initializeFileOpening(viewer: ViewerElements): Promise<void> {
++  const initialNavigation = navigationSequence;
++  let queue = Promise.resolve(false);
++  const drain = (): Promise<boolean> => {
++    queue = queue.then(async () => {
++      const path = await takeOpenedFile();
++      if (!path) return false;
++      await openNativeFile(path, viewer);
++      return true;
++    }).catch((error: unknown) => {
++      ++navigationSequence;
++      showDirectoryNotice(errorMessage(error));
++      // A failed explicit open must not be replaced by a restored document.
++      return true;
++    });
++    return queue;
++  };
++  try {
++    await listen("native-file-opened", () => { void drain(); });
++    const opened = await drain();
++    if (!opened && initialNavigation === navigationSequence && getSettings().restoreSession) {
++      await restoreSession(viewer);
++    }
++  } catch (error: unknown) {
++    showDirectoryNotice(`无法接收系统文件打开请求：${errorMessage(error)}`);
++  }
++}
++
+ function createEmptyViewerArticle(): HTMLElement {
+   const article = document.createElement("article");
+   article.id = "write";
+diff --git a/src/platform.ts b/src/platform.ts
+index e700852..dc56bc2 100644
+--- a/src/platform.ts
++++ b/src/platform.ts
+@@ -21,13 +21,14 @@ export type DirectoryFileContent =
+   | { kind: "image"; path: string; dataUrl: string };
+ 
+ export function directoryFileKind(path: string): DirectoryFileKind {
+-  if (/\.md$/iu.test(path)) return "markdown";
++  if (/\.(md|markdown)$/iu.test(path)) return "markdown";
+   if (/\.json$/iu.test(path)) return "json";
+   if (/\.html?$/iu.test(path)) return "html";
+   if (/\.pdf$/iu.test(path)) return "pdf";
+   return /\.(png|jpe?g|gif|webp|avif|svg)$/iu.test(path) ? "image" : "other";
+ }
+ 
++export const takeOpenedFile = (): Promise<string | null> => invoke("take_opened_file");
+ export const pickEntry = (): Promise<{ kind: "file" | "directory"; path: string } | null> => invoke("pick_entry");
+ export const pickDirectory = (): Promise<string | null> => invoke("pick_directory");
+ export const readFile = (path: string): Promise<DirectoryFileContent> => invoke("read_file", { path });

@@ -25,10 +25,15 @@ npm run build
 # 构建本地可执行程序，不生成安装包、不签名或发布
 npm run build:desktop
 
+# macOS 本地应用包（ad-hoc 签名，不公证、不安装）
+npm run build:mac
+
 # 原生静态检查（先构建前端）
 cargo check --manifest-path src-tauri/Cargo.toml
 cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 ```
+
+macOS 应用包生成在 `src-tauri/target/release/bundle/macos/LinguaMark Reader.app`。可复制到“应用程序”后使用；它声明支持 `.md` / `.markdown`，支持 Finder“打开方式”或设为默认应用后的双击打开。应用冷启动和已运行时均接收文件，优先显示系统明确打开的文档；一次打开多个文档时，单窗口显示最后一个。此本地包仅作 ad-hoc 签名，未获 Apple 公证，不属于 Developer ID 分发安装包。
 
 ## 阅读能力
 
@@ -68,12 +73,12 @@ cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 ## 安全与限制
 
 - 只读应用，不提供文件写入、删除或任意 shell 执行接口。
-- Rust 仅接受通过原生选择器授权的文件或目录；规范化后的路径必须仍在授权范围内。目录树不遍历符号链接、设备和 socket。
+- Rust 仅接受用户通过原生选择器授权的文件/目录，或 macOS 系统文件打开事件明确选择的 Markdown 文件；后者只授予该文件，不授予父目录。规范化后的读取路径必须仍在授权范围内。目录树不遍历符号链接、设备和 socket。
 - 授权记录由原生层保存，收藏和最近浏览通过应用 WebView 的本地存储保存。不会导入或读取 Chrome profile、API Key 或浏览器文件句柄。
 - 不自动加载远程图片或远程字体；HTTP/HTTPS 链接经用户点击后交给系统浏览器。iframe、脚本、嵌入对象和表单提交被禁用。
 - 原始 HTML 经 DOMPurify 净化。自定义 CSS 仅在 WebView 支持 `@scope` 时启用并限制在正文；不支持时忽略，不退回无作用域样式。
 - 单文件上限 32 MiB，目录上限 10000 个条目及 32 层；超限会提示选择更小的文件或目录。
-- 单窗口版本；不含 AI、编辑、云同步、Chrome 历史迁移、系统文件关联或自动更新。
+- 单窗口版本；不含 AI、编辑、云同步、Chrome 历史迁移或自动更新。文件关联仅声明 Markdown，不抢占其他类型；设置默认打开应用是单独的本机操作。
 - 当前以非 App Sandbox 的本地运行方式开发，持久路径授权不等于 macOS security-scoped bookmark。若将来改成沙盒发行，应另外实现系统授权恢复。
 - Tauri 使用系统 WebView；公式图表及 CSS 对旧系统的兼容性需要实际验证，不承诺与所有 Chrome 版本逐像素一致。
 

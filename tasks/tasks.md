@@ -1,6 +1,14 @@
 # 任务索引
 
-- [提交全部本地改动并发布新版本](tasks/commit-and-release.md) — In Progress (2026-09-20 14:37)
+- [修复文件树选中类型标签对比度](tasks/selected-file-badge-contrast.md) — Completed (2026-09-20 16:10)
+
+- [安装已发布应用并设置 Markdown 默认打开方式](tasks/install-markdown-default.md) — Pending (2026-09-20 15:05)
+
+- [实现 macOS Markdown 文件打开与应用打包](tasks/macos-markdown-file-opening.md) — Completed (2026-09-20 16:23)
+
+- [发布新版并安装为 Markdown 默认阅读器](tasks/release-install-markdown-default.md) — In Progress (2026-09-20 14:57)
+
+- [提交全部本地改动并发布新版本](tasks/commit-and-release.md) — In Progress (2026-09-20 14:56)
 
 - [PDF 固定工具栏与双阅读模式](tasks/pdf-viewing-modes.md) — Completed (2026-09-20 14:33)
 

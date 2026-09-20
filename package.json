@@ -8,6 +8,7 @@
     "build": "node scripts/build.mjs",
     "check": "tsc --noEmit",
     "build:desktop": "tauri build --no-bundle",
+    "build:mac": "tauri build --bundles app",
     "tauri": "tauri"
   },
   "dependencies": {

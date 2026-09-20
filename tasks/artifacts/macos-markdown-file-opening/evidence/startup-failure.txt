@@ -1,0 +1,3 @@
+首次冷启动复现：Opened 早于 setup，访问 Access 导致 panic。
+关键错误：state() called before manage() for linguamark_reader::Access
+修复：Opened 仅缓存 URL，前端就绪后在后台任务中领取、校验与授予单文件权限。

@@ -8,6 +8,9 @@
     "allow-pick-directory",
     "allow-read-file",
     "allow-read-directory",
-    "allow-open-external"
+    "allow-open-external",
+    "allow-take-opened-file",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten"
   ]
 }

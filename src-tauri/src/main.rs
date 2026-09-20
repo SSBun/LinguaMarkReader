@@ -12,6 +12,8 @@ use std::{
     sync::Mutex,
 };
 use tauri::Manager;
+#[cfg(target_os = "macos")]
+use tauri::Emitter;
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 
@@ -83,6 +85,40 @@ impl Access {
     }
 }
 
+#[derive(Default)]
+struct PendingOpen(Mutex<Option<tauri::Url>>);
+
+#[tauri::command]
+async fn take_opened_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    // The frontend can call this only after setup has initialized Access.
+    tauri::async_runtime::spawn_blocking(move || {
+        let url = app.state::<PendingOpen>().0.lock().map_err(|_| "文件打开状态不可用")?.take();
+        url.map(|url| {
+            let path = url.to_file_path().map_err(|_| "仅支持打开本地 Markdown 文件")?;
+            let canonical = path.canonicalize().map_err(|_| "文件不存在或不可访问")?;
+            if !canonical.is_file() || file_kind(&canonical) != "markdown" {
+                return Err("请从 Finder 打开 Markdown 文件".into());
+            }
+            // Authorize only the system-selected file, never its parent directory.
+            app.state::<Access>().grant(&canonical, false)
+        }).transpose()
+    }).await.map_err(|_| "系统文件打开任务失败")?
+}
+
+#[cfg(target_os = "macos")]
+fn receive_opened_file(app: &tauri::AppHandle, url: tauri::Url) {
+    // macOS can deliver Opened before setup, so do not access grants here.
+    if let Ok(mut pending) = app.state::<PendingOpen>().0.lock() {
+        *pending = Some(url);
+    }
+    // The pending slot also covers events arriving before the frontend listener is ready.
+    let _ = app.emit_to("main", "native-file-opened", ());
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
 fn display_path(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
 }
@@ -107,7 +143,7 @@ async fn pick_entry(
             let _ = window;
             app.dialog()
                 .file()
-                .add_filter("Markdown / JSON / HTML / PDF", &["md", "MD", "json", "JSON", "html", "HTML", "htm", "HTM", "pdf", "PDF"])
+                .add_filter("Markdown / JSON / HTML / PDF", &["md", "MD", "markdown", "MARKDOWN", "json", "JSON", "html", "HTML", "htm", "HTM", "pdf", "PDF"])
                 .blocking_pick_file()
                 .map(|path| path.into_path().map_err(|_| "不支持此文件地址"))
                 .transpose()?
@@ -156,7 +192,7 @@ fn file_kind(path: &Path) -> &'static str {
         .to_ascii_lowercase()
         .as_str()
     {
-        "md" => "markdown",
+        "md" | "markdown" => "markdown",
         "json" => "json",
         "html" | "htm" => "html",
         "pdf" => "pdf",
@@ -346,6 +382,7 @@ fn open_external(url: String, app: tauri::AppHandle) -> Result<(), String> {
 
 fn main() {
     tauri::Builder::default()
+        .manage(PendingOpen::default())
         .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_opener::Builder::new()
@@ -397,8 +434,18 @@ fn main() {
             pick_directory,
             read_file,
             read_directory,
-            open_external
+            open_external,
+            take_opened_file
         ])
-        .run(tauri::generate_context!())
-        .expect("failed to run LinguaMark Reader");
+        .build(tauri::generate_context!())
+        .expect("failed to build LinguaMark Reader")
+        .run(|_app, _event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Opened { urls } = _event {
+                // A single-window reader displays the last document in a multi-file request.
+                if let Some(url) = urls.into_iter().last() {
+                    receive_opened_file(_app, url);
+                }
+            }
+        });
 }

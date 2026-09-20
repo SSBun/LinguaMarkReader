@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "build": "0.2.0",
+  "identifier": "com.linguamark.reader",
+  "documentTypes": [
+    {
+      "CFBundleTypeExtensions": [
+        "md",
+        "markdown"
+      ],
+      "LSItemContentTypes": [
+        "net.daringfireball.markdown"
+      ],
+      "CFBundleTypeName": "Markdown document",
+      "CFBundleTypeRole": "Viewer",
+      "LSHandlerRank": "Alternate"
+    }
+  ],
+  "signature": "ad-hoc; codesign --verify --deep --strict succeeded",
+  "notarized": false,
+  "executableSHA256": "50807498cca20618f7651c454f9a1b612817737126e3980d8d381b62767fcda1"
+}

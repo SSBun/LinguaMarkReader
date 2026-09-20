@@ -1,3 +1,4 @@
+import { listen } from "@tauri-apps/api/event";
 import zenuml from "@mermaid-js/mermaid-zenuml";
 import DOMPurify from "dompurify";
 import hljs from "highlight.js/lib/common";
@@ -14,7 +15,7 @@ import { createPdfArticle } from "./pdf.ts";
 import { initializeDocumentSearch } from "./search.ts";
 import { applyTypography, createSettingsPage, getSettings, subscribeSettings, updateSettings } from "./settings.ts";
 import {
-  directoryFileKind, pickEntry, pickDirectory, readFile, readDirectory,
+  directoryFileKind, pickEntry, pickDirectory, readFile, readDirectory, takeOpenedFile,
   readLibrary, writeLibrary, openExternal, errorMessage,
   type DirectoryBrowserState, type DirectoryFileContent,
   type DirectoryFileKind, type DirectoryTreeEntry,
@@ -126,11 +127,39 @@ function renderStandaloneViewer(): void {
     document.title = "LinguaMark Reader";
     initializeNativeNavigation(viewer);
     initializeViewerLibrary(viewer);
-    if (getSettings().restoreSession) void restoreSession(viewer);
+    void initializeFileOpening(viewer);
   } catch (error: unknown) {
     showDirectoryNotice("阅读器初始化失败，请重启应用");
     document.documentElement.dataset.linguamarkMarkdown = "error";
     logWarn("content", "markdown.standalone.failed", { errorName: errorName(error) });
+  }
+}
+
+async function initializeFileOpening(viewer: ViewerElements): Promise<void> {
+  const initialNavigation = navigationSequence;
+  let queue = Promise.resolve(false);
+  const drain = (): Promise<boolean> => {
+    queue = queue.then(async () => {
+      const path = await takeOpenedFile();
+      if (!path) return false;
+      await openNativeFile(path, viewer);
+      return true;
+    }).catch((error: unknown) => {
+      ++navigationSequence;
+      showDirectoryNotice(errorMessage(error));
+      // A failed explicit open must not be replaced by a restored document.
+      return true;
+    });
+    return queue;
+  };
+  try {
+    await listen("native-file-opened", () => { void drain(); });
+    const opened = await drain();
+    if (!opened && initialNavigation === navigationSequence && getSettings().restoreSession) {
+      await restoreSession(viewer);
+    }
+  } catch (error: unknown) {
+    showDirectoryNotice(`无法接收系统文件打开请求：${errorMessage(error)}`);
   }
 }
 

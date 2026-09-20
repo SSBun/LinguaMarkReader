@@ -31,6 +31,8 @@ fn select_entry() -> Result<Option<PathBuf>, String> {
     let extensions = NSArray::from_retained_slice(&[
         NSString::from_str("md"),
         NSString::from_str("MD"),
+        NSString::from_str("markdown"),
+        NSString::from_str("MARKDOWN"),
         NSString::from_str("json"),
         NSString::from_str("JSON"),
         NSString::from_str("html"),

@@ -1,0 +1,25 @@
+
+> linguamark-desktop-reader@0.2.0 build:mac
+> tauri build --bundles app
+
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `npm run build`
+
+> linguamark-desktop-reader@0.2.0 build
+> node scripts/build.mjs
+
+   Compiling linguamark-reader v0.2.0 (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri)
+    Finished `release` profile [optimized] target(s) in 16.12s
+       Built application at: /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/release/linguamark-reader
+    Bundling LinguaMark Reader.app (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/release/bundle/macos/LinguaMark Reader.app)
+     Signing with identity "-"
+Signing with identity "-"
+Signing /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/release/bundle/macos/LinguaMark Reader.app/Contents/MacOS/linguamark-reader
+/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/release/bundle/macos/LinguaMark Reader.app/Contents/MacOS/linguamark-reader: replacing existing signature
+Signing with identity "-"
+Signing /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/release/bundle/macos/LinguaMark Reader.app
+/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/release/bundle/macos/LinguaMark Reader.app: replacing existing signature
+        Warn skipping app notarization, no APPLE_ID & APPLE_PASSWORD & APPLE_TEAM_ID or APPLE_API_KEY & APPLE_API_ISSUER & APPLE_API_KEY_PATH environment variables found
+    Finished 1 bundle at:
+        /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/release/bundle/macos/LinguaMark Reader.app
+

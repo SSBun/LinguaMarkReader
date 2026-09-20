@@ -1,0 +1,11 @@
+--- before/public/markdown.css
++++ after/public/markdown.css
+@@ -3375,7 +3375,7 @@
+ }
+ 
+ .linguamark-directory-file.is-active .linguamark-directory-file-badge {
+-    background: rgba(250, 247, 239, 0.16);
++    background: var(--accent-deep);
+     color: var(--bg-write);
+ }
+ 

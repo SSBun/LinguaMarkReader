@@ -1,0 +1,17 @@
+{
+  "base": "6958c272edfa3886a18f3c352e72a4f028249d39",
+  "files": {
+    "src/main.ts": "ab0c31b9189206ee734797c312153d949f7028484eecc9bc0e3274fa4d92a95c",
+    "src/platform.ts": "366468e38eb74ca766d44bd7e1c084c7a8935ac53019e10495d5d26902154827",
+    "src-tauri/src/main.rs": "e7002516e68cbc6d47decd1e90a8eefae2d74f5b61b46090ac902d050bc7d7b7",
+    "src-tauri/src/native_picker.rs": "0fe04d1b70cfa7220870c692fcece0fc45843b6507dbe798bbe6e421a1f18764",
+    "src-tauri/build.rs": "bfb4c6f6da252d1a9cb572e5ebc0d297dde0834ff29f80130e1e854f5b4f48ca",
+    "src-tauri/capabilities/main.json": "aaa087f37330afb58e7981ec51b084813a492524fa2e2532c2bccf80f11132ee",
+    "src-tauri/tauri.macos.conf.json": "aa9335951f35633bc816c9e390609bbf2ddd3c347538d4f99103a5b1d022cd24",
+    "src-tauri/Info.plist": "c7310a8cf52f218f87e43815d2d895603f53c7791ff75d1999c77c3adf23fe3a",
+    "package.json": "cf23092108803522c577f386b515892f5c78307483e9bc75b1af78256c2a2ed7",
+    "README.md": "0b8862bd3b681d6d929aaf63820fd809097952beb9cc7c412c3453dc22f46c7d",
+    "CHANGELOG.md": "53fb7a4f40df9facedaf4673bf99af58a417342c704a558a94cd6863afe78712",
+    "public/markdown.css": "fc79b0249fd6815fd6861894411b3ea45c6eaf11376c6d9ea506dfe5efc00148"
+  }
+}

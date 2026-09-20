@@ -21,13 +21,14 @@ export type DirectoryFileContent =
   | { kind: "image"; path: string; dataUrl: string };
 
 export function directoryFileKind(path: string): DirectoryFileKind {
-  if (/\.md$/iu.test(path)) return "markdown";
+  if (/\.(md|markdown)$/iu.test(path)) return "markdown";
   if (/\.json$/iu.test(path)) return "json";
   if (/\.html?$/iu.test(path)) return "html";
   if (/\.pdf$/iu.test(path)) return "pdf";
   return /\.(png|jpe?g|gif|webp|avif|svg)$/iu.test(path) ? "image" : "other";
 }
 
+export const takeOpenedFile = (): Promise<string | null> => invoke("take_opened_file");
 export const pickEntry = (): Promise<{ kind: "file" | "directory"; path: string } | null> => invoke("pick_entry");
 export const pickDirectory = (): Promise<string | null> => invoke("pick_directory");
 export const readFile = (path: string): Promise<DirectoryFileContent> => invoke("read_file", { path });
