@@ -1,0 +1,32 @@
+{
+  "html" : {
+    "application" : "\/Applications\/Google Chrome.app",
+    "handler" : "com.google.Chrome",
+    "uti" : "public.html"
+  },
+  "json" : {
+    "application" : "\/Applications\/CodeRunner.app",
+    "handler" : "com.krill.CodeRunner",
+    "uti" : "public.json"
+  },
+  "markdown" : {
+    "application" : "\/Applications\/LinguaMark Reader.app",
+    "handler" : "com.linguamark.reader",
+    "uti" : "net.daringfireball.markdown"
+  },
+  "md" : {
+    "application" : "\/Applications\/LinguaMark Reader.app",
+    "handler" : "com.linguamark.reader",
+    "uti" : "net.daringfireball.markdown"
+  },
+  "pdf" : {
+    "application" : "\/System\/Applications\/Preview.app",
+    "handler" : "com.apple.Preview",
+    "uti" : "com.adobe.pdf"
+  },
+  "txt" : {
+    "application" : "\/Applications\/CodeRunner.app",
+    "handler" : "com.krill.CodeRunner",
+    "uti" : "public.plain-text"
+  }
+}

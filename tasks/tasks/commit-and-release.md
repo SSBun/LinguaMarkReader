@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In Progress (2026-09-20 14:56) |
+| Status | Completed (2026-09-20 16:48) |
 | Artifacts | [Artifacts](../artifacts/commit-and-release/) |
 | Kind | Task |
 | Parent | release-install-markdown-default |
@@ -22,24 +22,30 @@
 
 ## Target
 - [x] T1: 当前项目全部本地改动已纳入 Git 提交。
-- [ ] T2: 新版本已发布，版本信息、发布内容与对应提交一致，可提供版本号及发布入口。
+- [x] T2: 新版本已发布，版本信息、发布内容与对应提交一致，可提供版本号及发布入口。
 
 ## Result
 
-- T1: 已创建本地提交6958c272edfa3886a18f3c352e72a4f028249d39（95文件），包含全部原有非忽略改动、版本0.2.0与发布前验证证据；提交后git status为空。后续审查/发布任务收尾记录将在远端确认后另行提交。
-- Review gate: Required — Task left In Review; rerun the applicable review after revisions
+- T1: 本地全部非忽略项目改动已纳入6958c272edfa3886a18f3c352e72a4f028249d39及补充提交6557da4dc27237bfaf3f9bcaff889bf9485ca655，两者均已推送main；包含原生Markdown打开与标签修正。只剩队列阶段的任务收尾证据，按已批准计划在队列结束统一提交。
+- T2: 已按用户最终Safety Confirmation发布稳定非draft v0.2.0：https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.2.0；HTTP200，latest API返回v0.2.0，远端main与annotated tag解引用均为6557da4。独立下载源码归档203文件逐一与Git blob匹配，SHA256 13c23a58bc60a9d6b7e23b8692aa0b369a0f1d943186f308037176c48171dc74。见remote-release.json与archive-verification.json；无安装包资产。
+- Review gate: Passed — fresh只读结果审查b382e166-d2e1-4b9d-95b8-d14347d295fd无阻断发现；round-02已保存，主会话复核源码、远端main/tag、归档SHA256及发布正文一致。
 ## Review Reports
 
 | Round | Report | Snapshot | Outcome |
 | --- | --- | --- | --- |
 | 01 | [发布前审查](../artifacts/commit-and-release/reviews/round-01.md) | git:6958c272edfa3886a18f3c352e72a4f028249d39 | no blocking findings；T2远端发布待授权及验证 |
+| 02 | [发布结果审查](../artifacts/commit-and-release/reviews/round-02.md) | git:6557da4dc27237bfaf3f9bcaff889bf9485ca655 | no blocking findings；主会话已核验远端正文、引用及归档身份 |
 
 ## Review Assessment
 
 - Schema: task-review-assessment/v1
 - Level: R2
-- State: Stale
-- Reason: 公开发布包含多个原生与前端功能的全部本地改动；需核对版本一致性、发布范围与敏感数据。T2远端发布尚未执行，预发布审查不声称完成。
-- Snapshot: git:6958c272edfa3886a18f3c352e72a4f028249d39
-- Evidence: release提交内容；tasks/artifacts/commit-and-release/evidence 中build.log、runtime.log、short-pages.log、versions.json、preflight.json；源码/配置whitespace通过，原始证据结构性空白保留。
-- Task fingerprint: 645b45320d1480e7c27740fd1205708d1a704c7ebe7fa0ff140fb6b7262d2887
+- State: Current
+- Reason: 发布最终结果审查：核对源提交、版本、公开Release与下载归档的一致性，保留既有R2义务。
+- Snapshot: git:6557da4dc27237bfaf3f9bcaff889bf9485ca655; v0.2.0; archive-sha256:13c23a58bc60a9d6b7e23b8692aa0b369a0f1d943186f308037176c48171dc74
+- Evidence: 当前T1/T2 Result；remote-release.json、archive-verification.json、既有版本/构建记录；native-file-opening独立审查与源码SHA256再次匹配。
+- Task fingerprint: 0c6c87eeb7544f21d1461d5faabae1863d14ac03e106c38df2e47f475f4295ba
+
+## Verification
+
+- Passed: 最终远端main/tag解引用6557da4，稳定Release正文与CHANGELOG提取说明一致，archiveSHA256保持13c23a58...；203文件比对证据有效，源码无漂移，后续任务记录按已授权计划收尾提交。

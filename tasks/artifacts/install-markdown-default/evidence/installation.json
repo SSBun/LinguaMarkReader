@@ -1,0 +1,14 @@
+{
+  "releaseCommit": "6557da4dc27237bfaf3f9bcaff889bf9485ca655",
+  "installedPath": "/Applications/LinguaMark Reader.app",
+  "version": "0.2.0",
+  "build": "0.2.0",
+  "signature": "ad-hoc, codesign deep/strict valid",
+  "notarized": false,
+  "bundleFilesMatched": 4,
+  "executableSHA256": "50807498cca20618f7651c454f9a1b612817737126e3980d8d381b62767fcda1",
+  "markdownHandlersVerified": true,
+  "otherHandlersUnchanged": true,
+  "backup": "not needed: no prior installed app",
+  "temporaryBuildRegistrationRemoved": true
+}

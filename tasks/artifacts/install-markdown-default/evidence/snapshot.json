@@ -1,0 +1,14 @@
+{
+  "releaseCommit": "6557da4dc27237bfaf3f9bcaff889bf9485ca655",
+  "evidence": {
+    "installation.json": "5598eca07298c6e8ff51779be9b90368a49a8bc322bb2b761f03ee57686c9a2c",
+    "defaults-before.json": "d727804624046a0b9682ba0ff556029cfbd85ac6be3a219fcc93f5c797fa49ea",
+    "defaults-after.json": "0b80203bec52a4633a71e3c2df5d979f4a117d1ecf3feadb16061096dff812d0",
+    "default-md-open.json": "5ea9ce57ee02fb3ebd2de9ca5213a49a1bdc9223bdbe85fe4213b6471e55385c",
+    "default-markdown-open.json": "8bc2951481a2434027622a893ac42fcf102df92e4a62cf8889ff3c6ce65d0eed",
+    "data-preservation.json": "c77b9e0afcfdfb54c368ec3fb7db47bb53e192a1cbe1ef04c3bc9458a8b2f662",
+    "default-app.swift": "2b45e3d17bacdd37b6fdfb41236bb7dbabdb28438bcde8fa1918ec81c3ca64c0",
+    "installed-reader.png": "378f3a756526efba149a184e9b83f8ff5d69ee067f196440c92827bda4be1f56"
+  },
+  "installedExecutableSHA256": "50807498cca20618f7651c454f9a1b612817737126e3980d8d381b62767fcda1"
+}
