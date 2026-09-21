@@ -1,0 +1,5 @@
+
+> csl-works@0.0.1 verify:deployed
+> node scripts/verify-site.mjs deployed --url https://ssbun.com --mode production
+
+Deployed production verification passed.

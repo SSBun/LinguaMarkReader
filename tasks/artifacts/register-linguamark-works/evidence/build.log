@@ -1,0 +1,36 @@
+
+> csl-works@0.0.1 verify
+> astro check && node scripts/verify-site.mjs source && astro build && node scripts/verify-site.mjs dist
+
+17:08:16 [types] Generated 26ms
+17:08:16 [check] Getting diagnostics for Astro files in /Users/caishilin/Desktop/personal/csl-works...
+Result (13 files):
+- 0 errors
+- 0 warnings
+- 0 hints
+
+Source verification passed.
+17:08:18 [types] Generated 17ms
+17:08:18 [build] output: "static"
+17:08:18 [build] mode: "static"
+17:08:18 [build] directory: /Users/caishilin/Desktop/personal/csl-works/dist/
+17:08:18 [build] Collecting build info...
+17:08:18 [build] ✓ Completed in 38ms.
+17:08:18 [build] Building static entrypoints...
+17:08:19 [vite] ✓ built in 662ms
+17:08:19 [vite] ✓ built in 11ms
+17:08:19 [build] Rearranging server assets...
+
+ generating static routes
+17:08:19   ├─ /404.html (+5ms)
+17:08:19   ├─ /changelog/index.html (+1ms)
+17:08:19   ├─ /robots.txt (+1ms)
+17:08:19   ├─ /route-manifest.json (+1ms)
+17:08:19   ├─ /index.html (+1ms)
+17:08:19 ✓ Completed in 14ms.
+
+17:08:19 [build] ✓ Completed in 702ms.
+17:08:19 [@astrojs/sitemap] `sitemap-index.xml` created at `dist`
+17:08:19 [build] 3 page(s) built in 748ms
+17:08:19 [build] Complete!
+Dist verification passed for 3 routes.

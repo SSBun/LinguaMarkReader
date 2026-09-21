@@ -1,10 +1,14 @@
 # 任务索引
 
+- [发布 v0.3.0 并安装到本机](tasks/release-v030-install.md) — In Progress (2026-09-21 11:22)
+
 - [提交表格横向滚动任务相关改动](tasks/commit-table-scroll.md) — Completed (2026-09-21 11:19)
 
 - [构建并重新打开包含表格滚动修复的应用](tasks/build-reopen-table-scroll.md) — Completed (2026-09-21 11:13)
 
 - [修复 Markdown 表格超出阅读区宽度](tasks/markdown-table-width.md) — Completed (2026-09-21 11:02)
+
+- [将 LinguaMark Reader 加入作品集并更新网站](tasks/register-linguamark-works.md) — Completed (2026-09-20 17:15)
 
 - [修复文件树选中类型标签对比度](tasks/selected-file-badge-contrast.md) — Completed (2026-09-20 16:10)
 

@@ -2,7 +2,7 @@
 
 独立的本地只读文档阅读器，支持 Markdown、JSON、HTML 和 PDF，基于 Tauri 2、TypeScript 和 Rust。项目包含自己的依赖锁、构建脚本、原生应用和静态资源，无需安装原 LinguaMark Chrome 扩展。
 
-当前版本为 **0.2.0**。[GitHub Release](https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.2.0) 提供源码归档，本次不提供安装包。
+当前版本为 **0.3.0**。[GitHub Release](https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.3.0) 提供源码归档，本次不提供安装包。
 
 ## 运行
 

@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-21
+
+### 修复
+
+- Markdown 超宽表格现在仅在表格区域横向滚动，不再撑宽整个阅读页面，页面仍可正常纵向滚动。
+- 表格滚动区域支持键盘聚焦和方向键滚动，保留原有表格语义。
+
+### 发布说明
+
+- 按次版本更新至 v0.3.0，继续提供源码及 GitHub 自动生成的源码归档，不上传安装包。
+- 本机构建的 macOS 应用采用 ad-hoc 签名，未经 Apple 公证，不属于 Developer ID 分发应用。
+- 未运行测试套件；表格布局已在 Chromium 的三种视口宽度下验证，原生 WebKit 交互仍需实际确认。
+
 ## [0.2.0] - 2026-09-20
 
 ### 新增
@@ -51,6 +64,7 @@
 - 已验证 macOS 开发启动；Windows 和 Linux 尚未实机验证。
 - 应用只读，不提供文档编辑、AI、云同步或自动更新。
 
-[Unreleased]: https://github.com/SSBun/LinguaMarkReader/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SSBun/LinguaMarkReader/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.1.0
