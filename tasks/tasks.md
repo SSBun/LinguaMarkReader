@@ -1,6 +1,6 @@
 # 任务索引
 
-- [发布 v0.3.0 并安装到本机](tasks/release-v030-install.md) — In Progress (2026-09-21 11:22)
+- [发布 v0.3.0 并安装到本机](tasks/release-v030-install.md) — Completed (2026-09-21 11:29)
 
 - [提交表格横向滚动任务相关改动](tasks/commit-table-scroll.md) — Completed (2026-09-21 11:19)
 
