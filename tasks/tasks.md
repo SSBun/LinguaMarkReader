@@ -1,5 +1,7 @@
 # 任务索引
 
+- [提交表格横向滚动任务相关改动](tasks/commit-table-scroll.md) — Completed (2026-09-21 11:19)
+
 - [构建并重新打开包含表格滚动修复的应用](tasks/build-reopen-table-scroll.md) — Completed (2026-09-21 11:13)
 
 - [修复 Markdown 表格超出阅读区宽度](tasks/markdown-table-width.md) — Completed (2026-09-21 11:02)
