@@ -2387,6 +2387,19 @@ footer {
 }
 
 /* ---------- 表格 ---------- */
+#write .linguamark-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    margin: 0.9em 0;
+}
+#write .linguamark-table-scroll:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+#write .linguamark-table-scroll > table {
+    margin: 0;
+}
 #write table {
     border-collapse: separate;
     border-spacing: 0;

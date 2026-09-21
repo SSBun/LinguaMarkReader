@@ -219,6 +219,15 @@ function createArticle(source: string, kind: "markdown" | "html" = "markdown"): 
   article.append(clean);
   secureInteractiveContent(article);
   if (kind === "markdown") {
+    for (const table of article.querySelectorAll("table")) {
+      const container = document.createElement("div");
+      container.className = "linguamark-table-scroll";
+      container.tabIndex = 0;
+      container.setAttribute("role", "region");
+      container.setAttribute("aria-label", "表格（可横向滚动）");
+      table.replaceWith(container);
+      container.append(table);
+    }
     decorateAlerts(article);
     decorateMath(article);
     prepareDiagrams(article);
