@@ -2,7 +2,7 @@
 
 独立的本地只读文档阅读器，支持 Markdown、JSON、HTML 和 PDF，基于 Tauri 2、TypeScript 和 Rust。项目包含自己的依赖锁、构建脚本、原生应用和静态资源，无需安装原 LinguaMark Chrome 扩展。
 
-当前版本为 **0.3.0**。[GitHub Release](https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.3.0) 提供源码归档，本次不提供安装包。
+当前版本为 **0.4.0**。[GitHub Release](https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.4.0) 提供 Apple Silicon（arm64）应用归档、更新签名和清单。首次安装请解压应用归档后将应用放入“应用程序”；旧版 v0.3.0 没有更新能力，需要先手动安装。应用采用 ad-hoc 签名，未经 Apple 公证，macOS 可能阻止首次打开；它不是 Developer ID 分发包。
 
 ## 运行
 
@@ -62,13 +62,51 @@ macOS 应用包生成在 `src-tauri/target/release/bundle/macos/LinguaMark Reade
 通过工具栏“设置”或 `⌘,`（其他平台为 `Ctrl+,`）打开应用内设置页：
 
 - **Basic（基础）**：主题默认/系统无衬线/衬线字体、14–28 px 正文字号、1.40–2.40 倍正文行距、默认阅读宽度、启动时恢复上次阅读、重载动画。
-- **About（关于）**：应用名称、版本与简介；名称和版本由构建时读取的 Tauri 配置提供。
+- **About（关于）**：应用名称、版本与简介；名称和版本由构建时读取的 Tauri 配置提供。可手动检查更新，查看版本说明并确认下载、安装与重启。检查、下载或安装失败可重试；安装成功但重启失败时只重试重启，不会重复安装。
 
 显示偏好即时生效且在重启后保留，字号和行距不改变工具栏；公式和图表保留自身的专用字体与排版规则。宽度与工具栏开关双向同步；动画开关仅保留在 Basic 设置中。设置自动保存，写入失败时保留之前的配置并显示错误。
 
 启动恢复开关下次启动生效，关闭后显示空白阅读器，但不会删除收藏、最近浏览或已有文件授权。开启时恢复上次文档、目录和阅读滚动位置；重载动画控制恢复时是否平滑滚动，系统“减少动态效果”优先。恢复期间主动操作会取消待执行的自动滚动，避免抢夺阅读位置。
 
 设置标签支持左右方向键、Home/End 切换，Escape 关闭。字体仅使用本机安装字体及系统回退，不下载字体。
+
+## 应用内更新与发布
+
+应用已接入官方 Tauri Updater，不在启动时自动联网检查。更新说明只按纯文本展示，网络请求由原生插件完成，不放宽正文的 CSP 或文件授权范围。关闭设置页不取消已经确认的下载和安装；再次打开关于页可查看进度。
+
+**已配置真实更新公钥和 GitHub Releases 更新清单地址**。检查失败会显示错误，不会误报“已是最新版本”。客户端要求归档签名及其签名版本与清单一致，不接受缺少版本信息的旧格式签名。当前发布产物只支持 Apple Silicon（arm64）。
+
+### 密钥维护
+
+1. 本机更新私钥已在仓库外生成，位于 ["/Users/caishilin/.config/LinguaMarkReader/updater.key"](file:///Users/caishilin/.config/LinguaMarkReader/updater.key)。目录权限为 `700`、私钥权限为 `600`；当前密钥未设置额外密码，依赖本机文件权限保护。请将它备份到受保护的位置，不要提交、上传或在日志中输出私钥。
+2. 真实公钥已写入 ["/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/tauri.conf.json"](file:///Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/tauri.conf.json) 的 `plugins.updater.pubkey`。公钥可提交；更换构建机器时恢复原私钥，**不要重新生成密钥覆盖已有更新身份**。私钥丢失后，不能简单换公钥继续向旧客户端推送更新。
+3. 构建命令默认从当前用户主目录下的约定位置加载私钥；也可通过 `TAURI_SIGNING_PRIVATE_KEY` 指定密钥内容或文件路径。加密密钥须另设 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`，未设置时按无密码处理，不请求交互输入。不要把私钥或密码写入仓库或命令行参数。
+4. 面向普通 macOS 用户分发前，另行配置 Developer ID 签名和 Apple 公证。当前 macOS 配置仍为 ad-hoc 签名；Updater 的签名只验证更新包来源，不能替代 Apple 签名或公证。
+
+### 构建与上传
+
+普通 `npm run build:mac` 保持本地构建行为，不要求更新私钥。需要签名更新产物时执行：
+
+```sh
+npm run build:mac:update
+```
+
+此命令只在 Mac 上构建当前 Node.js 进程架构对应的稳定版（Apple Silicon 或 Intel），不会上传、发布或安装。它拒绝空公钥或缺少私钥的配置，显式启用 `createUpdaterArtifacts`；生成归档后使用与 Updater 相同的 `minisign-verify` 库验证公钥、归档签名及签名版本，全部通过后才生成包含 CHANGELOG 发布说明的 `latest.json`。请使用锁文件中的 Tauri CLI 2.11.5 或更新的兼容版本，旧 CLI 2.11.4 生成的签名不含版本字段。在 Rosetta 下使用 x64 Node.js 会构建 Intel 版本；发布前确认期望架构及相应 Rust target 已安装。
+
+构建脚本位于 ["/Users/caishilin/Desktop/personal/LinguaMarkReader/scripts/build-update.mjs"](file:///Users/caishilin/Desktop/personal/LinguaMarkReader/scripts/build-update.mjs)。产物输出目录在命令完成时显示，位于 ["/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target"](file:///Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target) 下的目标架构目录。每次构建的清单只包含该架构，不会自动合并其他架构。
+
+发布时须完成以下步骤：
+
+1. 按项目版本管理约定同步应用版本，使用新的 `v<version>` Release 标签。不要覆盖已有版本的更新包；客户端只接受比当前版本更高的版本。
+2. 上传脚本生成的 `LinguaMark-Reader_<version>_<arch>.app.tar.gz` 和同名 `.sig`。更新使用此归档，不是 DMG 或源码归档。重命名复制不会改变签名，但修改或重新压缩归档后必须重新签名。
+3. 审阅生成的 `latest.json`：版本、下载 URL、架构及签名必须对应上传产物；`signature` 是 `.sig` 的内容，不是文件 URL。可把 `notes` 改为本次更新说明。
+4. 若同时支持 Apple Silicon 和 Intel，构建两个架构并将同一版本的 `darwin-aarch64`、`darwin-x86_64` 条目合并到一份清单，不要让后上传的单架构清单覆盖另一架构。没有对应条目的客户端会报告检查失败，不会误装其他架构。
+5. 先把所有产物及清单上传到草稿 Release，核对完成后再公开发布为最新稳定版。不要把仅含源码的版本设为最新稳定版，否则当前更新地址会找不到清单。
+6. 首个支持更新且包含真实公钥的版本必须手动安装；现有不含 Updater 的安装版无法自行获得更新能力。保留应用标识 `com.linguamark.reader` 和数据位置。
+
+正式启用前需要用两个不同版本验证真实升级、签名错误拒绝、断网重试、安装重启，以及设置、收藏和文件授权保留。静态检查不能替代这些验收。实际发布和本机应用替换需单独确认；当前未办理 Apple 公证。
+
+参考：[Tauri Updater](https://v2.tauri.app/plugin/updater/)。
 
 ## 安全与限制
 
@@ -78,7 +116,7 @@ macOS 应用包生成在 `src-tauri/target/release/bundle/macos/LinguaMark Reade
 - 不自动加载远程图片或远程字体；HTTP/HTTPS 链接经用户点击后交给系统浏览器。iframe、脚本、嵌入对象和表单提交被禁用。
 - 原始 HTML 经 DOMPurify 净化。自定义 CSS 仅在 WebView 支持 `@scope` 时启用并限制在正文；不支持时忽略，不退回无作用域样式。
 - 单文件上限 32 MiB，目录上限 10000 个条目及 32 层；超限会提示选择更小的文件或目录。
-- 单窗口版本；不含 AI、编辑、云同步、Chrome 历史迁移或自动更新。文件关联仅声明 Markdown，不抢占其他类型；设置默认打开应用是单独的本机操作。
+- 单窗口版本；不含 AI、编辑、云同步或 Chrome 历史迁移。更新必须由用户手动检查并确认安装，不启动后台自动检查。文件关联仅声明 Markdown，不抢占其他类型；设置默认打开应用是单独的本机操作。
 - 当前以非 App Sandbox 的本地运行方式开发，持久路径授权不等于 macOS security-scoped bookmark。若将来改成沙盒发行，应另外实现系统授权恢复。
 - Tauri 使用系统 WebView；公式图表及 CSS 对旧系统的兼容性需要实际验证，不承诺与所有 Chrome 版本逐像素一致。
 

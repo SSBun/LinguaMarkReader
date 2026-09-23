@@ -1,3 +1,5 @@
+import { createUpdaterControls } from "./updater.ts";
+
 declare const __APP_NAME__: string;
 declare const __APP_VERSION__: string;
 
@@ -152,6 +154,7 @@ export function createSettingsPage(): { dialog: HTMLDialogElement; open: () => v
 
   dialog.querySelector(".reader-settings-app-name")!.textContent = __APP_NAME__;
   dialog.querySelector(".reader-settings-version")!.textContent = `版本 ${__APP_VERSION__}`;
+  dialog.querySelector("#settings-about")!.append(createUpdaterControls());
   const sync = (value: Readonly<ReaderSettings>): void => {
     font.value = value.font;
     fontSize.value = String(value.fontSize);

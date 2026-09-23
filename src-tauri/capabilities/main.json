@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main",
-  "description": "仅本地主阅读窗口可请求用户选择文件及读取已授权内容。",
+  "description": "仅本地主阅读窗口可读取已授权内容、检查与安装签名更新及重启应用。",
   "windows": ["main"],
   "permissions": [
     "allow-pick-entry",
@@ -10,6 +10,11 @@
     "allow-read-directory",
     "allow-open-external",
     "allow-take-opened-file",
+    "allow-updater-configured",
+    "updater:allow-check",
+    "updater:allow-download-and-install",
+    "process:allow-restart",
+    "core:resources:allow-close",
     "core:event:allow-listen",
     "core:event:allow-unlisten"
   ]

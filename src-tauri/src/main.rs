@@ -380,10 +380,28 @@ fn open_external(url: String, app: tauri::AppHandle) -> Result<(), String> {
         .map_err(|_| "无法打开外部链接".into())
 }
 
+#[tauri::command]
+fn updater_configured(app: tauri::AppHandle) -> bool {
+    let Some(config) = app.config().plugins.0.get("updater") else {
+        return false;
+    };
+    let has_key = config
+        .get("pubkey")
+        .and_then(serde_json::Value::as_str)
+        .is_some_and(|key| !key.trim().is_empty());
+    let has_endpoint = config
+        .get("endpoints")
+        .and_then(serde_json::Value::as_array)
+        .is_some_and(|endpoints| !endpoints.is_empty());
+    has_key && has_endpoint
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(PendingOpen::default())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .plugin(
             tauri_plugin_opener::Builder::new()
                 .open_js_links_on_click(false)
@@ -435,7 +453,8 @@ fn main() {
             read_file,
             read_directory,
             open_external,
-            take_opened_file
+            take_opened_file,
+            updater_configured
         ])
         .build(tauri::generate_context!())
         .expect("failed to build LinguaMark Reader")

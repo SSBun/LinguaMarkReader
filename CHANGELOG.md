@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-23
+
+### 新增
+
+- “设置 → 关于”支持手动检查更新，展示版本说明与下载进度，确认后安装并重启；失败可重试。
+- 配置真实更新公钥和 GitHub Releases 更新地址，更新归档及签名中的版本均须通过验证后才能安装。
+- 增加 macOS 签名更新包构建命令；构建后使用公钥验证归档及版本，通过后才生成更新清单。
+
+### 发布说明
+
+- 本次提供 Apple Silicon（arm64）应用/更新归档、签名及清单；尚未支持 Intel 的发布产物。
+- 更新包使用独立的 Updater 密钥签名；应用仍为 ad-hoc 签名，未经 Apple 公证，不属于 Developer ID 分发应用。
+- 首个带更新公钥的版本需要手动安装；之前发布的 v0.3.0 不包含更新能力。
+- 不在启动时自动检查更新；不会改变文件访问授权或清除阅读设置、收藏。
+- 未运行测试套件。真实发布及双版本升级结果须以本次发布验收记录为准。
+
 ## [0.3.0] - 2026-09-21
 
 ### 修复
@@ -64,7 +80,8 @@
 - 已验证 macOS 开发启动；Windows 和 Linux 尚未实机验证。
 - 应用只读，不提供文档编辑、AI、云同步或自动更新。
 
-[Unreleased]: https://github.com/SSBun/LinguaMarkReader/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/SSBun/LinguaMarkReader/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.4.0
 [0.3.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.2.0
 [0.1.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.1.0

@@ -120,6 +120,33 @@ body:has(> #reader-settings[open], > #linguamark-markdown-library[open]) .lingua
 .reader-settings-app-name { margin: 0; font-size: 24px; }
 .reader-settings-version { color: var(--fg-muted); margin: 8px 0 24px; }
 .reader-settings-muted { color: var(--fg-muted); font-size: 13px; margin-top: 24px; }
+.reader-updater { margin-top: 24px; }
+.reader-updater-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.reader-updater button {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--radius-sm);
+  background: var(--bg-write);
+  cursor: pointer;
+}
+.reader-updater button:disabled { opacity: 0.55; cursor: default; }
+.reader-updater [hidden] { display: none; }
+.reader-updater progress { width: 100%; accent-color: var(--accent-deep); }
+.reader-updater-progress { font-size: 12px; color: var(--fg-muted); }
+.reader-updater .reader-settings-status { overflow-wrap: anywhere; }
+.reader-updater-notes {
+  max-height: 180px;
+  overflow: auto;
+  padding: 12px;
+  background: var(--bg-page);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 13px;
+}
 @media (max-width: 600px) {
   .reader-settings { padding: 16px; }
   .reader-settings-row { gap: 12px; }
