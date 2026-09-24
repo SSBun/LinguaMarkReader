@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-24
+
+### 修复
+
+- 文章目录右键菜单的「Copy Link」现在复制当前文档原始文件的绝对路径，不再复制应用内部地址或标题锚点；目录点击跳转保持不变。
+
+### 发布说明
+
+- 提供 Apple Silicon（arm64）应用/更新归档、签名和更新清单。
+- 应用仍采用 ad-hoc 签名，未经 Apple 公证；更新归档使用已有 Updater 密钥签名。
+- 未运行测试套件；本次未验证原生剪贴板交互或实际安装升级。
+
 ## [0.4.0] - 2026-09-23
 
 ### 新增
@@ -80,7 +92,8 @@
 - 已验证 macOS 开发启动；Windows 和 Linux 尚未实机验证。
 - 应用只读，不提供文档编辑、AI、云同步或自动更新。
 
-[Unreleased]: https://github.com/SSBun/LinguaMarkReader/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/SSBun/LinguaMarkReader/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.4.1
 [0.4.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.4.0
 [0.3.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.3.0
 [0.2.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.2.0

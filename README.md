@@ -2,7 +2,7 @@
 
 独立的本地只读文档阅读器，支持 Markdown、JSON、HTML 和 PDF，基于 Tauri 2、TypeScript 和 Rust。项目包含自己的依赖锁、构建脚本、原生应用和静态资源，无需安装原 LinguaMark Chrome 扩展。
 
-当前版本为 **0.4.0**。[GitHub Release](https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.4.0) 提供 Apple Silicon（arm64）应用归档、更新签名和清单。首次安装请解压应用归档后将应用放入“应用程序”；旧版 v0.3.0 没有更新能力，需要先手动安装。应用采用 ad-hoc 签名，未经 Apple 公证，macOS 可能阻止首次打开；它不是 Developer ID 分发包。
+当前版本为 **0.4.1**。[GitHub Release](https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.4.1) 提供 Apple Silicon（arm64）应用归档、更新签名和清单。首次安装请解压应用归档后将应用放入“应用程序”；旧版 v0.3.0 没有更新能力，需要先手动安装。应用采用 ad-hoc 签名，未经 Apple 公证，macOS 可能阻止首次打开；它不是 Developer ID 分发包。
 
 ## 运行
 

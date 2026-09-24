@@ -1041,6 +1041,14 @@ function initializeNativeNavigation(viewer: ViewerElements): void {
       void chooseNative(event.shiftKey, viewer);
     }
   });
+  document.addEventListener("contextmenu", (event) => {
+    const anchor = event.target instanceof Element
+      ? event.target.closest<HTMLAnchorElement>(".linguamark-markdown-toc-list a[href]") : null;
+    const item = viewer.currentItem;
+    if (!anchor || !viewer.shell.contains(anchor) || item?.kind !== "file") return;
+    event.preventDefault();
+    showContextMenu(event, anchor, [{ label: "Copy Link", action: () => copyToClipboard(item.path) }]);
+  });
   document.addEventListener("click", (event) => {
     const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
     if (!anchor || !viewer.content.contains(anchor)) return;
@@ -1334,43 +1342,9 @@ function showDirectoryContextMenu(event: MouseEvent, target: HTMLElement, viewer
   const relativePath = target.dataset.directoryPath;
   const root = viewer.directoryRootName;
   if (relativePath === undefined || !root) return;
-  closeDirectoryContextMenu?.(false);
-
-  const menu = document.createElement("div");
-  menu.className = "linguamark-directory-context-menu";
-  menu.dataset.linguamarkUi = "";
-  menu.popover = "manual";
-  menu.role = "menu";
-  menu.setAttribute("aria-label", "项目操作");
-
-  const controller = new AbortController();
-  let restoreFocus = true;
-  const closeMenu = (shouldRestoreFocus = true): void => {
-    restoreFocus = shouldRestoreFocus;
-    controller.abort();
-    if (closeDirectoryContextMenu === closeMenu) closeDirectoryContextMenu = undefined;
-    if (menu.matches(":popover-open")) menu.hidePopover();
-    else menu.remove();
-  };
-  closeDirectoryContextMenu = closeMenu;
-
-  const buttons: HTMLButtonElement[] = [];
+  const actions: { label: string; action: () => void }[] = [];
   const addButton = (label: string, action: () => void): void => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.role = "menuitem";
-    button.textContent = label;
-    button.addEventListener("click", () => {
-      closeMenu();
-      action();
-    });
-    buttons.push(button);
-  };
-  const copyToClipboard = (value: string): void => {
-    void navigator.clipboard.writeText(value).catch((error: unknown) => {
-      logWarn("directory", "viewer.clipboard.copy.failed", { errorName: errorName(error) });
-      showDirectoryNotice("无法复制到剪贴板");
-    });
+    actions.push({ label, action });
   };
 
   addButton("Copy Relative Path", () => copyToClipboard(relativePath || "."));
@@ -1395,6 +1369,51 @@ function showDirectoryContextMenu(event: MouseEvent, target: HTMLElement, viewer
       addButton("Expand Subtree", () => setSubtreeExpanded(true));
       addButton("Collapse Subtree", () => setSubtreeExpanded(false));
     }
+  }
+  showContextMenu(event, target, actions);
+}
+
+function copyToClipboard(value: string): void {
+  void navigator.clipboard.writeText(value).catch((error: unknown) => {
+    logWarn("directory", "viewer.clipboard.copy.failed", { errorName: errorName(error) });
+    showDirectoryNotice("无法复制到剪贴板");
+  });
+}
+
+function showContextMenu(
+  event: MouseEvent, target: HTMLElement, actions: { label: string; action: () => void }[],
+): void {
+  closeDirectoryContextMenu?.(false);
+
+  const menu = document.createElement("div");
+  menu.className = "linguamark-directory-context-menu";
+  menu.dataset.linguamarkUi = "";
+  menu.popover = "manual";
+  menu.role = "menu";
+  menu.setAttribute("aria-label", "项目操作");
+
+  const controller = new AbortController();
+  let restoreFocus = true;
+  const closeMenu = (shouldRestoreFocus = true): void => {
+    restoreFocus = shouldRestoreFocus;
+    controller.abort();
+    if (closeDirectoryContextMenu === closeMenu) closeDirectoryContextMenu = undefined;
+    if (menu.matches(":popover-open")) menu.hidePopover();
+    else menu.remove();
+  };
+  closeDirectoryContextMenu = closeMenu;
+
+  const buttons: HTMLButtonElement[] = [];
+  for (const { label, action } of actions) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.role = "menuitem";
+    button.textContent = label;
+    button.addEventListener("click", () => {
+      closeMenu();
+      action();
+    });
+    buttons.push(button);
   }
 
   menu.addEventListener("keydown", (keyboardEvent) => {
