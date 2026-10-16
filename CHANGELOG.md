@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-16
+
+### 新增
+
+- 工具栏增加后退与前进箭头；点击文档链接跳转后可返回之前的列表文档，菜单和快捷键同步支持浏览历史。
+- 快捷打开面板支持搜索收藏和最近项目，首页提供更清晰的打开入口。
+
+### 改进与修复
+
+- 产品更名为 Folio；保留应用标识、用户数据和更新签名身份。
+- 改善文档超链接打开，访问未授权的本地目标时先请求确认。
+- 移除目录 10000 条目限制，保留路径授权、符号链接过滤及目录深度限制。
+- 调整最近浏览记录和阅读区域聚焦表现。
+
+### 发布说明
+
+- 提供 Apple Silicon（arm64）更新归档、签名及清单；已有支持更新的版本可从“设置 → 关于”检查新版，v0.3.0 及更早版本仍需手动安装。
+- 更新包沿用现有 Updater 密钥签名；应用为 ad-hoc 签名，未经 Apple 公证，不属于 Developer ID 分发包。
+- 未运行测试套件；本次发布的下载、签名与更新检查结果以发布验收记录为准。
+
 ## [0.4.1] - 2026-09-24
 
 ### 修复
@@ -92,7 +112,8 @@
 - 已验证 macOS 开发启动；Windows 和 Linux 尚未实机验证。
 - 应用只读，不提供文档编辑、AI、云同步或自动更新。
 
-[Unreleased]: https://github.com/SSBun/LinguaMarkReader/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/SSBun/LinguaMarkReader/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.5.0
 [0.4.1]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.4.1
 [0.4.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.4.0
 [0.3.0]: https://github.com/SSBun/LinguaMarkReader/releases/tag/v0.3.0
