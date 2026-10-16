@@ -1,0 +1,40 @@
+{
+  "installedVersion": "0.4.0",
+  "installedBinaryMatchesPublishedBuild": true,
+  "codeSignatureIntegrity": true,
+  "beforePid": 72238,
+  "afterPid": 86304,
+  "grantsUnchanged": false,
+  "settingsAndLibraryUnchanged": {
+    "webkit-bundle/WebsiteData/Default/UmGXX3-SXfeXj_U9nL8NXADDbLTM8URKBunYIavFOdA/UmGXX3-SXfeXj_U9nL8NXADDbLTM8URKBunYIavFOdA/LocalStorage/localstorage.sqlite3": false,
+    "webkit-executable/WebsiteData/Default/Y5MRhchQkDYVsFy0tBAkHaRi2D662iqoby2IJNY3nv4/Y5MRhchQkDYVsFy0tBAkHaRi2D662iqoby2IJNY3nv4/LocalStorage/localstorage.sqlite3": true,
+    "webkit-executable/WebsiteData/Default/K3iWJ3ItJXJcddzSyl5JrVqBy1INBbWDce0fKCbGrVA/K3iWJ3ItJXJcddzSyl5JrVqBy1INBbWDce0fKCbGrVA/LocalStorage/localstorage.sqlite3": true
+  },
+  "storageHashes": {
+    "webkit-bundle/WebsiteData/Default/UmGXX3-SXfeXj_U9nL8NXADDbLTM8URKBunYIavFOdA/UmGXX3-SXfeXj_U9nL8NXADDbLTM8URKBunYIavFOdA/LocalStorage/localstorage.sqlite3": {
+      "linguamark-reader-settings-v1": "6d48fb8f012ce0812b836f83aafd1193159f60bb529d3e83d80b7883d35def4b",
+      "linguamark-reader-library-v1": "ce23cb6e5150b1d60e1037e8d873cabd8c8e9553e33169561f1de66046ea0419"
+    },
+    "webkit-executable/WebsiteData/Default/Y5MRhchQkDYVsFy0tBAkHaRi2D662iqoby2IJNY3nv4/Y5MRhchQkDYVsFy0tBAkHaRi2D662iqoby2IJNY3nv4/LocalStorage/localstorage.sqlite3": {
+      "linguamark-reader-settings-v1": "6d48fb8f012ce0812b836f83aafd1193159f60bb529d3e83d80b7883d35def4b",
+      "linguamark-reader-library-v1": "f1b350dc1ce804cd6c21bbcc66011ddcf30bee41102b073a971baba17cb6a65a"
+    },
+    "webkit-executable/WebsiteData/Default/K3iWJ3ItJXJcddzSyl5JrVqBy1INBbWDce0fKCbGrVA/K3iWJ3ItJXJcddzSyl5JrVqBy1INBbWDce0fKCbGrVA/LocalStorage/localstorage.sqlite3": {
+      "linguamark-reader-settings-v1": "6d48fb8f012ce0812b836f83aafd1193159f60bb529d3e83d80b7883d35def4b",
+      "linguamark-reader-library-v1": "4b250bc5ce52a7a6e1204b3163cd4acfb25d958a3faa8230d4e49809fa41941b"
+    }
+  },
+  "updateInvocation": "尚未确认：观察到版本与进程变化，但未由脚本记录到下载/安装按钮点击。",
+  "semanticDataComparison": {
+    "allPreviousFileGrantsRetained": true,
+    "fileGrantsBefore": 12,
+    "fileGrantsAfter": 13,
+    "allPreviousDirectoryGrantsRetained": true,
+    "directoryGrantsBefore": 4,
+    "directoryGrantsAfter": 4,
+    "settingsUnchangedInAllThreeStores": true,
+    "priorLibraryHadNoFavoritesField": true,
+    "onlyChangedLibraryField": "markdownViewerRecents",
+    "interpretation": "出现新阅读操作：新增单文件授权且最近浏览列表变化；未观察到设置或旧授权丢失。升级触发来源仍需用户确认。"
+  }
+}

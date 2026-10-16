@@ -1,0 +1,9 @@
+
+> linguamark-desktop-reader@0.3.0 check
+> tsc --noEmit
+
+   Compiling linguamark-reader v0.3.0 (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.51s
+    Checking linguamark-reader v0.3.0 (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.18s
+前端内存打包通过，110 个输出，未写入产物

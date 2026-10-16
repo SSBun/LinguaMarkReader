@@ -1,4 +1,6 @@
 const paths = {
+  back: ["M20 12H4", "m11 5-7 7 7 7"],
+  forward: ["M4 12h16", "m13 5 7 7-7 7"],
   sidebar: ["M4 4h16v16H4z", "M10 4v16"],
   list: ["M8 6h12M8 12h12M8 18h12", "M4 6h.01M4 12h.01M4 18h.01"],
   folder: ["M3 7V5h6l2 2h10v13H3z", "M3 10h18"],

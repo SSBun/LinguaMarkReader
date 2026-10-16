@@ -1,4 +1,6 @@
-# LinguaMark Reader · Tauri
+# Folio · Tauri
+
+Folio 原名 LinguaMark Reader。本次更名尚未发布；下述 v0.4.1 链接仍指向旧名称的已发布版本。为兼容已有安装，应用标识、用户数据键、更新端点和签名身份保持不变；内部包名与样式前缀也保留旧名称。
 
 独立的本地只读文档阅读器，支持 Markdown、JSON、HTML 和 PDF，基于 Tauri 2、TypeScript 和 Rust。项目包含自己的依赖锁、构建脚本、原生应用和静态资源，无需安装原 LinguaMark Chrome 扩展。
 
@@ -33,7 +35,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 ```
 
-macOS 应用包生成在 `src-tauri/target/release/bundle/macos/LinguaMark Reader.app`。可复制到“应用程序”后使用；它声明支持 `.md` / `.markdown`，支持 Finder“打开方式”或设为默认应用后的双击打开。应用冷启动和已运行时均接收文件，优先显示系统明确打开的文档；一次打开多个文档时，单窗口显示最后一个。此本地包仅作 ad-hoc 签名，未获 Apple 公证，不属于 Developer ID 分发安装包。
+macOS 应用包生成在 `src-tauri/target/release/bundle/macos/Folio.app`。可复制到“应用程序”后使用；它声明支持 `.md` / `.markdown`，支持 Finder“打开方式”或设为默认应用后的双击打开。应用冷启动和已运行时均接收文件，优先显示系统明确打开的文档；一次打开多个文档时，单窗口显示最后一个。此本地包仅作 ad-hoc 签名，未获 Apple 公证，不属于 Developer ID 分发安装包。
 
 ## 阅读能力
 
@@ -98,7 +100,7 @@ npm run build:mac:update
 发布时须完成以下步骤：
 
 1. 按项目版本管理约定同步应用版本，使用新的 `v<version>` Release 标签。不要覆盖已有版本的更新包；客户端只接受比当前版本更高的版本。
-2. 上传脚本生成的 `LinguaMark-Reader_<version>_<arch>.app.tar.gz` 和同名 `.sig`。更新使用此归档，不是 DMG 或源码归档。重命名复制不会改变签名，但修改或重新压缩归档后必须重新签名。
+2. 上传脚本生成的 `Folio_<version>_<arch>.app.tar.gz` 和同名 `.sig`。更新使用此归档，不是 DMG 或源码归档。重命名复制不会改变签名，但修改或重新压缩归档后必须重新签名。
 3. 审阅生成的 `latest.json`：版本、下载 URL、架构及签名必须对应上传产物；`signature` 是 `.sig` 的内容，不是文件 URL。可把 `notes` 改为本次更新说明。
 4. 若同时支持 Apple Silicon 和 Intel，构建两个架构并将同一版本的 `darwin-aarch64`、`darwin-x86_64` 条目合并到一份清单，不要让后上传的单架构清单覆盖另一架构。没有对应条目的客户端会报告检查失败，不会误装其他架构。
 5. 先把所有产物及清单上传到草稿 Release，核对完成后再公开发布为最新稳定版。不要把仅含源码的版本设为最新稳定版，否则当前更新地址会找不到清单。

@@ -1,0 +1,3 @@
+实际 AXPress 点击截图同名链接后，辅助功能树中的文档标题：
+UI element 创建 X 时间线个性化评论工作流 of group 1 of group 阅读正文 of UI element 1 of scroll area 1 of group 1 of group 1 of window Folio of application process linguamark-reader
+旧命令错误存在：False

@@ -1,0 +1,230 @@
+
+> linguamark-desktop-reader@0.3.0 build:mac:update
+> node scripts/build-update.mjs
+
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `npm run build`
+
+> linguamark-desktop-reader@0.3.0 build
+> node scripts/build.mjs
+
+   Compiling serde_core v1.0.229
+   Compiling libc v0.2.189
+   Compiling zerofrom v0.1.8
+   Compiling stable_deref_trait v1.2.1
+   Compiling serde v1.0.229
+   Compiling objc2-exception-helper v0.1.1
+   Compiling itoa v1.0.18
+   Compiling cfg-if v1.0.4
+   Compiling objc2-encode v4.1.0
+   Compiling bytes v1.12.1
+   Compiling yoke v0.8.3
+   Compiling litemap v0.8.3
+   Compiling writeable v0.6.4
+   Compiling zerovec v0.11.8
+   Compiling smallvec v1.16.1
+   Compiling memchr v2.8.3
+   Compiling zerotrie v0.2.5
+   Compiling utf8_iter v1.0.4
+   Compiling core-foundation-sys v0.8.7
+   Compiling tinystr v0.8.4
+   Compiling potential_utf v0.1.6
+   Compiling icu_properties_data v2.3.0
+   Compiling icu_normalizer_data v2.3.0
+   Compiling icu_locale_core v2.3.0
+   Compiling icu_collections v2.3.0
+   Compiling once_cell v1.21.4
+   Compiling pin-project-lite v0.2.17
+   Compiling percent-encoding v2.3.2
+   Compiling http v1.5.0
+   Compiling zmij v1.0.23
+   Compiling serde_json v1.0.151
+   Compiling icu_provider v2.3.1
+   Compiling bitflags v2.13.2
+   Compiling socket2 v0.6.5
+   Compiling mio v1.2.3
+   Compiling form_urlencoded v1.2.2
+   Compiling core-foundation v0.10.1
+   Compiling tokio v1.53.1
+   Compiling thiserror v2.0.20
+   Compiling time-core v0.1.9
+   Compiling deranged v0.5.8
+   Compiling powerfmt v0.2.0
+   Compiling objc2 v0.6.4
+   Compiling num-conv v0.2.2
+   Compiling log v0.4.34
+   Compiling tauri v2.11.5
+   Compiling aho-corasick v1.1.5
+   Compiling icu_properties v2.3.0
+   Compiling time v0.3.55
+   Compiling icu_normalizer v2.3.0
+   Compiling idna_adapter v1.2.2
+   Compiling idna v1.1.0
+   Compiling url v2.5.8
+   Compiling typeid v1.0.3
+   Compiling regex-syntax v0.8.11
+   Compiling futures-core v0.3.34
+   Compiling unic-common v0.9.0
+   Compiling simd-adler32 v0.3.10
+   Compiling alloc-no-stdlib v2.0.4
+   Compiling unic-char-range v0.9.0
+   Compiling raw-window-handle v0.6.2
+   Compiling unic-char-property v0.9.0
+   Compiling alloc-stdlib v0.2.4
+   Compiling crossbeam-utils v0.8.23
+   Compiling unic-ucd-version v0.9.0
+   Compiling dpi v0.1.2
+   Compiling uuid v1.26.1
+   Compiling thiserror v1.0.69
+   Compiling erased-serde v0.4.10
+   Compiling block2 v0.6.2
+   Compiling objc2-core-foundation v0.3.2
+   Compiling regex-automata v0.4.18
+   Compiling siphasher v1.0.3
+   Compiling fnv v1.0.7
+   Compiling hashbrown v0.17.1
+   Compiling winnow v1.0.4
+   Compiling adler2 v2.0.1
+   Compiling equivalent v1.0.2
+   Compiling base64 v0.23.1
+   Compiling byteorder v1.5.0
+   Compiling cfb v0.7.3
+   Compiling indexmap v2.14.2
+   Compiling objc2-foundation v0.3.2
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling phf_shared v0.13.1
+   Compiling cookie v0.18.2
+   Compiling unic-ucd-ident v0.9.0
+   Compiling brotli-decompressor v5.0.3
+   Compiling jsonptr v0.6.3
+   Compiling regex v1.13.1
+   Compiling serde_spanned v1.1.1
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling crc32fast v1.5.2
+   Compiling quick-xml v0.42.0
+   Compiling anyhow v1.0.104
+   Compiling ring v0.17.14
+   Compiling foreign-types-shared v0.3.1
+   Compiling option-ext v0.2.0
+   Compiling toml_writer v1.1.2+spec-1.1.0
+   Compiling same-file v1.0.6
+   Compiling toml v1.1.6+spec-1.1.0
+   Compiling walkdir v2.5.0
+   Compiling dirs-sys v0.5.0
+   Compiling foreign-types v0.5.0
+   Compiling plist v1.10.1
+   Compiling urlpattern v0.3.0
+   Compiling brotli v8.0.4
+   Compiling serde-untagged v0.1.9
+   Compiling json-patch v3.0.1
+   Compiling phf v0.13.1
+   Compiling infer v0.19.0
+   Compiling crossbeam-channel v0.5.17
+   Compiling miniz_oxide v0.9.1
+   Compiling dispatch2 v0.3.1
+   Compiling core-graphics-types v0.2.0
+   Compiling semver v1.0.28
+   Compiling serde_with v3.23.0
+   Compiling ctor v0.8.0
+   Compiling dunce v1.0.5
+   Compiling glob v0.3.4
+   Compiling wry v0.55.1
+   Compiling tauri-runtime v2.11.3
+   Compiling core-graphics v0.25.0
+   Compiling flate2 v1.1.10
+   Compiling dirs v6.0.0
+   Compiling miniz_oxide v0.8.9
+   Compiling fdeflate v0.3.7
+   Compiling getrandom v0.2.17
+   Compiling unicode-segmentation v1.13.3
+   Compiling zeroize v1.9.0
+   Compiling untrusted v0.9.0
+   Compiling rustls-pki-types v1.15.1
+   Compiling tauri-runtime-wry v2.11.4
+   Compiling tauri-utils v2.9.3
+   Compiling png v0.18.1
+   Compiling keyboard-types v0.7.0
+   Compiling getrandom v0.3.4
+   Compiling http-body v1.1.0
+   Compiling futures-macro v0.3.34
+   Compiling system-configuration-sys v0.6.0
+   Compiling futures-task v0.3.34
+   Compiling slab v0.4.12
+   Compiling httparse v1.10.1
+   Compiling rustls v0.23.45
+   Compiling futures-util v0.3.34
+   Compiling serialize-to-javascript v0.1.2
+   Compiling rustls-webpki v0.103.15
+   Compiling rustix v1.1.4
+   Compiling embed_plist v1.2.2
+   Compiling tower-service v0.3.3
+   Compiling mime v0.3.17
+   Compiling heck v0.5.0
+   Compiling try-lock v0.2.5
+   Compiling subtle v2.6.1
+   Compiling want v0.3.1
+   Compiling futures-channel v0.3.34
+   Compiling core-foundation v0.9.4
+   Compiling errno v0.3.14
+   Compiling tracing-core v0.1.36
+   Compiling atomic-waker v1.1.2
+   Compiling hyper v1.11.1
+   Compiling tracing v0.1.44
+   Compiling system-configuration v0.7.0
+   Compiling tauri-plugin-fs v2.5.2
+   Compiling sync_wrapper v1.0.2
+   Compiling security-framework-sys v2.17.0
+   Compiling ipnet v2.12.2
+   Compiling tower-layer v0.3.3
+   Compiling base64 v0.22.1
+   Compiling hyper-util v0.1.20
+   Compiling tower v0.5.3
+   Compiling security-framework v3.7.0
+   Compiling tauri-plugin-process v2.3.1
+   Compiling tauri-plugin-updater v2.12.0
+   Compiling getrandom v0.4.3
+   Compiling futures-sink v0.3.34
+   Compiling rfd v0.16.0
+   Compiling tokio-util v0.7.19
+   Compiling objc2-app-kit v0.3.2
+   Compiling xattr v1.6.1
+   Compiling tower-http v0.6.11
+   Compiling tauri-plugin-opener v2.5.5
+   Compiling tauri-plugin-dialog v2.7.3
+   Compiling http-body-util v0.1.5
+   Compiling filetime v0.2.29
+   Compiling fastrand v2.5.0
+   Compiling tar v0.4.46
+   Compiling linguamark-reader v0.3.0 (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri)
+   Compiling tempfile v3.27.0
+   Compiling open v5.4.4
+   Compiling minisign-verify v0.2.5
+   Compiling tokio-rustls v0.26.5
+   Compiling hyper-rustls v0.27.10
+   Compiling rustls-platform-verifier v0.7.0
+   Compiling reqwest v0.13.5
+   Compiling objc2-web-kit v0.3.2
+   Compiling tao v0.35.3
+   Compiling window-vibrancy v0.6.0
+   Compiling muda v0.19.3
+   Compiling objc2-osa-kit v0.3.2
+   Compiling osakit v0.3.1
+    Finished `release` profile [optimized] target(s) in 1m 02s
+       Built application at: /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/linguamark-reader
+    Bundling LinguaMark Reader.app (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app)
+     Signing with identity "-"
+Signing with identity "-"
+Signing /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app/Contents/MacOS/linguamark-reader
+/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app/Contents/MacOS/linguamark-reader: replacing existing signature
+Signing with identity "-"
+Signing /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app
+/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app: replacing existing signature
+        Warn skipping app notarization, no APPLE_ID & APPLE_PASSWORD & APPLE_TEAM_ID or APPLE_API_KEY & APPLE_API_ISSUER & APPLE_API_KEY_PATH environment variables found
+    Bundling /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app.tar.gz (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app.tar.gz)
+    Finished 1 bundle at:
+        /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app
+        /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app.tar.gz (updater)
+
+        Info Decrypting updater signing key, expect a prompt for password
+failed to decode secret key: incorrect updater private key password: Device not configured (os error 6)
+       Error failed to decode secret key: incorrect updater private key password: Device not configured (os error 6)

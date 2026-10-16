@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-resolve-link-target"
+description = "Enables the resolve_link_target command without any pre-configured scope."
+commands.allow = ["resolve_link_target"]
+
+[[permission]]
+identifier = "deny-resolve-link-target"
+description = "Denies the resolve_link_target command without any pre-configured scope."
+commands.deny = ["resolve_link_target"]

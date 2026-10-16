@@ -1,0 +1,1010 @@
+diff --git a/README.md b/README.md
+index 138b5f1..27a8981 100644
+--- a/README.md
++++ b/README.md
+@@ -62,7 +62,7 @@ macOS 应用包生成在 `src-tauri/target/release/bundle/macos/LinguaMark Reade
+ 通过工具栏“设置”或 `⌘,`（其他平台为 `Ctrl+,`）打开应用内设置页：
+ 
+ - **Basic（基础）**：主题默认/系统无衬线/衬线字体、14–28 px 正文字号、1.40–2.40 倍正文行距、默认阅读宽度、启动时恢复上次阅读、重载动画。
+-- **About（关于）**：应用名称、版本与简介；名称和版本由构建时读取的 Tauri 配置提供。
++- **About（关于）**：应用名称、版本与简介；名称和版本由构建时读取的 Tauri 配置提供。可手动检查更新，查看版本说明并确认下载、安装与重启。检查、下载或安装失败可重试；安装成功但重启失败时只重试重启，不会重复安装。
+ 
+ 显示偏好即时生效且在重启后保留，字号和行距不改变工具栏；公式和图表保留自身的专用字体与排版规则。宽度与工具栏开关双向同步；动画开关仅保留在 Basic 设置中。设置自动保存，写入失败时保留之前的配置并显示错误。
+ 
+@@ -70,6 +70,44 @@ macOS 应用包生成在 `src-tauri/target/release/bundle/macos/LinguaMark Reade
+ 
+ 设置标签支持左右方向键、Home/End 切换，Escape 关闭。字体仅使用本机安装字体及系统回退，不下载字体。
+ 
++## 应用内更新与发布
++
++应用已接入官方 Tauri Updater，不在启动时自动联网检查。更新说明只按纯文本展示，网络请求由原生插件完成，不放宽正文的 CSP 或文件授权范围。关闭设置页不取消已经确认的下载和安装；再次打开关于页可查看进度。
++
++**当前尚未配置更新公钥，也未发布签名更新包**。此时点击“检查更新”会明确提示配置缺失，不发送更新请求。这是接入代码，不代表线上更新服务已启用。
++
++### 首次配置
++
++1. 发布负责人在安全位置生成并备份 Updater 密钥对，例如运行 `npm run tauri signer generate -- -w "$HOME/.config/LinguaMarkReader/updater.key"`（先创建私有目录）。不要把私钥、密码或包含它们的终端输出提交到仓库。
++2. 将生成的公钥文件内容填入 ["/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/tauri.conf.json"](file:///Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/tauri.conf.json) 的 `plugins.updater.pubkey`。更新地址已指向本仓库 GitHub Releases 的 `latest.json`。公钥是可提交的公开信息；私钥丢失后，不能简单换公钥继续向旧客户端推送更新。
++3. 通过安全环境变量提供 `TAURI_SIGNING_PRIVATE_KEY`（密钥内容或文件路径）和 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`（如有密码）。不要写进提交到 Git 的配置或命令行参数。
++4. 面向普通 macOS 用户分发前，另行配置 Developer ID 签名和 Apple 公证。当前 macOS 配置仍为 ad-hoc 签名；Updater 的签名只验证更新包来源，不能替代 Apple 签名或公证。
++
++### 构建与上传
++
++普通 `npm run build:mac` 保持本地构建行为，不要求更新私钥。需要签名更新产物时执行：
++
++```sh
++npm run build:mac:update
++```
++
++此命令只在 Mac 上构建当前 Node.js 进程架构对应的稳定版（Apple Silicon 或 Intel），不会上传、发布或安装。它拒绝空公钥或缺少私钥的配置，显式启用 `createUpdaterArtifacts`，并输出签名归档与当前架构的 `latest.json`。在 Rosetta 下使用 x64 Node.js 会构建 Intel 版本；发布前确认期望架构及相应 Rust target 已安装。
++
++构建脚本位于 ["/Users/caishilin/Desktop/personal/LinguaMarkReader/scripts/build-update.mjs"](file:///Users/caishilin/Desktop/personal/LinguaMarkReader/scripts/build-update.mjs)。产物输出目录在命令完成时显示，位于 ["/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target"](file:///Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target) 下的目标架构目录。每次构建的清单只包含该架构，不会自动合并其他架构。
++
++发布时须完成以下步骤：
++
++1. 按项目版本管理约定同步应用版本，使用新的 `v<version>` Release 标签。不要覆盖已有版本的更新包；客户端只接受比当前版本更高的版本。
++2. 上传脚本生成的 `LinguaMark-Reader_<version>_<arch>.app.tar.gz` 和同名 `.sig`。更新使用此归档，不是 DMG 或源码归档。重命名复制不会改变签名，但修改或重新压缩归档后必须重新签名。
++3. 审阅生成的 `latest.json`：版本、下载 URL、架构及签名必须对应上传产物；`signature` 是 `.sig` 的内容，不是文件 URL。可把 `notes` 改为本次更新说明。
++4. 若同时支持 Apple Silicon 和 Intel，构建两个架构并将同一版本的 `darwin-aarch64`、`darwin-x86_64` 条目合并到一份清单，不要让后上传的单架构清单覆盖另一架构。没有对应条目的客户端会报告检查失败，不会误装其他架构。
++5. 先把所有产物及清单上传到草稿 Release，核对完成后再公开发布为最新稳定版。不要把仅含源码的版本设为最新稳定版，否则当前更新地址会找不到清单。
++6. 首个支持更新且包含真实公钥的版本必须手动安装；现有不含 Updater 的安装版无法自行获得更新能力。保留应用标识 `com.linguamark.reader` 和数据位置。
++
++正式启用前需要用两个不同版本验证真实升级、签名错误拒绝、断网重试、安装重启，以及设置、收藏和文件授权保留。静态检查不能替代这些验收。本次接入不自动执行真实更新、发布或 Apple 公证。
++
++参考：[Tauri Updater](https://v2.tauri.app/plugin/updater/)。
++
+ ## 安全与限制
+ 
+ - 只读应用，不提供文件写入、删除或任意 shell 执行接口。
+@@ -78,7 +116,7 @@ macOS 应用包生成在 `src-tauri/target/release/bundle/macos/LinguaMark Reade
+ - 不自动加载远程图片或远程字体；HTTP/HTTPS 链接经用户点击后交给系统浏览器。iframe、脚本、嵌入对象和表单提交被禁用。
+ - 原始 HTML 经 DOMPurify 净化。自定义 CSS 仅在 WebView 支持 `@scope` 时启用并限制在正文；不支持时忽略，不退回无作用域样式。
+ - 单文件上限 32 MiB，目录上限 10000 个条目及 32 层；超限会提示选择更小的文件或目录。
+-- 单窗口版本；不含 AI、编辑、云同步、Chrome 历史迁移或自动更新。文件关联仅声明 Markdown，不抢占其他类型；设置默认打开应用是单独的本机操作。
++- 单窗口版本；不含 AI、编辑、云同步或 Chrome 历史迁移。更新必须由用户手动检查并确认安装，不启动后台自动检查。文件关联仅声明 Markdown，不抢占其他类型；设置默认打开应用是单独的本机操作。
+ - 当前以非 App Sandbox 的本地运行方式开发，持久路径授权不等于 macOS security-scoped bookmark。若将来改成沙盒发行，应另外实现系统授权恢复。
+ - Tauri 使用系统 WebView；公式图表及 CSS 对旧系统的兼容性需要实际验证，不承诺与所有 Chrome 版本逐像素一致。
+ 
+diff --git a/package-lock.json b/package-lock.json
+index f24fa48..ecacb71 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -10,6 +10,8 @@
+       "dependencies": {
+         "@mermaid-js/mermaid-zenuml": "^0.2.3",
+         "@tauri-apps/api": "^2.10.1",
++        "@tauri-apps/plugin-process": "^2.3.1",
++        "@tauri-apps/plugin-updater": "^2.12.0",
+         "dompurify": "^3.4.14",
+         "highlight.js": "^11.12.0",
+         "katex": "^0.18.4",
+@@ -1210,6 +1212,24 @@
+         "node": ">= 10"
+       }
+     },
++    "node_modules/@tauri-apps/plugin-process": {
++      "version": "2.3.1",
++      "resolved": "https://registry.npmjs.org/@tauri-apps/plugin-process/-/plugin-process-2.3.1.tgz",
++      "integrity": "sha512-nCa4fGVaDL/B9ai03VyPOjfAHRHSBz5v6F/ObsB73r/dA3MHHhZtldaDMIc0V/pnUw9ehzr2iEG+XkSEyC0JJA==",
++      "license": "MIT OR Apache-2.0",
++      "dependencies": {
++        "@tauri-apps/api": "^2.8.0"
++      }
++    },
++    "node_modules/@tauri-apps/plugin-updater": {
++      "version": "2.12.0",
++      "resolved": "https://registry.npmjs.org/@tauri-apps/plugin-updater/-/plugin-updater-2.12.0.tgz",
++      "integrity": "sha512-74+g7rSIHXQje3ttR6tYap3FJP/UtZqqYxGVF9EE0Kpz0YADxHX2Ynw/eIlNPMy9D1aG+F8oBosT+6nphSa8Og==",
++      "license": "MIT OR Apache-2.0",
++      "dependencies": {
++        "@tauri-apps/api": "^2.11.0"
++      }
++    },
+     "node_modules/@types/d3": {
+       "version": "7.4.3",
+       "resolved": "https://registry.npmjs.org/@types/d3/-/d3-7.4.3.tgz",
+diff --git a/package.json b/package.json
+index 88ad430..eb6cdb2 100644
+--- a/package.json
++++ b/package.json
+@@ -9,11 +9,14 @@
+     "check": "tsc --noEmit",
+     "build:desktop": "tauri build --no-bundle",
+     "build:mac": "tauri build --bundles app",
++    "build:mac:update": "node scripts/build-update.mjs",
+     "tauri": "tauri"
+   },
+   "dependencies": {
+     "@mermaid-js/mermaid-zenuml": "^0.2.3",
+     "@tauri-apps/api": "^2.10.1",
++    "@tauri-apps/plugin-process": "^2.3.1",
++    "@tauri-apps/plugin-updater": "^2.12.0",
+     "dompurify": "^3.4.14",
+     "highlight.js": "^11.12.0",
+     "katex": "^0.18.4",
+diff --git a/public/settings.css b/public/settings.css
+index fe5e2a0..805a507 100644
+--- a/public/settings.css
++++ b/public/settings.css
+@@ -120,6 +120,33 @@ body:has(> #reader-settings[open], > #linguamark-markdown-library[open]) .lingua
+ .reader-settings-app-name { margin: 0; font-size: 24px; }
+ .reader-settings-version { color: var(--fg-muted); margin: 8px 0 24px; }
+ .reader-settings-muted { color: var(--fg-muted); font-size: 13px; margin-top: 24px; }
++.reader-updater { margin-top: 24px; }
++.reader-updater-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
++.reader-updater button {
++  min-height: 36px;
++  padding: 6px 12px;
++  border: 1px solid var(--accent-soft);
++  border-radius: var(--radius-sm);
++  background: var(--bg-write);
++  cursor: pointer;
++}
++.reader-updater button:disabled { opacity: 0.55; cursor: default; }
++.reader-updater [hidden] { display: none; }
++.reader-updater progress { width: 100%; accent-color: var(--accent-deep); }
++.reader-updater-progress { font-size: 12px; color: var(--fg-muted); }
++.reader-updater .reader-settings-status { overflow-wrap: anywhere; }
++.reader-updater-notes {
++  max-height: 180px;
++  overflow: auto;
++  padding: 12px;
++  background: var(--bg-page);
++  border-radius: var(--radius-sm);
++  text-align: left;
++  white-space: pre-wrap;
++  overflow-wrap: anywhere;
++  font: inherit;
++  font-size: 13px;
++}
+ @media (max-width: 600px) {
+   .reader-settings { padding: 16px; }
+   .reader-settings-row { gap: 12px; }
+diff --git a/src-tauri/Cargo.lock b/src-tauri/Cargo.lock
+index 0659740..4cf157b 100644
+--- a/src-tauri/Cargo.lock
++++ b/src-tauri/Cargo.lock
+@@ -47,6 +47,15 @@ version = "1.0.104"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
+ 
++[[package]]
++name = "arbitrary"
++version = "1.4.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
++dependencies = [
++ "derive_arbitrary",
++]
++
+ [[package]]
+ name = "async-broadcast"
+ version = "0.7.2"
+@@ -500,6 +509,16 @@ dependencies = [
+  "version_check",
+ ]
+ 
++[[package]]
++name = "core-foundation"
++version = "0.9.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f"
++dependencies = [
++ "core-foundation-sys",
++ "libc",
++]
++
+ [[package]]
+ name = "core-foundation"
+ version = "0.10.1"
+@@ -523,7 +542,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "064badf302c3194842cf2c5d61f56cc88e54a759313879cdf03abdd27d0c3b97"
+ dependencies = [
+  "bitflags 2.13.2",
+- "core-foundation",
++ "core-foundation 0.10.1",
+  "core-graphics-types",
+  "foreign-types",
+  "libc",
+@@ -536,7 +555,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "3d44a101f213f6c4cdc1853d4b78aef6db6bdfa3468798cc1d9912f4735013eb"
+ dependencies = [
+  "bitflags 2.13.2",
+- "core-foundation",
++ "core-foundation 0.10.1",
+  "libc",
+ ]
+ 
+@@ -707,6 +726,17 @@ dependencies = [
+  "serde_core",
+ ]
+ 
++[[package]]
++name = "derive_arbitrary"
++version = "1.4.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1e567bd82dcff979e4b03460c307b3cdc9e96fde3d73bed1496d2bc75d9dd62a"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.119",
++]
++
+ [[package]]
+ name = "derive_more"
+ version = "2.1.1"
+@@ -990,6 +1020,16 @@ dependencies = [
+  "rustc_version",
+ ]
+ 
++[[package]]
++name = "filetime"
++version = "0.2.29"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5c287a33c7f0a620c38e641e7f60827713987b3c0f26e8ddc9462cc69cf75759"
++dependencies = [
++ "cfg-if",
++ "libc",
++]
++
+ [[package]]
+ name = "find-msvc-tools"
+ version = "0.1.12"
+@@ -1535,6 +1575,21 @@ dependencies = [
+  "want",
+ ]
+ 
++[[package]]
++name = "hyper-rustls"
++version = "0.27.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "dfa8e654703247911e29c23fbeaa261834bd9bb74efba2f9acddc37bfb127f53"
++dependencies = [
++ "http",
++ "hyper",
++ "hyper-util",
++ "rustls",
++ "tokio",
++ "tokio-rustls",
++ "tower-service",
++]
++
+ [[package]]
+ name = "hyper-util"
+ version = "0.1.20"
+@@ -1553,9 +1608,11 @@ dependencies = [
+  "percent-encoding",
+  "pin-project-lite",
+  "socket2",
++ "system-configuration",
+  "tokio",
+  "tower-service",
+  "tracing",
++ "windows-registry",
+ ]
+ 
+ [[package]]
+@@ -1858,6 +1915,36 @@ dependencies = [
+  "windows-sys 0.45.0",
+ ]
+ 
++[[package]]
++name = "jni"
++version = "0.22.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5efd9a482cf3a427f00d6b35f14332adc7902ce91efb778580e180ff90fa3498"
++dependencies = [
++ "cfg-if",
++ "combine",
++ "jni-macros",
++ "jni-sys 0.4.1",
++ "log",
++ "simd_cesu8",
++ "thiserror 2.0.20",
++ "walkdir",
++ "windows-link 0.2.1",
++]
++
++[[package]]
++name = "jni-macros"
++version = "0.22.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a00109accc170f0bdb141fed3e393c565b6f5e072365c3bd58f5b062591560a3"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "rustc_version",
++ "simd_cesu8",
++ "syn 2.0.119",
++]
++
+ [[package]]
+ name = "jni-sys"
+ version = "0.3.1"
+@@ -2002,6 +2089,8 @@ dependencies = [
+  "tauri-build",
+  "tauri-plugin-dialog",
+  "tauri-plugin-opener",
++ "tauri-plugin-process",
++ "tauri-plugin-updater",
+ ]
+ 
+ [[package]]
+@@ -2063,6 +2152,12 @@ version = "0.3.17"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
+ 
++[[package]]
++name = "minisign-verify"
++version = "0.2.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "22f9645cb765ea72b8111f36c522475d2daa0d22c957a9826437e97534bc4e9e"
++
+ [[package]]
+ name = "miniz_oxide"
+ version = "0.8.9"
+@@ -2321,6 +2416,18 @@ dependencies = [
+  "objc2-core-foundation",
+ ]
+ 
++[[package]]
++name = "objc2-osa-kit"
++version = "0.3.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f112d1746737b0da274ef79a23aac283376f335f4095a083a267a082f21db0c0"
++dependencies = [
++ "bitflags 2.13.2",
++ "objc2",
++ "objc2-app-kit",
++ "objc2-foundation",
++]
++
+ [[package]]
+ name = "objc2-quartz-core"
+ version = "0.3.2"
+@@ -2395,6 +2502,12 @@ dependencies = [
+  "libc",
+ ]
+ 
++[[package]]
++name = "openssl-probe"
++version = "0.2.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
++
+ [[package]]
+ name = "option-ext"
+ version = "0.2.0"
+@@ -2411,6 +2524,20 @@ dependencies = [
+  "pin-project-lite",
+ ]
+ 
++[[package]]
++name = "osakit"
++version = "0.3.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "732c71caeaa72c065bb69d7ea08717bd3f4863a4f451402fc9513e29dbd5261b"
++dependencies = [
++ "objc2",
++ "objc2-foundation",
++ "objc2-osa-kit",
++ "serde",
++ "serde_json",
++ "thiserror 2.0.20",
++]
++
+ [[package]]
+ name = "pango"
+ version = "0.18.3"
+@@ -2817,15 +2944,20 @@ dependencies = [
+  "http-body",
+  "http-body-util",
+  "hyper",
++ "hyper-rustls",
+  "hyper-util",
+  "js-sys",
+  "log",
+  "percent-encoding",
+  "pin-project-lite",
++ "rustls",
++ "rustls-pki-types",
++ "rustls-platform-verifier",
+  "serde",
+  "serde_json",
+  "sync_wrapper",
+  "tokio",
++ "tokio-rustls",
+  "tokio-util",
+  "tower",
+  "tower-http",
+@@ -2861,6 +2993,20 @@ dependencies = [
+  "windows-sys 0.60.2",
+ ]
+ 
++[[package]]
++name = "ring"
++version = "0.17.14"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a4689e6c2294d81e88dc6261c768b63bc4fcdb852be6d1352498b114f61383b7"
++dependencies = [
++ "cc",
++ "cfg-if",
++ "getrandom 0.2.17",
++ "libc",
++ "untrusted",
++ "windows-sys 0.52.0",
++]
++
+ [[package]]
+ name = "rustc-hash"
+ version = "2.1.3"
+@@ -2889,6 +3035,79 @@ dependencies = [
+  "windows-sys 0.61.2",
+ ]
+ 
++[[package]]
++name = "rustls"
++version = "0.23.45"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0d41d731c7d2f962d1ccc364cec258de3c0e93b38c2fb3ba97ac74513048d634"
++dependencies = [
++ "once_cell",
++ "ring",
++ "rustls-pki-types",
++ "rustls-webpki",
++ "subtle",
++ "zeroize",
++]
++
++[[package]]
++name = "rustls-native-certs"
++version = "0.8.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "dab5152771c58876a2146916e53e35057e1a4dfa2b9df0f0305b07f611fdea4d"
++dependencies = [
++ "openssl-probe",
++ "rustls-pki-types",
++ "schannel",
++ "security-framework",
++]
++
++[[package]]
++name = "rustls-pki-types"
++version = "1.15.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2f4925028c7eb5d1fcdaf196971378ed9d2c1c4efc7dc5d011256f76c99c0a96"
++dependencies = [
++ "zeroize",
++]
++
++[[package]]
++name = "rustls-platform-verifier"
++version = "0.7.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "26d1e2536ce4f35f4846aa13bff16bd0ff40157cdb14cc056c7b14ba41233ba0"
++dependencies = [
++ "core-foundation 0.10.1",
++ "core-foundation-sys",
++ "jni 0.22.4",
++ "log",
++ "once_cell",
++ "rustls",
++ "rustls-native-certs",
++ "rustls-platform-verifier-android",
++ "rustls-webpki",
++ "security-framework",
++ "security-framework-sys",
++ "webpki-root-certs",
++ "windows-sys 0.61.2",
++]
++
++[[package]]
++name = "rustls-platform-verifier-android"
++version = "0.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
++
++[[package]]
++name = "rustls-webpki"
++version = "0.103.15"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f3c3cf1d8b1e7d4927e2d154c3fcb02979afb9939629c62cd9048d4f07b60ac2"
++dependencies = [
++ "ring",
++ "rustls-pki-types",
++ "untrusted",
++]
++
+ [[package]]
+ name = "rustversion"
+ version = "1.0.23"
+@@ -2904,6 +3123,15 @@ dependencies = [
+  "winapi-util",
+ ]
+ 
++[[package]]
++name = "schannel"
++version = "0.1.29"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "91c1b7e4904c873ef0710c1f407dde2e6287de2bebc1bbbf7d430bb7cbffd939"
++dependencies = [
++ "windows-sys 0.61.2",
++]
++
+ [[package]]
+ name = "schemars"
+ version = "0.8.22"
+@@ -2961,6 +3189,29 @@ version = "1.2.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+ 
++[[package]]
++name = "security-framework"
++version = "3.7.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b7f4bc775c73d9a02cde8bf7b2ec4c9d12743edf609006c7facc23998404cd1d"
++dependencies = [
++ "bitflags 2.13.2",
++ "core-foundation 0.10.1",
++ "core-foundation-sys",
++ "libc",
++ "security-framework-sys",
++]
++
++[[package]]
++name = "security-framework-sys"
++version = "2.17.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3"
++dependencies = [
++ "core-foundation-sys",
++ "libc",
++]
++
+ [[package]]
+ name = "selectors"
+ version = "0.36.1"
+@@ -3182,6 +3433,22 @@ version = "0.3.10"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
+ 
++[[package]]
++name = "simd_cesu8"
++version = "1.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "11031e251abf8611c80f460e19dbdeb54a66db918e49c65a7065b46ac7aec520"
++dependencies = [
++ "rustc_version",
++ "simdutf8",
++]
++
++[[package]]
++name = "simdutf8"
++version = "0.1.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e3a9fe34e3e7a50316060351f37187a3f546bce95496156754b601a5fa71b76e"
++
+ [[package]]
+ name = "siphasher"
+ version = "1.0.3"
+@@ -3294,6 +3561,12 @@ version = "0.11.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
+ 
++[[package]]
++name = "subtle"
++version = "2.6.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
++
+ [[package]]
+ name = "swift-rs"
+ version = "1.0.8"
+@@ -3357,6 +3630,27 @@ dependencies = [
+  "syn 3.0.5",
+ ]
+ 
++[[package]]
++name = "system-configuration"
++version = "0.7.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a13f3d0daba03132c0aa9767f98351b3488edc2c100cda2d2ec2b04f3d8d3c8b"
++dependencies = [
++ "bitflags 2.13.2",
++ "core-foundation 0.9.4",
++ "system-configuration-sys",
++]
++
++[[package]]
++name = "system-configuration-sys"
++version = "0.6.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8e1d1b10ced5ca923a1fcb8d03e96b8d3268065d724548c0211415ff6ac6bac4"
++dependencies = [
++ "core-foundation-sys",
++ "libc",
++]
++
+ [[package]]
+ name = "system-deps"
+ version = "6.2.2"
+@@ -3378,7 +3672,7 @@ checksum = "d1c93047acf68669466a34690ac58cca7010bd1b201e1ec86f1fd0a75d3dd4a9"
+ dependencies = [
+  "bitflags 2.13.2",
+  "block2",
+- "core-foundation",
++ "core-foundation 0.10.1",
+  "core-graphics",
+  "crossbeam-channel",
+  "dbus",
+@@ -3388,7 +3682,7 @@ dependencies = [
+  "gdkwayland-sys",
+  "gdkx11-sys",
+  "gtk",
+- "jni",
++ "jni 0.21.1",
+  "libc",
+  "log",
+  "ndk",
+@@ -3421,6 +3715,17 @@ dependencies = [
+  "syn 2.0.119",
+ ]
+ 
++[[package]]
++name = "tar"
++version = "0.4.46"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3f6221d9a6003c78398e3b239969f352578258df48c8eb051caadae0015bc840"
++dependencies = [
++ "filetime",
++ "libc",
++ "xattr",
++]
++
+ [[package]]
+ name = "target-lexicon"
+ version = "0.12.16"
+@@ -3444,7 +3749,7 @@ dependencies = [
+  "gtk",
+  "heck 0.5.0",
+  "http",
+- "jni",
++ "jni 0.21.1",
+  "libc",
+  "log",
+  "mime",
+@@ -3620,6 +3925,49 @@ dependencies = [
+  "zbus",
+ ]
+ 
++[[package]]
++name = "tauri-plugin-process"
++version = "2.3.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d55511a7bf6cd70c8767b02c97bf8134fa434daf3926cfc1be0a0f94132d165a"
++dependencies = [
++ "tauri",
++ "tauri-plugin",
++]
++
++[[package]]
++name = "tauri-plugin-updater"
++version = "2.12.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7a5cad8ed5948d988e1018ecd31e27cacedbf72ce3fb972940c3e4bf51639e4b"
++dependencies = [
++ "base64 0.22.1",
++ "dirs",
++ "flate2",
++ "futures-util",
++ "http",
++ "infer",
++ "log",
++ "minisign-verify",
++ "osakit",
++ "percent-encoding",
++ "reqwest",
++ "rustls",
++ "semver",
++ "serde",
++ "serde_json",
++ "tar",
++ "tauri",
++ "tauri-plugin",
++ "tempfile",
++ "thiserror 2.0.20",
++ "time",
++ "tokio",
++ "url",
++ "windows-sys 0.60.2",
++ "zip",
++]
++
+ [[package]]
+ name = "tauri-runtime"
+ version = "2.11.3"
+@@ -3630,7 +3978,7 @@ dependencies = [
+  "dpi",
+  "gtk",
+  "http",
+- "jni",
++ "jni 0.21.1",
+  "objc2",
+  "objc2-ui-kit",
+  "objc2-web-kit",
+@@ -3653,7 +4001,7 @@ checksum = "4e6fac707727b7a2f48e4ded90976324267371073edbb415ffb73bb0458d203f"
+ dependencies = [
+  "gtk",
+  "http",
+- "jni",
++ "jni 0.21.1",
+  "log",
+  "objc2",
+  "objc2-app-kit",
+@@ -3842,6 +4190,16 @@ dependencies = [
+  "windows-sys 0.61.2",
+ ]
+ 
++[[package]]
++name = "tokio-rustls"
++version = "0.26.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b0c85f2c3ef0b1cd58b36682f4b17aaa995f0e5db534d85692b4903abce21f67"
++dependencies = [
++ "rustls",
++ "tokio",
++]
++
+ [[package]]
+ name = "tokio-util"
+ version = "0.7.19"
+@@ -4155,6 +4513,12 @@ version = "1.13.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "c6f5d3c3b1bf09027a88a6bc961fc00497d651009560b5463668dc81b0fa87a8"
+ 
++[[package]]
++name = "untrusted"
++version = "0.9.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
++
+ [[package]]
+ name = "url"
+ version = "2.5.8"
+@@ -4398,6 +4762,15 @@ dependencies = [
+  "system-deps",
+ ]
+ 
++[[package]]
++name = "webpki-root-certs"
++version = "1.0.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b96554aa2acc8ccdb7e1c9a58a7a68dd5d13bccc69cd124cb09406db612a1c9b"
++dependencies = [
++ "rustls-pki-types",
++]
++
+ [[package]]
+ name = "webview2-com"
+ version = "0.38.2"
+@@ -4583,6 +4956,17 @@ dependencies = [
+  "windows-link 0.1.3",
+ ]
+ 
++[[package]]
++name = "windows-registry"
++version = "0.6.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "02752bf7fbdcce7f2a27a742f798510f3e5ad88dbe84871e5168e2120c3d5720"
++dependencies = [
++ "windows-link 0.2.1",
++ "windows-result 0.4.1",
++ "windows-strings 0.5.1",
++]
++
+ [[package]]
+ name = "windows-result"
+ version = "0.3.4"
+@@ -4628,6 +5012,15 @@ dependencies = [
+  "windows-targets 0.42.2",
+ ]
+ 
++[[package]]
++name = "windows-sys"
++version = "0.52.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "282be5f36a8ce781fad8c8ae18fa3f9beff57ec1b52cb3de0789201425d9a33d"
++dependencies = [
++ "windows-targets 0.52.6",
++]
++
+ [[package]]
+ name = "windows-sys"
+ version = "0.59.0"
+@@ -4923,7 +5316,7 @@ dependencies = [
+  "gtk",
+  "http",
+  "javascriptcore-rs",
+- "jni",
++ "jni 0.21.1",
+  "libc",
+  "ndk",
+  "objc2",
+@@ -4970,6 +5363,16 @@ dependencies = [
+  "pkg-config",
+ ]
+ 
++[[package]]
++name = "xattr"
++version = "1.6.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "32e45ad4206f6d2479085147f02bc2ef834ac85886624a23575ae137c8aa8156"
++dependencies = [
++ "libc",
++ "rustix",
++]
++
+ [[package]]
+ name = "yoke"
+ version = "0.8.3"
+@@ -5084,6 +5487,12 @@ dependencies = [
+  "synstructure",
+ ]
+ 
++[[package]]
++name = "zeroize"
++version = "1.9.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e13c156562582aa81c60cb29407084cdb54c4164760106ab78e6c5b0858cf64e"
++
+ [[package]]
+ name = "zerotrie"
+ version = "0.2.5"
+@@ -5117,6 +5526,18 @@ dependencies = [
+  "syn 3.0.5",
+ ]
+ 
++[[package]]
++name = "zip"
++version = "4.6.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "caa8cd6af31c3b31c6631b8f483848b91589021b28fffe50adada48d4f4d2ed1"
++dependencies = [
++ "arbitrary",
++ "crc32fast",
++ "indexmap 2.14.2",
++ "memchr",
++]
++
+ [[package]]
+ name = "zlib-rs"
+ version = "0.6.8"
+diff --git a/src-tauri/Cargo.toml b/src-tauri/Cargo.toml
+index d88d5f5..b34f9c7 100644
+--- a/src-tauri/Cargo.toml
++++ b/src-tauri/Cargo.toml
+@@ -12,6 +12,8 @@ tauri-build = { version = "2", features = [] }
+ tauri = { version = "2", features = [] }
+ tauri-plugin-dialog = "2"
+ tauri-plugin-opener = "2"
++tauri-plugin-updater = "2"
++tauri-plugin-process = "2"
+ serde = { version = "1", features = ["derive"] }
+ serde_json = "1"
+ base64 = "0.22"
+diff --git a/src-tauri/build.rs b/src-tauri/build.rs
+index 4937b40..7838c6a 100644
+--- a/src-tauri/build.rs
++++ b/src-tauri/build.rs
+@@ -7,6 +7,7 @@ fn main() {
+             "read_directory",
+             "open_external",
+             "take_opened_file",
++            "updater_configured",
+         ]),
+     ))
+     .expect("failed to build Tauri application");
+diff --git a/src-tauri/capabilities/main.json b/src-tauri/capabilities/main.json
+index d97b171..395d167 100644
+--- a/src-tauri/capabilities/main.json
++++ b/src-tauri/capabilities/main.json
+@@ -1,7 +1,7 @@
+ {
+   "$schema": "../gen/schemas/desktop-schema.json",
+   "identifier": "main",
+-  "description": "仅本地主阅读窗口可请求用户选择文件及读取已授权内容。",
++  "description": "仅本地主阅读窗口可读取已授权内容、检查与安装签名更新及重启应用。",
+   "windows": ["main"],
+   "permissions": [
+     "allow-pick-entry",
+@@ -10,6 +10,11 @@
+     "allow-read-directory",
+     "allow-open-external",
+     "allow-take-opened-file",
++    "allow-updater-configured",
++    "updater:allow-check",
++    "updater:allow-download-and-install",
++    "process:allow-restart",
++    "core:resources:allow-close",
+     "core:event:allow-listen",
+     "core:event:allow-unlisten"
+   ]
+diff --git a/src-tauri/src/main.rs b/src-tauri/src/main.rs
+index 6609147..678853d 100644
+--- a/src-tauri/src/main.rs
++++ b/src-tauri/src/main.rs
+@@ -380,10 +380,28 @@ fn open_external(url: String, app: tauri::AppHandle) -> Result<(), String> {
+         .map_err(|_| "无法打开外部链接".into())
+ }
+ 
++#[tauri::command]
++fn updater_configured(app: tauri::AppHandle) -> bool {
++    let Some(config) = app.config().plugins.0.get("updater") else {
++        return false;
++    };
++    let has_key = config
++        .get("pubkey")
++        .and_then(serde_json::Value::as_str)
++        .is_some_and(|key| !key.trim().is_empty());
++    let has_endpoint = config
++        .get("endpoints")
++        .and_then(serde_json::Value::as_array)
++        .is_some_and(|endpoints| !endpoints.is_empty());
++    has_key && has_endpoint
++}
++
+ fn main() {
+     tauri::Builder::default()
+         .manage(PendingOpen::default())
+         .plugin(tauri_plugin_dialog::init())
++        .plugin(tauri_plugin_updater::Builder::new().build())
++        .plugin(tauri_plugin_process::init())
+         .plugin(
+             tauri_plugin_opener::Builder::new()
+                 .open_js_links_on_click(false)
+@@ -435,7 +453,8 @@ fn main() {
+             read_file,
+             read_directory,
+             open_external,
+-            take_opened_file
++            take_opened_file,
++            updater_configured
+         ])
+         .build(tauri::generate_context!())
+         .expect("failed to build LinguaMark Reader")
+diff --git a/src-tauri/tauri.conf.json b/src-tauri/tauri.conf.json
+index 07e2c8a..dcddc16 100644
+--- a/src-tauri/tauri.conf.json
++++ b/src-tauri/tauri.conf.json
+@@ -16,5 +16,13 @@
+   },
+   "bundle": {
+     "active": false
++  },
++  "plugins": {
++    "updater": {
++      "pubkey": "",
++      "endpoints": [
++        "https://github.com/SSBun/LinguaMarkReader/releases/latest/download/latest.json"
++      ]
++    }
+   }
+ }
+diff --git a/src/settings.ts b/src/settings.ts
+index 07382cd..e8a51d7 100644
+--- a/src/settings.ts
++++ b/src/settings.ts
+@@ -1,3 +1,5 @@
++import { createUpdaterControls } from "./updater.ts";
++
+ declare const __APP_NAME__: string;
+ declare const __APP_VERSION__: string;
+ 
+@@ -152,6 +154,7 @@ export function createSettingsPage(): { dialog: HTMLDialogElement; open: () => v
+ 
+   dialog.querySelector(".reader-settings-app-name")!.textContent = __APP_NAME__;
+   dialog.querySelector(".reader-settings-version")!.textContent = `版本 ${__APP_VERSION__}`;
++  dialog.querySelector("#settings-about")!.append(createUpdaterControls());
+   const sync = (value: Readonly<ReaderSettings>): void => {
+     font.value = value.font;
+     fontSize.value = String(value.fontSize);

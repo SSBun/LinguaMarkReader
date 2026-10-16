@@ -1,0 +1,1763 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "09c81b622fe34714232595c7325cba1cf2e5f8fb",
+  "generatedAt": "2026-09-22T10:44:25.685Z",
+  "files": {
+    "CHANGELOG.md": {
+      "filePath": "CHANGELOG.md",
+      "contentHash": "aeccb1f6899564a06c527a82c4628bda036558785c18c3f71491b2cf1a38eb51",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 71,
+      "hasStructuralAnalysis": false
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "c2a19025455d5a080c96093350b6c18098d26193f889f5070543c204de977136",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 133,
+      "hasStructuralAnalysis": false
+    },
+    "examples/第二篇.md": {
+      "filePath": "examples/第二篇.md",
+      "contentHash": "4ea61a7bc9f10faa0d3212573a240e0d5cf16d6f8de9013347951936202e6ac7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 10,
+      "hasStructuralAnalysis": false
+    },
+    "examples/阅读示例.md": {
+      "filePath": "examples/阅读示例.md",
+      "contentHash": "d14538278be84e3d0d0829a66ccd91f609405db547006a034ee958ffd53e8f4b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 64,
+      "hasStructuralAnalysis": false
+    },
+    "package.json": {
+      "filePath": "package.json",
+      "contentHash": "52adbb2b2bb2cd4d0edc1936919cb23dc7bb889876668a71aba5eb782714d545",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": false
+    },
+    "public/index.html": {
+      "filePath": "public/index.html",
+      "contentHash": "0094a2c8367558381175d630d3a5af4aef14642aa2611830340014f4dc3c0ae4",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 14,
+      "hasStructuralAnalysis": false
+    },
+    "public/katex-LICENSE.txt": {
+      "filePath": "public/katex-LICENSE.txt",
+      "contentHash": "766ccc1f306c885aa45542a9846bbd0a505b27a0374f146778171c2254ce18e3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 22,
+      "hasStructuralAnalysis": false
+    },
+    "public/markdown.css": {
+      "filePath": "public/markdown.css",
+      "contentHash": "19ffa5779038f4f50cb1a5d63cddff1cc3264f79118b5525d9ca9f04c10baa10",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 3946,
+      "hasStructuralAnalysis": false
+    },
+    "public/settings.css": {
+      "filePath": "public/settings.css",
+      "contentHash": "7d3ac0e6eaabed3c2fff88e8a47f2eef02c6b71896a757ca055b8b991ba8f388",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 155,
+      "hasStructuralAnalysis": false
+    },
+    "scripts/build-update.mjs": {
+      "filePath": "scripts/build-update.mjs",
+      "contentHash": "8697aee683fbee1fd28791b0b2328ae88777df45e2757e3120d0634559a0f776",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:fs/promises",
+          "specifiers": [
+            "copyFile",
+            "readFile",
+            "writeFile"
+          ]
+        },
+        {
+          "source": "node:child_process",
+          "specifiers": [
+            "spawnSync"
+          ]
+        },
+        {
+          "source": "node:url",
+          "specifiers": [
+            "fileURLToPath"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 50,
+      "hasStructuralAnalysis": true
+    },
+    "scripts/build.mjs": {
+      "filePath": "scripts/build.mjs",
+      "contentHash": "60775a8974111bb9aa95a25a5321138172dee08b2c66e27157200a5e322a3559",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "node:fs/promises",
+          "specifiers": [
+            "cp",
+            "mkdir",
+            "readFile",
+            "rm"
+          ]
+        },
+        {
+          "source": "esbuild",
+          "specifiers": [
+            "build"
+          ]
+        },
+        {
+          "source": "node:url",
+          "specifiers": [
+            "fileURLToPath"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 31,
+      "hasStructuralAnalysis": true
+    },
+    "src-tauri/Cargo.toml": {
+      "filePath": "src-tauri/Cargo.toml",
+      "contentHash": "c4875b4a465646576e8235c5f325bade740c1467fd9c20b365aa85e206e133b0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 28,
+      "hasStructuralAnalysis": false
+    },
+    "src-tauri/Info.plist": {
+      "filePath": "src-tauri/Info.plist",
+      "contentHash": "c7310a8cf52f218f87e43815d2d895603f53c7791ff75d1999c77c3adf23fe3a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 25,
+      "hasStructuralAnalysis": false
+    },
+    "src-tauri/build.rs": {
+      "filePath": "src-tauri/build.rs",
+      "contentHash": "d2ba1ac4f468a21291a03187a6ac8cda51d45548bc1e8e8bf0bf42cd79adb83f",
+      "functions": [
+        {
+          "name": "main",
+          "owner": "",
+          "params": [],
+          "exported": false,
+          "lineCount": 14
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 15,
+      "hasStructuralAnalysis": true
+    },
+    "src-tauri/capabilities/main.json": {
+      "filePath": "src-tauri/capabilities/main.json",
+      "contentHash": "a349e70243861aeeb8b32f0cdb0504586ea0f1bd84a0b884a797e50f24c2d95f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 22,
+      "hasStructuralAnalysis": false
+    },
+    "src-tauri/src/main.rs": {
+      "filePath": "src-tauri/src/main.rs",
+      "contentHash": "8f2a9fdc20be4b0ad08183e1530b17abc089db980ce0bf63e57fbe822c0666f3",
+      "functions": [
+        {
+          "name": "authorize",
+          "owner": "Access",
+          "params": [
+            "path"
+          ],
+          "returnType": "Result<PathBuf, String>",
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "grant",
+          "owner": "Access",
+          "params": [
+            "path",
+            "directory"
+          ],
+          "returnType": "Result<String, String>",
+          "exported": false,
+          "lineCount": 34
+        },
+        {
+          "name": "take_opened_file",
+          "owner": "",
+          "params": [
+            "app"
+          ],
+          "returnType": "Result<Option<String>, String>",
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "receive_opened_file",
+          "owner": "",
+          "params": [
+            "app",
+            "url"
+          ],
+          "exported": false,
+          "lineCount": 12
+        },
+        {
+          "name": "display_path",
+          "owner": "",
+          "params": [
+            "path"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "pick_entry",
+          "owner": "",
+          "params": [
+            "app",
+            "window"
+          ],
+          "returnType": "Result<Option<SelectedEntry>, String>",
+          "exported": false,
+          "lineCount": 38
+        },
+        {
+          "name": "pick_directory",
+          "owner": "",
+          "params": [
+            "app"
+          ],
+          "returnType": "Result<Option<String>, String>",
+          "exported": false,
+          "lineCount": 13
+        },
+        {
+          "name": "file_kind",
+          "owner": "",
+          "params": [
+            "path"
+          ],
+          "returnType": "&'static str",
+          "exported": false,
+          "lineCount": 16
+        },
+        {
+          "name": "read_file",
+          "owner": "",
+          "params": [
+            "path",
+            "app"
+          ],
+          "returnType": "Result<Content, String>",
+          "exported": false,
+          "lineCount": 53
+        },
+        {
+          "name": "walk",
+          "owner": "",
+          "params": [
+            "root",
+            "directory",
+            "depth",
+            "count"
+          ],
+          "returnType": "Result<Vec<Entry>, String>",
+          "exported": false,
+          "lineCount": 50
+        },
+        {
+          "name": "read_directory",
+          "owner": "",
+          "params": [
+            "path",
+            "app"
+          ],
+          "returnType": "Result<Directory, String>",
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "open_external",
+          "owner": "",
+          "params": [
+            "url",
+            "app"
+          ],
+          "returnType": "Result<(), String>",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "updater_configured",
+          "owner": "",
+          "params": [
+            "app"
+          ],
+          "returnType": "bool",
+          "exported": false,
+          "lineCount": 14
+        },
+        {
+          "name": "main",
+          "owner": "",
+          "params": [],
+          "exported": false,
+          "lineCount": 72
+        }
+      ],
+      "classes": [
+        {
+          "name": "Grants",
+          "methods": [],
+          "properties": [
+            "files",
+            "directories"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "Access",
+          "methods": [
+            "authorize",
+            "grant"
+          ],
+          "properties": [
+            "grants",
+            "store"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "PendingOpen",
+          "methods": [],
+          "properties": [],
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "SelectedEntry",
+          "methods": [],
+          "properties": [
+            "kind",
+            "path"
+          ],
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "Content",
+          "methods": [],
+          "properties": [
+            "Markdown",
+            "Json",
+            "Html",
+            "Pdf",
+            "Image"
+          ],
+          "exported": false,
+          "lineCount": 23
+        },
+        {
+          "name": "Entry",
+          "methods": [],
+          "properties": [
+            "name",
+            "path",
+            "kind",
+            "file_kind",
+            "children"
+          ],
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "Directory",
+          "methods": [],
+          "properties": [
+            "status",
+            "root_name",
+            "entries"
+          ],
+          "exported": false,
+          "lineCount": 5
+        }
+      ],
+      "imports": [
+        {
+          "source": "base64",
+          "specifiers": [
+            "engine::general_purpose::STANDARD",
+            "Engine"
+          ]
+        },
+        {
+          "source": "serde",
+          "specifiers": [
+            "Deserialize",
+            "Serialize"
+          ]
+        },
+        {
+          "source": "std",
+          "specifiers": [
+            "io::Read",
+            "sync::Mutex"
+          ]
+        },
+        {
+          "source": "tauri",
+          "specifiers": [
+            "Manager"
+          ]
+        },
+        {
+          "source": "tauri",
+          "specifiers": [
+            "Emitter"
+          ]
+        },
+        {
+          "source": "tauri_plugin_dialog",
+          "specifiers": [
+            "DialogExt"
+          ]
+        },
+        {
+          "source": "tauri_plugin_opener",
+          "specifiers": [
+            "OpenerExt"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 471,
+      "hasStructuralAnalysis": true
+    },
+    "src-tauri/src/native_picker.rs": {
+      "filePath": "src-tauri/src/native_picker.rs",
+      "contentHash": "0fe04d1b70cfa7220870c692fcece0fc45843b6507dbe798bbe6e421a1f18764",
+      "functions": [
+        {
+          "name": "pick_entry",
+          "owner": "",
+          "params": [
+            "window"
+          ],
+          "returnType": "Result<Option<PathBuf>, String>",
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "select_entry",
+          "owner": "",
+          "params": [],
+          "returnType": "Result<Option<PathBuf>, String>",
+          "exported": false,
+          "lineCount": 43
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "objc2",
+          "specifiers": [
+            "MainThreadMarker"
+          ]
+        },
+        {
+          "source": "objc2_app_kit",
+          "specifiers": [
+            "NSModalResponseCancel",
+            "NSModalResponseOK",
+            "NSOpenPanel"
+          ]
+        },
+        {
+          "source": "objc2_foundation",
+          "specifiers": [
+            "NSArray",
+            "NSString"
+          ]
+        },
+        {
+          "source": "std",
+          "specifiers": [
+            "path::PathBuf",
+            "sync::mpsc"
+          ]
+        }
+      ],
+      "exports": [
+        "pick_entry"
+      ],
+      "totalLines": 62,
+      "hasStructuralAnalysis": true
+    },
+    "src-tauri/tauri.conf.json": {
+      "filePath": "src-tauri/tauri.conf.json",
+      "contentHash": "a51a6101cba735a3c0131f831b94af5b7dac2e1ca5b97dc7e15d927c077cb22f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 29,
+      "hasStructuralAnalysis": false
+    },
+    "src-tauri/tauri.macos.conf.json": {
+      "filePath": "src-tauri/tauri.macos.conf.json",
+      "contentHash": "aa9335951f35633bc816c9e390609bbf2ddd3c347538d4f99103a5b1d022cd24",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 22,
+      "hasStructuralAnalysis": false
+    },
+    "src/debug.ts": {
+      "filePath": "src/debug.ts",
+      "contentHash": "50919771e756efb9024531f04a0198336adba3fa9e8b0b0e14cce979f1f6ff2f",
+      "functions": [
+        {
+          "name": "logInfo",
+          "params": [
+            "scope",
+            "event",
+            "details"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "logWarn",
+          "params": [
+            "scope",
+            "event",
+            "details"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "sanitize",
+          "params": [
+            "value",
+            "key",
+            "depth"
+          ],
+          "returnType": "unknown",
+          "exported": false,
+          "lineCount": 20
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [
+        "logInfo",
+        "logWarn"
+      ],
+      "totalLines": 44,
+      "hasStructuralAnalysis": true
+    },
+    "src/icons.ts": {
+      "filePath": "src/icons.ts",
+      "contentHash": "ca3859be4bae957b97bcffebb5207e6e4d8c056457ec3c221776a02f7a362681",
+      "functions": [
+        {
+          "name": "createToolbarIcon",
+          "params": [
+            "name"
+          ],
+          "returnType": "SVGSVGElement",
+          "exported": true,
+          "lineCount": 19
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [
+        "createToolbarIcon"
+      ],
+      "totalLines": 36,
+      "hasStructuralAnalysis": true
+    },
+    "src/json.ts": {
+      "filePath": "src/json.ts",
+      "contentHash": "ec10168e4963f035d0324ee06c37c187058e9ff4aa69716c72179535289bcbd5",
+      "functions": [
+        {
+          "name": "createJsonArticle",
+          "params": [
+            "source"
+          ],
+          "returnType": "HTMLElement",
+          "exported": true,
+          "lineCount": 96
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [
+        "createJsonArticle"
+      ],
+      "totalLines": 100,
+      "hasStructuralAnalysis": true
+    },
+    "src/main.ts": {
+      "filePath": "src/main.ts",
+      "contentHash": "1e3e8df9e9a0bd4c2d27ede4acde20eee20f7b83fa81a30463b96b817d370743",
+      "functions": [
+        {
+          "name": "contentCount",
+          "params": [
+            "source"
+          ],
+          "returnType": "number",
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "renderStandaloneViewer",
+          "params": [],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 17
+        },
+        {
+          "name": "initializeFileOpening",
+          "params": [
+            "viewer"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 27
+        },
+        {
+          "name": "createEmptyViewerArticle",
+          "params": [],
+          "returnType": "HTMLElement",
+          "exported": false,
+          "lineCount": 27
+        },
+        {
+          "name": "createArticle",
+          "params": [
+            "source",
+            "kind"
+          ],
+          "returnType": "{ article: HTMLElement; customCss: string }",
+          "exported": false,
+          "lineCount": 43
+        },
+        {
+          "name": "splitFrontMatter",
+          "params": [
+            "source"
+          ],
+          "returnType": "{ body: string; frontMatter?: string }",
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "scopeCustomCss",
+          "params": [
+            "source"
+          ],
+          "returnType": "string",
+          "exported": false,
+          "lineCount": 23
+        },
+        {
+          "name": "replaceCustomStyle",
+          "params": [
+            "css"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "secureInteractiveContent",
+          "params": [
+            "article"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 22
+        },
+        {
+          "name": "isUrlAttribute",
+          "params": [
+            "name"
+          ],
+          "returnType": "boolean",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "isExecutableUrl",
+          "params": [
+            "value"
+          ],
+          "returnType": "boolean",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "decorateAlerts",
+          "params": [
+            "article"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 21
+        },
+        {
+          "name": "decorateMath",
+          "params": [
+            "article"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "prepareDiagrams",
+          "params": [
+            "article"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 13
+        },
+        {
+          "name": "initializeMermaid",
+          "params": [],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 21
+        },
+        {
+          "name": "renderDiagrams",
+          "params": [
+            "article"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 27
+        },
+        {
+          "name": "removeMermaidScratch",
+          "params": [
+            "diagramId"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "createViewer",
+          "params": [
+            "article"
+          ],
+          "returnType": "ViewerElements",
+          "exported": false,
+          "lineCount": 295
+        },
+        {
+          "name": "createViewerLibrary",
+          "params": [],
+          "returnType": "ViewerLibraryElements",
+          "exported": false,
+          "lineCount": 31
+        },
+        {
+          "name": "createViewerLibrarySection",
+          "params": [
+            "titleText"
+          ],
+          "returnType": "{ section: HTMLElement; list: HTMLUListElement }",
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "initializeViewerLibrary",
+          "params": [
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 26
+        },
+        {
+          "name": "toggleViewerFavorite",
+          "params": [
+            "viewer",
+            "item"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 21
+        },
+        {
+          "name": "openViewerLibrary",
+          "params": [
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "setViewerCurrentItem",
+          "params": [
+            "viewer",
+            "item"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "recordViewerRecent",
+          "params": [
+            "item",
+            "viewer"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 12
+        },
+        {
+          "name": "updateViewerFavoriteButton",
+          "params": [
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 12
+        },
+        {
+          "name": "renderViewerLibrary",
+          "params": [
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "renderViewerItems",
+          "params": [
+            "list",
+            "items",
+            "emptyText",
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 35
+        },
+        {
+          "name": "openViewerItem",
+          "params": [
+            "item",
+            "viewer"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "readViewerItems",
+          "params": [
+            "value",
+            "limit"
+          ],
+          "returnType": "ViewerItem[]",
+          "exported": false,
+          "lineCount": 20
+        },
+        {
+          "name": "viewerItemKey",
+          "params": [
+            "item"
+          ],
+          "returnType": "string",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "viewerFavoriteKeys",
+          "params": [
+            "item",
+            "_viewer"
+          ],
+          "returnType": "Set<string>",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "isViewerFavorite",
+          "params": [
+            "item",
+            "viewer"
+          ],
+          "returnType": "boolean",
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "viewerFavoritesForDisplay",
+          "params": [
+            "viewer"
+          ],
+          "returnType": "ViewerItem[]",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "viewerItemLabel",
+          "params": [
+            "item"
+          ],
+          "returnType": "string",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "createTableOfContents",
+          "params": [
+            "article"
+          ],
+          "returnType": "HTMLElement | undefined",
+          "exported": false,
+          "lineCount": 47
+        },
+        {
+          "name": "initializeNativeNavigation",
+          "params": [
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 64
+        },
+        {
+          "name": "chooseNative",
+          "params": [
+            "directoryOnly",
+            "viewer"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 20
+        },
+        {
+          "name": "saveSession",
+          "params": [
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "restoreSession",
+          "params": [
+            "viewer"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 28
+        },
+        {
+          "name": "applyDirectoryState",
+          "params": [
+            "state",
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "openNativeDirectory",
+          "params": [
+            "path",
+            "viewer"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 25
+        },
+        {
+          "name": "openNativeFile",
+          "params": [
+            "path",
+            "viewer",
+            "hash"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 37
+        },
+        {
+          "name": "disableStandaloneRelativeResources",
+          "params": [
+            "article"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 17
+        },
+        {
+          "name": "createDirectorySidebar",
+          "params": [
+            "state",
+            "viewer"
+          ],
+          "returnType": "HTMLElement",
+          "exported": false,
+          "lineCount": 78
+        },
+        {
+          "name": "createDirectoryTreeItem",
+          "params": [
+            "entry",
+            "viewer"
+          ],
+          "returnType": "HTMLLIElement",
+          "exported": false,
+          "lineCount": 46
+        },
+        {
+          "name": "showDirectoryContextMenu",
+          "params": [
+            "event",
+            "target",
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 101
+        },
+        {
+          "name": "openDirectoryEntry",
+          "params": [
+            "path",
+            "_kind",
+            "viewer",
+            "hash"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "readDirectoryFile",
+          "params": [
+            "path",
+            "viewer"
+          ],
+          "returnType": "Promise<DirectoryFileContent>",
+          "exported": false,
+          "lineCount": 5
+        },
+        {
+          "name": "renderDirectoryMarkdown",
+          "params": [
+            "file",
+            "viewer",
+            "hash"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 19
+        },
+        {
+          "name": "renderJson",
+          "params": [
+            "file",
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 14
+        },
+        {
+          "name": "renderPdf",
+          "params": [
+            "file",
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 15
+        },
+        {
+          "name": "renderDirectoryImage",
+          "params": [
+            "file",
+            "viewer"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 25
+        },
+        {
+          "name": "trackDocumentRender",
+          "params": [
+            "article",
+            "imagesReady"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "prepareDirectoryDocument",
+          "params": [
+            "article",
+            "currentPath",
+            "viewer",
+            "renderId"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 41
+        },
+        {
+          "name": "loadDirectoryImage",
+          "params": [
+            "image",
+            "path",
+            "article",
+            "viewer",
+            "renderId"
+          ],
+          "returnType": "Promise<void>",
+          "exported": false,
+          "lineCount": 28
+        },
+        {
+          "name": "resolveDirectoryReference",
+          "params": [
+            "currentPath",
+            "reference"
+          ],
+          "returnType": "ResolvedDirectoryReference | undefined",
+          "exported": false,
+          "lineCount": 22
+        },
+        {
+          "name": "isExternalReference",
+          "params": [
+            "reference"
+          ],
+          "returnType": "boolean",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "currentDirectoryPath",
+          "params": [
+            "viewer",
+            "sidebar"
+          ],
+          "returnType": "string",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "setActiveDirectoryPath",
+          "params": [
+            "path",
+            "scope"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 24
+        },
+        {
+          "name": "resetLocationHash",
+          "params": [],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 8
+        },
+        {
+          "name": "showDirectoryNotice",
+          "params": [
+            "message"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "clearDirectoryNotice",
+          "params": [],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "decodeURIComponentSafely",
+          "params": [
+            "value"
+          ],
+          "returnType": "string",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "headingLevel",
+          "params": [
+            "heading"
+          ],
+          "returnType": "number",
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "slugify",
+          "params": [
+            "value"
+          ],
+          "returnType": "string",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "escapeHtml",
+          "params": [
+            "value"
+          ],
+          "returnType": "string",
+          "exported": false,
+          "lineCount": 9
+        },
+        {
+          "name": "isRecord",
+          "params": [
+            "value"
+          ],
+          "exported": false,
+          "lineCount": 3
+        },
+        {
+          "name": "errorName",
+          "params": [
+            "error"
+          ],
+          "returnType": "string",
+          "exported": false,
+          "lineCount": 3
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@tauri-apps/api/event",
+          "specifiers": [
+            "listen"
+          ]
+        },
+        {
+          "source": "@mermaid-js/mermaid-zenuml",
+          "specifiers": [
+            "zenuml"
+          ]
+        },
+        {
+          "source": "dompurify",
+          "specifiers": [
+            "DOMPurify"
+          ]
+        },
+        {
+          "source": "highlight.js/lib/common",
+          "specifiers": [
+            "hljs"
+          ]
+        },
+        {
+          "source": "katex",
+          "specifiers": [
+            "katex"
+          ]
+        },
+        {
+          "source": "markdown-it",
+          "specifiers": [
+            "MarkdownIt"
+          ]
+        },
+        {
+          "source": "markdown-it-footnote",
+          "specifiers": [
+            "footnote"
+          ]
+        },
+        {
+          "source": "markdown-it-task-lists",
+          "specifiers": [
+            "taskLists"
+          ]
+        },
+        {
+          "source": "markdown-it-texmath",
+          "specifiers": [
+            "texmath"
+          ]
+        },
+        {
+          "source": "mermaid",
+          "specifiers": [
+            "mermaid"
+          ]
+        },
+        {
+          "source": "./debug.ts",
+          "specifiers": [
+            "logWarn"
+          ]
+        },
+        {
+          "source": "./icons.ts",
+          "specifiers": [
+            "createToolbarIcon"
+          ]
+        },
+        {
+          "source": "./json.ts",
+          "specifiers": [
+            "createJsonArticle"
+          ]
+        },
+        {
+          "source": "./pdf.ts",
+          "specifiers": [
+            "createPdfArticle"
+          ]
+        },
+        {
+          "source": "./search.ts",
+          "specifiers": [
+            "initializeDocumentSearch"
+          ]
+        },
+        {
+          "source": "./settings.ts",
+          "specifiers": [
+            "applyTypography",
+            "createSettingsPage",
+            "getSettings",
+            "subscribeSettings",
+            "updateSettings"
+          ]
+        },
+        {
+          "source": "./platform.ts",
+          "specifiers": [
+            "directoryFileKind",
+            "pickEntry",
+            "pickDirectory",
+            "readFile",
+            "readDirectory",
+            "takeOpenedFile",
+            "readLibrary",
+            "writeLibrary",
+            "openExternal",
+            "errorMessage",
+            "DirectoryBrowserState",
+            "DirectoryFileContent",
+            "DirectoryFileKind",
+            "DirectoryTreeEntry"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 1728,
+      "hasStructuralAnalysis": true
+    },
+    "src/pdf.ts": {
+      "filePath": "src/pdf.ts",
+      "contentHash": "92a7e98f3cf9dccca8794dbc1d3bb5a4db2144a27ac2542d0d0cdc27f740ecde",
+      "functions": [
+        {
+          "name": "createPdfArticle",
+          "params": [
+            "base64"
+          ],
+          "returnType": "{ article: HTMLElement; ready: Promise<void>; dispose: () => void }",
+          "exported": true,
+          "lineCount": 356
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "pdfjs-dist",
+          "specifiers": [
+            "PDFDocumentLoadingTask",
+            "PDFDocumentProxy",
+            "RenderTask"
+          ]
+        }
+      ],
+      "exports": [
+        "createPdfArticle"
+      ],
+      "totalLines": 359,
+      "hasStructuralAnalysis": true
+    },
+    "src/platform.ts": {
+      "filePath": "src/platform.ts",
+      "contentHash": "366468e38eb74ca766d44bd7e1c084c7a8935ac53019e10495d5d26902154827",
+      "functions": [
+        {
+          "name": "directoryFileKind",
+          "params": [
+            "path"
+          ],
+          "returnType": "DirectoryFileKind",
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "takeOpenedFile",
+          "params": [],
+          "returnType": "Promise<string | null>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "pickEntry",
+          "params": [],
+          "returnType": "Promise<{ kind: \"file\" | \"directory\"; path: string } | null>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "pickDirectory",
+          "params": [],
+          "returnType": "Promise<string | null>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "readFile",
+          "params": [
+            "path"
+          ],
+          "returnType": "Promise<DirectoryFileContent>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "readDirectory",
+          "params": [
+            "path"
+          ],
+          "returnType": "Promise<DirectoryBrowserState>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "openExternal",
+          "params": [
+            "url"
+          ],
+          "returnType": "Promise<void>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "readLibrary",
+          "params": [],
+          "returnType": "Promise<Record<string, unknown>>",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "writeLibrary",
+          "params": [
+            "changes"
+          ],
+          "returnType": "Promise<void>",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "errorMessage",
+          "params": [
+            "error"
+          ],
+          "returnType": "string",
+          "exported": true,
+          "lineCount": 3
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@tauri-apps/api/core",
+          "specifiers": [
+            "invoke"
+          ]
+        }
+      ],
+      "exports": [
+        "directoryFileKind",
+        "takeOpenedFile",
+        "pickEntry",
+        "pickDirectory",
+        "readFile",
+        "readDirectory",
+        "openExternal",
+        "readLibrary",
+        "writeLibrary",
+        "errorMessage"
+      ],
+      "totalLines": 56,
+      "hasStructuralAnalysis": true
+    },
+    "src/search.ts": {
+      "filePath": "src/search.ts",
+      "contentHash": "6e011b3ac5267dac8e77a029d9d748c6b0c0f4def354398eb38a5250fce9349b",
+      "functions": [
+        {
+          "name": "initializeDocumentSearch",
+          "params": [
+            "content",
+            "shell",
+            "canOpen"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 180
+        }
+      ],
+      "classes": [],
+      "imports": [],
+      "exports": [
+        "initializeDocumentSearch"
+      ],
+      "totalLines": 190,
+      "hasStructuralAnalysis": true
+    },
+    "src/settings.ts": {
+      "filePath": "src/settings.ts",
+      "contentHash": "cbcf49e0b8ff4128f4bcae177f5cf6442118cab86e328605311524771ef486f2",
+      "functions": [
+        {
+          "name": "bounded",
+          "params": [
+            "value",
+            "fallback",
+            "minimum",
+            "maximum"
+          ],
+          "returnType": "number",
+          "exported": false,
+          "lineCount": 4
+        },
+        {
+          "name": "normalize",
+          "params": [
+            "value"
+          ],
+          "returnType": "ReaderSettings",
+          "exported": false,
+          "lineCount": 11
+        },
+        {
+          "name": "loadSettings",
+          "params": [],
+          "returnType": "ReaderSettings",
+          "exported": false,
+          "lineCount": 10
+        },
+        {
+          "name": "getSettings",
+          "params": [],
+          "returnType": "Readonly<ReaderSettings>",
+          "exported": true,
+          "lineCount": 3
+        },
+        {
+          "name": "subscribeSettings",
+          "params": [
+            "listener"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "updateSettings",
+          "params": [
+            "changes"
+          ],
+          "returnType": "string | undefined",
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "applyTypography",
+          "params": [
+            "value"
+          ],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "createSettingsPage",
+          "params": [],
+          "returnType": "{ dialog: HTMLDialogElement; open: () => void }",
+          "exported": true,
+          "lineCount": 134
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "./updater.ts",
+          "specifiers": [
+            "createUpdaterControls"
+          ]
+        }
+      ],
+      "exports": [
+        "getSettings",
+        "subscribeSettings",
+        "updateSettings",
+        "applyTypography",
+        "createSettingsPage"
+      ],
+      "totalLines": 223,
+      "hasStructuralAnalysis": true
+    },
+    "src/updater.ts": {
+      "filePath": "src/updater.ts",
+      "contentHash": "7e7f14b63bddd25e23f29f88cb3a25e9c2a5787b86fd659e55aafff769204cf4",
+      "functions": [
+        {
+          "name": "createUpdaterControls",
+          "params": [],
+          "returnType": "HTMLElement",
+          "exported": true,
+          "lineCount": 129
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@tauri-apps/api/core",
+          "specifiers": [
+            "invoke"
+          ]
+        },
+        {
+          "source": "@tauri-apps/plugin-process",
+          "specifiers": [
+            "relaunch"
+          ]
+        },
+        {
+          "source": "@tauri-apps/plugin-updater",
+          "specifiers": [
+            "check",
+            "Update"
+          ]
+        },
+        {
+          "source": "./platform.ts",
+          "specifiers": [
+            "errorMessage"
+          ]
+        }
+      ],
+      "exports": [
+        "createUpdaterControls"
+      ],
+      "totalLines": 135,
+      "hasStructuralAnalysis": true
+    },
+    "src/vendor.d.ts": {
+      "filePath": "src/vendor.d.ts",
+      "contentHash": "b1892f93f94945b65ac4220da655b032e02eb03b72563ade9661dd4ae14e9230",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 15,
+      "hasStructuralAnalysis": true
+    },
+    "tsconfig.json": {
+      "filePath": "tsconfig.json",
+      "contentHash": "9550ee93fa3241234a8c3267c834f85d2ba70583254f922f1a10f2d29aec8d04",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 17,
+      "hasStructuralAnalysis": false
+    }
+  }
+}

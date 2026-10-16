@@ -1,0 +1,10 @@
+
+> linguamark-desktop-reader@0.4.1 check
+> tsc --noEmit
+
+
+> linguamark-desktop-reader@0.4.1 build
+> node scripts/build.mjs
+
+    Checking linguamark-reader v0.4.1 (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.98s

@@ -11,14 +11,12 @@ use std::{
     path::{Path, PathBuf},
     sync::Mutex,
 };
-use tauri::Manager;
-#[cfg(target_os = "macos")]
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
+use tauri::menu::{Menu, MenuItem, Submenu};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 
 const MAX_FILE_BYTES: u64 = 32 * 1024 * 1024;
-const MAX_ENTRIES: usize = 10_000;
 const MAX_DEPTH: usize = 32;
 
 #[derive(Default, Deserialize, Serialize)]
@@ -297,7 +295,6 @@ fn walk(
     root: &Path,
     directory: &Path,
     depth: usize,
-    count: &mut usize,
 ) -> Result<Vec<Entry>, String> {
     if depth > MAX_DEPTH {
         return Err("目录层级超过 32 层，请选择更小的目录".into());
@@ -309,10 +306,6 @@ fn walk(
         // Do not follow links, special devices or sockets while traversing user directories.
         if file_type.is_symlink() || (!file_type.is_file() && !file_type.is_dir()) {
             continue;
-        }
-        *count += 1;
-        if *count > MAX_ENTRIES {
-            return Err("目录超过 10000 个条目，请选择更小的目录".into());
         }
         let path = entry.path();
         let canonical = path.canonicalize().map_err(|_| "目录条目已不可访问")?;
@@ -330,7 +323,7 @@ fn walk(
                 Some(file_kind(&path))
             },
             children: if directory {
-                Some(walk(root, &canonical, depth + 1, count)?)
+                Some(walk(root, &canonical, depth + 1)?)
             } else {
                 None
             },
@@ -362,7 +355,7 @@ async fn read_directory(path: String, app: tauri::AppHandle) -> Result<Directory
         Ok(Directory {
             status: "granted",
             root_name: display_path(&root),
-            entries: walk(&root, &root, 0, &mut 0)?,
+            entries: walk(&root, &root, 0)?,
         })
     })
     .await
@@ -370,10 +363,49 @@ async fn read_directory(path: String, app: tauri::AppHandle) -> Result<Directory
 }
 
 #[tauri::command]
+async fn resolve_link_target(
+    source: String, path: String, app: tauri::AppHandle,
+) -> Result<Option<SelectedEntry>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let access = app.state::<Access>();
+        let source = access.authorize(Path::new(&source))?;
+        if !source.is_file() {
+            return Err("链接来源必须是已授权的文件".into());
+        }
+        let canonical = Path::new(&path).canonicalize().map_err(|_| "链接目标不存在或不可访问")?;
+        let directory = canonical.is_dir();
+        if !directory && (!canonical.is_file() || file_kind(&canonical) == "other") {
+            return Err("阅读器不支持此链接目标的文件类型".into());
+        }
+        if access.authorize(&canonical).is_err() {
+            let description = if directory { "此文件夹及其内容" } else { "此文件" };
+            let approved = app.dialog()
+                .message(format!("文档链接请求访问{description}：\n{}\n\n是否允许阅读器访问？", display_path(&canonical)))
+                .title("打开本地链接")
+                .buttons(tauri_plugin_dialog::MessageDialogButtons::OkCancelCustom(
+                    "允许并打开".into(), "取消".into(),
+                ))
+                .blocking_show();
+            if !approved {
+                return Ok(None);
+            }
+            // Grant only the explicitly confirmed target, never a linked file's parent.
+            access.grant(&canonical, directory)?;
+        }
+        Ok(Some(SelectedEntry {
+            kind: if directory { "directory" } else { "file" },
+            path: display_path(&canonical),
+        }))
+    }).await.map_err(|_| "打开链接任务失败")?
+}
+
+#[tauri::command]
 fn open_external(url: String, app: tauri::AppHandle) -> Result<(), String> {
     let parsed = tauri::Url::parse(&url).map_err(|_| "链接无效")?;
-    if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
-        return Err("仅允许在浏览器打开 HTTP/HTTPS 链接".into());
+    match parsed.scheme() {
+        "http" | "https" if parsed.host_str().is_some() => {},
+        "mailto" | "tel" | "sms" if !parsed.path().is_empty() => {},
+        _ => return Err(format!("不支持打开 {} 协议的链接", parsed.scheme())),
     }
     app.opener()
         .open_url(parsed.to_string(), None::<&str>)
@@ -396,6 +428,21 @@ fn updater_configured(app: tauri::AppHandle) -> bool {
     has_key && has_endpoint
 }
 
+struct NavigationMenu {
+    back: MenuItem<tauri::Wry>,
+    forward: MenuItem<tauri::Wry>,
+}
+
+#[tauri::command]
+fn set_navigation_state(
+    menu: tauri::State<'_, NavigationMenu>,
+    can_back: bool,
+    can_forward: bool,
+) -> Result<(), String> {
+    menu.back.set_enabled(can_back).map_err(|error| error.to_string())?;
+    menu.forward.set_enabled(can_forward).map_err(|error| error.to_string())
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(PendingOpen::default())
@@ -407,7 +454,21 @@ fn main() {
                 .open_js_links_on_click(false)
                 .build(),
         )
+        .on_menu_event(|app, event| {
+            let direction = match event.id().as_ref() {
+                "document-back" => "back",
+                "document-forward" => "forward",
+                _ => return,
+            };
+            let _ = app.emit_to("main", "document-navigation", direction);
+        })
         .setup(|app| {
+            let menu = Menu::default(app.handle())?;
+            let back = MenuItem::with_id(app, "document-back", "后退", false, Some("CmdOrCtrl+["))?;
+            let forward = MenuItem::with_id(app, "document-forward", "前进", false, Some("CmdOrCtrl+]"))?;
+            menu.append(&Submenu::with_items(app, "导航", true, &[&back, &forward])?)?;
+            app.set_menu(menu)?;
+            app.manage(NavigationMenu { back, forward });
             let data = app.path().app_data_dir()?;
             fs::create_dir_all(&data)?;
             let store = data.join("grants.json");
@@ -430,7 +491,7 @@ fn main() {
                 "main",
                 tauri::WebviewUrl::App("index.html".into()),
             )
-            .title("LinguaMark Reader")
+            .title("Folio")
             .inner_size(1200.0, 820.0)
             .min_inner_size(640.0, 480.0)
             .on_new_window(|_, _| tauri::webview::NewWindowResponse::Deny)
@@ -453,11 +514,13 @@ fn main() {
             read_file,
             read_directory,
             open_external,
+            resolve_link_target,
             take_opened_file,
-            updater_configured
+            updater_configured,
+            set_navigation_state
         ])
         .build(tauri::generate_context!())
-        .expect("failed to build LinguaMark Reader")
+        .expect("failed to build Folio")
         .run(|_app, _event| {
             #[cfg(target_os = "macos")]
             if let tauri::RunEvent::Opened { urls } = _event {

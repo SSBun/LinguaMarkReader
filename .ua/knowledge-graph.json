@@ -1,0 +1,3216 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "linguamark-desktop-reader",
+    "languages": [
+      "css",
+      "html",
+      "javascript",
+      "json",
+      "markdown",
+      "rust",
+      "toml",
+      "txt",
+      "typescript",
+      "xml"
+    ],
+    "frameworks": [
+      "Tauri"
+    ],
+    "description": "基于 Tauri 2、TypeScript 和 Rust 的本地只读文档阅读器，支持 Markdown、JSON、HTML 和 PDF，提供文件目录浏览、正文搜索、阅读设置与应用更新。",
+    "analyzedAt": "2026-09-22T10:44:15.848039+00:00",
+    "gitCommitHash": "09c81b622fe34714232595c7325cba1cf2e5f8fb"
+  },
+  "nodes": [
+    {
+      "id": "file:src/debug.ts",
+      "type": "file",
+      "name": "debug.ts",
+      "filePath": "src/debug.ts",
+      "complexity": "simple",
+      "summary": "提供带作用域的控制台日志，并对敏感字段、令牌及过长内容进行递归脱敏。",
+      "tags": [
+        "日志",
+        "隐私保护",
+        "工具函数"
+      ]
+    },
+    {
+      "id": "function:src/debug.ts:logInfo",
+      "type": "function",
+      "name": "logInfo",
+      "filePath": "src/debug.ts",
+      "lineRange": [
+        16,
+        18
+      ],
+      "summary": "以统一作用域前缀输出经过脱敏的普通日志。",
+      "tags": [
+        "日志",
+        "隐私保护",
+        "工具函数"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/debug.ts:logWarn",
+      "type": "function",
+      "name": "logWarn",
+      "filePath": "src/debug.ts",
+      "lineRange": [
+        20,
+        22
+      ],
+      "summary": "以统一作用域前缀输出经过脱敏的警告日志。",
+      "tags": [
+        "日志",
+        "隐私保护",
+        "工具函数"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/debug.ts:sanitize",
+      "type": "function",
+      "name": "sanitize",
+      "filePath": "src/debug.ts",
+      "lineRange": [
+        24,
+        43
+      ],
+      "summary": "递归处理日志数据，遮蔽敏感键和令牌，限制嵌套深度与字符串长度。",
+      "tags": [
+        "日志",
+        "隐私保护",
+        "工具函数"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/icons.ts",
+      "type": "file",
+      "name": "icons.ts",
+      "filePath": "src/icons.ts",
+      "complexity": "simple",
+      "summary": "集中定义工具栏图标路径，生成继承当前颜色且不参与辅助技术焦点的 SVG 元素。",
+      "tags": [
+        "图标",
+        "工具栏",
+        "界面组件"
+      ]
+    },
+    {
+      "id": "function:src/icons.ts:createToolbarIcon",
+      "type": "function",
+      "name": "createToolbarIcon",
+      "filePath": "src/icons.ts",
+      "lineRange": [
+        17,
+        35
+      ],
+      "summary": "根据预定义名称创建统一样式的 SVG 工具栏图标，并设置装饰性可访问属性。",
+      "tags": [
+        "图标",
+        "工具栏",
+        "界面组件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/json.ts",
+      "type": "file",
+      "name": "json.ts",
+      "filePath": "src/json.ts",
+      "complexity": "moderate",
+      "summary": "将 JSON 源文本转换为可折叠、延迟展开的语法着色树，保留原始数字和重复键，并在搜索前补全子节点。无效 JSON 回退为原文显示。",
+      "tags": [
+        "文档渲染",
+        "懒加载",
+        "json"
+      ]
+    },
+    {
+      "id": "function:src/json.ts:createJsonArticle",
+      "type": "function",
+      "name": "createJsonArticle",
+      "filePath": "src/json.ts",
+      "lineRange": [
+        4,
+        99
+      ],
+      "summary": "校验 JSON 后基于源词元构建可折叠树，延迟创建子节点并响应搜索准备事件；解析失败时显示原文。",
+      "tags": [
+        "文档渲染",
+        "懒加载",
+        "json"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/main.ts",
+      "type": "file",
+      "name": "main.ts",
+      "filePath": "src/main.ts",
+      "complexity": "complex",
+      "summary": "作为阅读器前端入口，协调原生文件打开、目录树、收藏与会话恢复，并分派 Markdown、HTML、JSON、PDF 和图片渲染。负责内容净化、相对资源加载、目录导航及设置与搜索集成。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航",
+        "内容安全"
+      ]
+    },
+    {
+      "id": "function:src/main.ts:renderStandaloneViewer",
+      "type": "function",
+      "name": "renderStandaloneViewer",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        120,
+        136
+      ],
+      "summary": "创建阅读器外壳，初始化原生导航、收藏和系统文件打开监听，并显示初始化失败提示。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:initializeFileOpening",
+      "type": "function",
+      "name": "initializeFileOpening",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        138,
+        164
+      ],
+      "summary": "串行消费原生文件打开请求；仅在没有明确打开动作和导航竞争时恢复上次会话。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:createEmptyViewerArticle",
+      "type": "function",
+      "name": "createEmptyViewerArticle",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        166,
+        192
+      ],
+      "summary": "构建未打开文档时的导入说明，以及收藏和最近浏览列表占位区域。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:createArticle",
+      "type": "function",
+      "name": "createArticle",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        194,
+        236
+      ],
+      "summary": "将 Markdown 或 HTML 转换为净化后的正文，分离受限自定义样式，并增强表格、提示块、公式和图表。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/main.ts:scopeCustomCss",
+      "type": "function",
+      "name": "scopeCustomCss",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        244,
+        266
+      ],
+      "summary": "解析文档样式并排除导入、字体及动画等规则，将剩余规则限制在正文作用域内。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:secureInteractiveContent",
+      "type": "function",
+      "name": "secureInteractiveContent",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        277,
+        298
+      ],
+      "summary": "移除主动内容、事件属性和可执行链接，约束嵌入框架、表单及新窗口链接行为。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:decorateAlerts",
+      "type": "function",
+      "name": "decorateAlerts",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        308,
+        328
+      ],
+      "summary": "识别 Markdown 引用中的提示标记，转换为带类型样式和标题的提示块。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:decorateMath",
+      "type": "function",
+      "name": "decorateMath",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        330,
+        340
+      ],
+      "summary": "为行内与块级公式添加展示类及忽略标记。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:prepareDiagrams",
+      "type": "function",
+      "name": "prepareDiagrams",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        342,
+        354
+      ],
+      "summary": "将 Mermaid 代码块包装为图表面板，保留源码供后续异步渲染。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:initializeMermaid",
+      "type": "function",
+      "name": "initializeMermaid",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        356,
+        376
+      ],
+      "summary": "以共享 Promise 初始化严格安全模式的 Mermaid，并注册 ZenUML 与阅读器主题。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:renderDiagrams",
+      "type": "function",
+      "name": "renderDiagrams",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        378,
+        404
+      ],
+      "summary": "异步渲染图表并过滤失效渲染结果，清理临时节点且在失败时保留源码与日志。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:createViewer",
+      "type": "function",
+      "name": "createViewer",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        410,
+        704
+      ],
+      "summary": "组装工具栏、正文、设置和收藏对话框，管理响应式侧栏切换、拖拽宽度及设置订阅。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/main.ts:createViewerLibrary",
+      "type": "function",
+      "name": "createViewerLibrary",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        706,
+        736
+      ],
+      "summary": "构建收藏与最近浏览对话框及其关闭按钮和分栏列表。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/main.ts:createViewerLibrarySection",
+      "type": "function",
+      "name": "createViewerLibrarySection",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        738,
+        747
+      ],
+      "summary": "创建带标题的收藏或最近浏览列表分区。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:initializeViewerLibrary",
+      "type": "function",
+      "name": "initializeViewerLibrary",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        749,
+        774
+      ],
+      "summary": "绑定收藏操作并加载持久化列表，完成校验后同步按钮、列表与初始浏览记录。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:toggleViewerFavorite",
+      "type": "function",
+      "name": "toggleViewerFavorite",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        776,
+        796
+      ],
+      "summary": "切换条目的收藏状态并持久化，写入失败时回滚界面和内存状态。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:recordViewerRecent",
+      "type": "function",
+      "name": "recordViewerRecent",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        817,
+        828
+      ],
+      "summary": "对最近浏览条目去重并限制数量，同步列表后将记录写入持久存储。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:updateViewerFavoriteButton",
+      "type": "function",
+      "name": "updateViewerFavoriteButton",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        830,
+        841
+      ],
+      "summary": "依据当前条目和收藏加载状态更新按钮可用性、图标、标签与辅助说明。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:renderViewerItems",
+      "type": "function",
+      "name": "renderViewerItems",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        853,
+        887
+      ],
+      "summary": "渲染可点击的收藏或最近浏览条目，并在列表为空时显示说明。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/main.ts:readViewerItems",
+      "type": "function",
+      "name": "readViewerItems",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        895,
+        914
+      ],
+      "summary": "验证持久化条目结构与路径，去重并按指定上限返回有效文件或目录条目。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:createTableOfContents",
+      "type": "function",
+      "name": "createTableOfContents",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        943,
+        989
+      ],
+      "summary": "为正文标题分配唯一锚点，并生成反映标题层级的侧栏目录。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/main.ts:initializeNativeNavigation",
+      "type": "function",
+      "name": "initializeNativeNavigation",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        991,
+        1054
+      ],
+      "summary": "集成搜索、导入和刷新快捷键、阅读位置保存及外部链接打开行为。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/main.ts:chooseNative",
+      "type": "function",
+      "name": "chooseNative",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1056,
+        1075
+      ],
+      "summary": "防止文件选择器重复打开，依据用户选择分派目录或文件打开，并处理异常。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:restoreSession",
+      "type": "function",
+      "name": "restoreSession",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1086,
+        1113
+      ],
+      "summary": "恢复保存的目录、文档和滚动位置；等待渲染稳定，并避免覆盖用户的新导航或滚动意图。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:openNativeDirectory",
+      "type": "function",
+      "name": "openNativeDirectory",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1125,
+        1149
+      ],
+      "summary": "读取目录并丢弃过期响应，释放旧 PDF 资源后更新文件树、空白主页、浏览记录与会话。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:openNativeFile",
+      "type": "function",
+      "name": "openNativeFile",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1151,
+        1187
+      ],
+      "summary": "读取原生文件并按类型选择渲染器，通过导航序列避免过期内容覆盖，再更新当前条目与会话。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/main.ts:disableStandaloneRelativeResources",
+      "type": "function",
+      "name": "disableStandaloneRelativeResources",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1189,
+        1205
+      ],
+      "summary": "单独打开文档时移除非数据图片来源，并禁用无法解析的相对文件链接。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:createDirectorySidebar",
+      "type": "function",
+      "name": "createDirectorySidebar",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1207,
+        1284
+      ],
+      "summary": "构建目录文件树侧栏，提供上下文菜单、全部展开折叠以及当前文件定位控件。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/main.ts:createDirectoryTreeItem",
+      "type": "function",
+      "name": "createDirectoryTreeItem",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1286,
+        1331
+      ],
+      "summary": "递归创建目录与文件树节点，按文件类型显示标记并禁用不支持格式的打开动作。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/main.ts:showDirectoryContextMenu",
+      "type": "function",
+      "name": "showDirectoryContextMenu",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1333,
+        1433
+      ],
+      "summary": "展示复制、收藏和子树展开折叠菜单，管理键盘焦点、边界定位及事件监听清理。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/main.ts:renderDirectoryMarkdown",
+      "type": "function",
+      "name": "renderDirectoryMarkdown",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1449,
+        1467
+      ],
+      "summary": "显示目录内 Markdown 或 HTML，更新目录与样式，加载相对资源并处理目标锚点。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:renderJson",
+      "type": "function",
+      "name": "renderJson",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1469,
+        1482
+      ],
+      "summary": "调用 JSON 阅读组件替换正文，清理目录和旧样式，并更新文件信息与渲染状态。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:renderPdf",
+      "type": "function",
+      "name": "renderPdf",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1484,
+        1498
+      ],
+      "summary": "安装 PDF 阅读组件，保存其释放回调与就绪 Promise，并重置目录、样式及文档信息。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:renderDirectoryImage",
+      "type": "function",
+      "name": "renderDirectoryImage",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1500,
+        1524
+      ],
+      "summary": "生成独立图片预览与路径说明，更新阅读器状态并等待图片解码完成。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:prepareDirectoryDocument",
+      "type": "function",
+      "name": "prepareDirectoryDocument",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1534,
+        1574
+      ],
+      "summary": "阻止自动加载远程图片，解析目录内图片与文件链接，并绑定受支持文件的导航。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/main.ts:loadDirectoryImage",
+      "type": "function",
+      "name": "loadDirectoryImage",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1576,
+        1603
+      ],
+      "summary": "通过原生文件读取与缓存加载目录图片，用渲染序列避免失效内容回写并显示失败状态。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:resolveDirectoryReference",
+      "type": "function",
+      "name": "resolveDirectoryReference",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1605,
+        1626
+      ],
+      "summary": "解析相对路径与锚点，规范化分隔符和父目录片段，并拒绝越过目录根或包含空字符的引用。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/main.ts:setActiveDirectoryPath",
+      "type": "function",
+      "name": "setActiveDirectoryPath",
+      "filePath": "src/main.ts",
+      "lineRange": [
+        1641,
+        1664
+      ],
+      "summary": "同步文件树当前项和定位按钮，展开祖先目录并滚动、聚焦到活动文件。",
+      "tags": [
+        "入口点",
+        "阅读器",
+        "导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/pdf.ts",
+      "type": "file",
+      "name": "pdf.ts",
+      "filePath": "src/pdf.ts",
+      "complexity": "complex",
+      "summary": "基于按需加载的 PDF.js 构建纵向连续和横向单页阅读界面，管理可见页渲染、缩放、当前页文本与资源释放。",
+      "tags": [
+        "文档渲染",
+        "pdf",
+        "资源管理",
+        "懒加载"
+      ]
+    },
+    {
+      "id": "function:src/pdf.ts:createPdfArticle",
+      "type": "function",
+      "name": "createPdfArticle",
+      "filePath": "src/pdf.ts",
+      "lineRange": [
+        3,
+        358
+      ],
+      "summary": "创建 PDF 阅读界面并按可见范围调度页面渲染，支持分页、缩放和文本提取，返回就绪信号与完整释放入口。",
+      "tags": [
+        "文档渲染",
+        "pdf",
+        "资源管理"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/search.ts",
+      "type": "file",
+      "name": "search.ts",
+      "filePath": "src/search.ts",
+      "complexity": "moderate",
+      "summary": "提供文档内跨文本节点搜索、高亮和循环定位，支持输入法组合输入、快捷键、折叠内容展开及文档变更后的清理。",
+      "tags": [
+        "全文搜索",
+        "键盘交互",
+        "可访问性"
+      ]
+    },
+    {
+      "id": "function:src/search.ts:initializeDocumentSearch",
+      "type": "function",
+      "name": "initializeDocumentSearch",
+      "filePath": "src/search.ts",
+      "lineRange": [
+        10,
+        189
+      ],
+      "summary": "构建搜索面板并实现跨文本节点匹配、高亮、循环定位和折叠展开，协调输入法、DOM 变化及焦点恢复。",
+      "tags": [
+        "全文搜索",
+        "键盘交互",
+        "可访问性"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/platform.ts",
+      "type": "file",
+      "name": "platform.ts",
+      "filePath": "src/platform.ts",
+      "summary": "封装 Tauri 文件与目录命令、外链打开及本地书库存储，为阅读界面提供类型化平台接口。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform.ts:directoryFileKind",
+      "type": "function",
+      "name": "directoryFileKind",
+      "filePath": "src/platform.ts",
+      "lineRange": [
+        23,
+        29
+      ],
+      "summary": "根据文件扩展名识别 Markdown、JSON、HTML、PDF 和图片，其他格式归为未识别类型。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform.ts:takeOpenedFile",
+      "type": "function",
+      "name": "takeOpenedFile",
+      "filePath": "src/platform.ts",
+      "lineRange": [
+        31,
+        31
+      ],
+      "summary": "通过 Tauri 命令取出等待打开的文件路径。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform.ts:pickEntry",
+      "type": "function",
+      "name": "pickEntry",
+      "filePath": "src/platform.ts",
+      "lineRange": [
+        32,
+        32
+      ],
+      "summary": "调用原生入口选择器，返回文件或目录的类型与路径。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform.ts:pickDirectory",
+      "type": "function",
+      "name": "pickDirectory",
+      "filePath": "src/platform.ts",
+      "lineRange": [
+        33,
+        33
+      ],
+      "summary": "调用原生目录选择器，返回选中目录或取消结果。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform.ts:readFile",
+      "type": "function",
+      "name": "readFile",
+      "filePath": "src/platform.ts",
+      "lineRange": [
+        34,
+        34
+      ],
+      "summary": "调用原生文件读取命令，返回带格式判别字段的文本或二进制内容。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform.ts:readDirectory",
+      "type": "function",
+      "name": "readDirectory",
+      "filePath": "src/platform.ts",
+      "lineRange": [
+        35,
+        35
+      ],
+      "summary": "调用原生目录读取命令，返回目录浏览状态和条目树。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform.ts:openExternal",
+      "type": "function",
+      "name": "openExternal",
+      "filePath": "src/platform.ts",
+      "lineRange": [
+        36,
+        36
+      ],
+      "summary": "将外部链接交给原生后端打开。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform.ts:readLibrary",
+      "type": "function",
+      "name": "readLibrary",
+      "filePath": "src/platform.ts",
+      "lineRange": [
+        40,
+        44
+      ],
+      "summary": "读取本地书库存储并解析为对象，非对象内容回退为空记录。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform.ts:writeLibrary",
+      "type": "function",
+      "name": "writeLibrary",
+      "filePath": "src/platform.ts",
+      "lineRange": [
+        46,
+        51
+      ],
+      "summary": "同步读取并合并书库变更后写回本地存储，避免读写间异步间隙造成覆盖。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/platform.ts:errorMessage",
+      "type": "function",
+      "name": "errorMessage",
+      "filePath": "src/platform.ts",
+      "lineRange": [
+        53,
+        55
+      ],
+      "summary": "将未知错误转换为可显示文本，无法识别时返回统一中文提示。",
+      "tags": [
+        "平台桥接",
+        "文件访问",
+        "本地存储"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/settings.ts",
+      "type": "file",
+      "name": "settings.ts",
+      "filePath": "src/settings.ts",
+      "summary": "管理阅读偏好的校验、持久化和订阅通知，创建设置对话框并应用排版 CSS 变量。",
+      "tags": [
+        "阅读设置",
+        "持久化",
+        "界面组件"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/settings.ts:normalize",
+      "type": "function",
+      "name": "normalize",
+      "filePath": "src/settings.ts",
+      "lineRange": [
+        35,
+        45
+      ],
+      "summary": "校验阅读设置并限制字号和行距范围，对无效字体、布局及布尔选项使用默认值。",
+      "tags": [
+        "阅读设置",
+        "持久化",
+        "界面组件"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/settings.ts:loadSettings",
+      "type": "function",
+      "name": "loadSettings",
+      "filePath": "src/settings.ts",
+      "lineRange": [
+        47,
+        56
+      ],
+      "summary": "从本地存储加载设置并兼容旧动画偏好，读取失败时记录警告并恢复默认值。",
+      "tags": [
+        "阅读设置",
+        "持久化",
+        "界面组件"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/settings.ts:getSettings",
+      "type": "function",
+      "name": "getSettings",
+      "filePath": "src/settings.ts",
+      "lineRange": [
+        58,
+        60
+      ],
+      "summary": "返回当前只读阅读设置供界面和阅读流程使用。",
+      "tags": [
+        "阅读设置",
+        "持久化",
+        "界面组件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/settings.ts:subscribeSettings",
+      "type": "function",
+      "name": "subscribeSettings",
+      "filePath": "src/settings.ts",
+      "lineRange": [
+        62,
+        65
+      ],
+      "summary": "登记设置监听器，并立即用当前设置初始化订阅者。",
+      "tags": [
+        "阅读设置",
+        "持久化",
+        "界面组件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/settings.ts:updateSettings",
+      "type": "function",
+      "name": "updateSettings",
+      "filePath": "src/settings.ts",
+      "lineRange": [
+        67,
+        79
+      ],
+      "summary": "规范化并持久化设置后再更新内存和通知监听器，写入失败时保留旧配置。",
+      "tags": [
+        "阅读设置",
+        "持久化",
+        "界面组件"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/settings.ts:applyTypography",
+      "type": "function",
+      "name": "applyTypography",
+      "filePath": "src/settings.ts",
+      "lineRange": [
+        81,
+        87
+      ],
+      "summary": "将字体、标题字体、字号和行距写入根元素 CSS 变量以即时调整排版。",
+      "tags": [
+        "阅读设置",
+        "持久化",
+        "界面组件"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/settings.ts:createSettingsPage",
+      "type": "function",
+      "name": "createSettingsPage",
+      "filePath": "src/settings.ts",
+      "lineRange": [
+        89,
+        222
+      ],
+      "summary": "构建含基础与关于页签的设置对话框，绑定偏好控件、键盘导航和更新面板。",
+      "tags": [
+        "阅读设置",
+        "持久化",
+        "界面组件"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/updater.ts",
+      "type": "file",
+      "name": "updater.ts",
+      "filePath": "src/updater.ts",
+      "summary": "提供设置页内的手动更新控件，协调 Tauri 更新插件、下载进度、资源释放与应用重启。",
+      "tags": [
+        "应用更新",
+        "状态管理",
+        "界面组件"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/updater.ts:createUpdaterControls",
+      "type": "function",
+      "name": "createUpdaterControls",
+      "filePath": "src/updater.ts",
+      "lineRange": [
+        6,
+        134
+      ],
+      "summary": "构建用户主动触发的更新面板，管理检查、下载进度、安装与重启，并区分安装失败和重启失败。",
+      "tags": [
+        "应用更新",
+        "状态管理",
+        "界面组件"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "document:CHANGELOG.md",
+      "type": "document",
+      "name": "CHANGELOG.md",
+      "filePath": "CHANGELOG.md",
+      "summary": "记录 0.1.0 至 0.3.0 的阅读功能、交互修复及发布范围，区分历史版本能力和已验证平台，并保留未发布章节。",
+      "tags": [
+        "文档",
+        "版本历史",
+        "发布说明"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "介绍本地只读阅读器的运行方式、多格式阅读、设置、文件授权边界与代码职责；说明手动更新接入、签名发布流程及尚未启用线上更新的限制。",
+      "tags": [
+        "文档",
+        "入口点",
+        "使用指南",
+        "安全边界"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "config:package.json",
+      "type": "config",
+      "name": "package.json",
+      "filePath": "package.json",
+      "summary": "定义独立 Tauri 阅读器的 npm 元数据、前端与桌面构建入口及仅类型检查命令，声明 Markdown、图表、PDF、净化和更新插件依赖。",
+      "tags": [
+        "配置",
+        "构建系统",
+        "依赖管理",
+        "tauri"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:tsconfig.json",
+      "type": "config",
+      "name": "tsconfig.json",
+      "filePath": "tsconfig.json",
+      "summary": "对源目录中的 TypeScript 启用严格类型检查和未使用声明检查，采用 ES2023、ESNext 与 Bundler 模块解析，禁止编译输出。",
+      "tags": [
+        "配置",
+        "类型检查",
+        "typescript"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:public/index.html",
+      "type": "file",
+      "name": "index.html",
+      "filePath": "public/index.html",
+      "summary": "提供中文阅读器的 HTML 外壳，声明字符编码与移动端视口，并加载主题、公式、设置样式及构建后的主模块。",
+      "tags": [
+        "入口点",
+        "页面骨架",
+        "资源加载"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:public/katex-LICENSE.txt",
+      "type": "document",
+      "name": "katex-LICENSE.txt",
+      "filePath": "public/katex-LICENSE.txt",
+      "summary": "保留 KaTeX 的 MIT 许可与版权声明，说明再分发时保留声明的要求以及无担保条款。",
+      "tags": [
+        "文档",
+        "第三方许可",
+        "版权"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:public/markdown.css",
+      "type": "file",
+      "name": "markdown.css",
+      "filePath": "public/markdown.css",
+      "summary": "定义米黄纸面与森林绿主题、Markdown 排版、代码和图表样式，并适配只读阅读器的工具栏、收藏库、目录、搜索、JSON 树及 PDF 视图。包含响应式布局、打印与减少动态效果规则。",
+      "tags": [
+        "阅读器",
+        "样式",
+        "主题",
+        "响应式",
+        "无障碍"
+      ],
+      "complexity": "complex",
+      "languageNotes": "通过 CSS 自定义属性集中定义设计令牌，使用 :has()、:is() 和媒体查询适配阅读状态与不同视口。"
+    },
+    {
+      "id": "file:public/settings.css",
+      "type": "file",
+      "name": "settings.css",
+      "filePath": "public/settings.css",
+      "summary": "将阅读字体、字号与行距限定到正文区域，并提供设置对话框、选项卡、预览及更新控件样式。复用主题变量并处理弹窗滚动锁定、键盘焦点和窄屏布局。",
+      "tags": [
+        "设置",
+        "样式",
+        "排版",
+        "无障碍"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "使用 var() 回退值继承基础主题，结合属性选择器表达选项卡选中、隐藏及禁用状态。"
+    },
+    {
+      "id": "config:src-tauri/Cargo.toml",
+      "type": "config",
+      "name": "Cargo.toml",
+      "filePath": "src-tauri/Cargo.toml",
+      "summary": "定义 Rust 2021 桌面后端的软件包元数据、最低工具链版本和 Tauri 2 依赖，包含对话框、文件打开、更新、进程及序列化支持；仅在 macOS 引入 Objective-C 桥接依赖。",
+      "tags": [
+        "配置",
+        "构建系统",
+        "依赖管理",
+        "平台适配"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:src-tauri/Info.plist",
+      "type": "config",
+      "name": "Info.plist",
+      "filePath": "src-tauri/Info.plist",
+      "summary": "向 macOS 声明 Markdown 文档类型及其纯文本继承关系，关联 md、markdown 扩展名和 text/markdown MIME 类型，供应用文档类型识别使用。",
+      "tags": [
+        "配置",
+        "文档类型",
+        "文件关联",
+        "平台适配"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:src-tauri/tauri.conf.json",
+      "type": "config",
+      "name": "tauri.conf.json",
+      "filePath": "src-tauri/tauri.conf.json",
+      "summary": "定义应用标识、版本、前端构建命令和资源目录，并设置内容安全策略；默认关闭打包、不静态声明窗口，配置更新地址但尚未填入更新公钥。",
+      "tags": [
+        "配置",
+        "构建系统",
+        "安全策略",
+        "应用更新"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:src-tauri/tauri.macos.conf.json",
+      "type": "config",
+      "name": "tauri.macos.conf.json",
+      "filePath": "src-tauri/tauri.macos.conf.json",
+      "summary": "提供 macOS 打包覆盖配置，启用 app 产物、图标和 Markdown 查看器文件关联，并指定临时签名标识及附加 Info.plist。",
+      "tags": [
+        "配置",
+        "应用打包",
+        "文件关联",
+        "平台适配"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:examples/第二篇.md",
+      "type": "document",
+      "name": "第二篇.md",
+      "filePath": "examples/第二篇.md",
+      "summary": "演示文档间相对链接与返回锚点，并提示使用目录、收藏和文件切换功能。",
+      "tags": [
+        "文档",
+        "阅读示例",
+        "文件导航"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:examples/阅读示例.md",
+      "type": "document",
+      "name": "阅读示例.md",
+      "filePath": "examples/阅读示例.md",
+      "summary": "提供本地阅读示例，涵盖相对链接、图片、表格、脚注、公式、Mermaid 图及原始 HTML。",
+      "tags": [
+        "文档",
+        "阅读示例",
+        "排版"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/build-update.mjs",
+      "type": "file",
+      "name": "build-update.mjs",
+      "filePath": "scripts/build-update.mjs",
+      "summary": "校验 macOS 架构、更新公钥、私钥环境变量及稳定版本格式，构建当前架构签名更新包并生成更新清单；不执行上传。",
+      "tags": [
+        "构建系统",
+        "签名更新",
+        "发布"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/build.mjs",
+      "type": "file",
+      "name": "build.mjs",
+      "filePath": "scripts/build.mjs",
+      "summary": "使用 esbuild 打包浏览器入口并注入应用名称和版本，复制静态资源及 PDF.js 工作线程与配套资源。",
+      "tags": [
+        "构建系统",
+        "前端打包",
+        "静态资源"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src-tauri/build.rs",
+      "type": "file",
+      "name": "build.rs",
+      "filePath": "src-tauri/build.rs",
+      "summary": "在 Rust 构建阶段向 Tauri 声明七个应用命令，供权限生成与应用构建使用。",
+      "tags": [
+        "构建系统",
+        "命令注册",
+        "权限"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src-tauri/build.rs:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src-tauri/build.rs",
+      "lineRange": [
+        1,
+        14
+      ],
+      "summary": "声明应用命令集合并执行 Tauri 构建，失败时终止构建。",
+      "tags": [
+        "构建系统",
+        "命令注册",
+        "权限"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:src-tauri/capabilities/main.json",
+      "type": "config",
+      "name": "main.json",
+      "filePath": "src-tauri/capabilities/main.json",
+      "summary": "将本地主窗口的权限限定为指定文件访问命令、签名更新、进程重启及必要事件与资源操作。",
+      "tags": [
+        "配置",
+        "权限",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src-tauri/src/main.rs",
+      "type": "file",
+      "name": "main.rs",
+      "filePath": "src-tauri/src/main.rs",
+      "summary": "提供 Tauri 桌面入口、持久化路径授权、受限文件和目录读取、Finder 打开事件及外部链接和更新配置检查。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:Access.authorize",
+      "type": "function",
+      "name": "Access.authorize",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        36,
+        50
+      ],
+      "summary": "规范化请求路径并检查单文件或目录授权，拒绝未获授权的文件系统访问。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:Access.grant",
+      "type": "function",
+      "name": "Access.grant",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        52,
+        85
+      ],
+      "summary": "校验所选路径类型并添加授权，以临时文件替换持久化记录，写入失败时回滚新增授权。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:take_opened_file",
+      "type": "function",
+      "name": "take_opened_file",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        92,
+        106
+      ],
+      "summary": "消费待处理系统打开事件，只接受本地 Markdown 普通文件并授予单文件读取权限。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:receive_opened_file",
+      "type": "function",
+      "name": "receive_opened_file",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        109,
+        120
+      ],
+      "summary": "暂存 macOS 文件打开事件，通知前端并显示和聚焦主窗口。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:pick_entry",
+      "type": "function",
+      "name": "pick_entry",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        133,
+        170
+      ],
+      "summary": "在阻塞任务中选择文件或目录，验证类型并持久化授权后返回选择结果。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:pick_directory",
+      "type": "function",
+      "name": "pick_directory",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        173,
+        185
+      ],
+      "summary": "在阻塞任务中选择目录并保存目录授权，取消选择时返回空值。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:file_kind",
+      "type": "function",
+      "name": "file_kind",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        187,
+        202
+      ],
+      "summary": "按扩展名将文件分类为 Markdown、JSON、HTML、PDF、图片或不支持类型。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:read_file",
+      "type": "function",
+      "name": "read_file",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        231,
+        283
+      ],
+      "summary": "校验路径授权与普通文件大小，限量读取内容并返回 UTF-8 文本、PDF Base64 或图片数据地址。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:walk",
+      "type": "function",
+      "name": "walk",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        296,
+        345
+      ],
+      "summary": "递归生成目录树，跳过符号链接及特殊文件，限制深度、条目数和根路径边界，并优先排列目录。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:read_directory",
+      "type": "function",
+      "name": "read_directory",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        356,
+        370
+      ],
+      "summary": "在阻塞任务中验证目录授权并调用受限遍历，返回根名称与目录树。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:open_external",
+      "type": "function",
+      "name": "open_external",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        373,
+        381
+      ],
+      "summary": "仅将带主机名的 HTTP 或 HTTPS 链接交给系统浏览器打开。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:updater_configured",
+      "type": "function",
+      "name": "updater_configured",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        384,
+        397
+      ],
+      "summary": "检查更新插件配置是否同时具有非空公钥与端点数组，供界面决定更新功能是否可用。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src-tauri/src/main.rs:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        399,
+        470
+      ],
+      "summary": "初始化 Tauri 插件、授权存储与主窗口，限制窗口导航并注册命令和系统文件打开事件。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src-tauri/src/main.rs:Access",
+      "type": "class",
+      "name": "Access",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        30,
+        33
+      ],
+      "summary": "以互斥锁保护文件与目录授权，提供规范化访问检查及可回滚的持久化授权写入。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src-tauri/src/main.rs:Content",
+      "type": "class",
+      "name": "Content",
+      "filePath": "src-tauri/src/main.rs",
+      "lineRange": [
+        206,
+        228
+      ],
+      "summary": "定义带 kind 判别字段的序列化内容枚举，承载文本、PDF Base64 及图片数据地址。",
+      "tags": [
+        "入口点",
+        "文件访问",
+        "安全边界"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src-tauri/src/native_picker.rs",
+      "type": "file",
+      "name": "native_picker.rs",
+      "filePath": "src-tauri/src/native_picker.rs",
+      "summary": "通过主线程 AppKit 选择器统一选择本地文件或目录，以通道返回路径，将授权与内容校验留给调用层。",
+      "tags": [
+        "原生界面",
+        "文件选择",
+        "主线程"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src-tauri/src/native_picker.rs:pick_entry",
+      "type": "function",
+      "name": "pick_entry",
+      "filePath": "src-tauri/src/native_picker.rs",
+      "lineRange": [
+        8,
+        17
+      ],
+      "summary": "把原生选择器调度到主线程，通过通道等待并返回路径或取消结果。",
+      "tags": [
+        "原生界面",
+        "文件选择",
+        "主线程"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src-tauri/src/native_picker.rs:select_entry",
+      "type": "function",
+      "name": "select_entry",
+      "filePath": "src-tauri/src/native_picker.rs",
+      "lineRange": [
+        19,
+        61
+      ],
+      "summary": "配置 AppKit 单选文件与目录面板、允许扩展名和本地地址校验，区分成功、取消与错误结果。",
+      "tags": [
+        "原生界面",
+        "文件选择",
+        "主线程"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/vendor.d.ts",
+      "type": "file",
+      "name": "vendor.d.ts",
+      "filePath": "src/vendor.d.ts",
+      "summary": "为三个 Markdown 扩展插件补充环境模块声明，使缺少上游类型的依赖可供 TypeScript 使用。",
+      "tags": [
+        "类型声明",
+        "插件",
+        "markdown"
+      ],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/debug.ts",
+      "target": "function:src/debug.ts:logInfo",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/debug.ts",
+      "target": "function:src/debug.ts:logInfo",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/debug.ts",
+      "target": "function:src/debug.ts:logWarn",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/debug.ts",
+      "target": "function:src/debug.ts:logWarn",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/debug.ts",
+      "target": "function:src/debug.ts:sanitize",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/icons.ts",
+      "target": "function:src/icons.ts:createToolbarIcon",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/icons.ts",
+      "target": "function:src/icons.ts:createToolbarIcon",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/json.ts",
+      "target": "function:src/json.ts:createJsonArticle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/json.ts",
+      "target": "function:src/json.ts:createJsonArticle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:renderStandaloneViewer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:initializeFileOpening",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:createEmptyViewerArticle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:createArticle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:scopeCustomCss",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:secureInteractiveContent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:decorateAlerts",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:decorateMath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:prepareDiagrams",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:initializeMermaid",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:renderDiagrams",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:createViewer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:createViewerLibrary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:createViewerLibrarySection",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:initializeViewerLibrary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:toggleViewerFavorite",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:recordViewerRecent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:updateViewerFavoriteButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:renderViewerItems",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:readViewerItems",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:createTableOfContents",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:initializeNativeNavigation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:chooseNative",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:restoreSession",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:openNativeDirectory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:openNativeFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:disableStandaloneRelativeResources",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:createDirectorySidebar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:createDirectoryTreeItem",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:showDirectoryContextMenu",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:renderDirectoryMarkdown",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:renderJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:renderPdf",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:renderDirectoryImage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:prepareDirectoryDocument",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:loadDirectoryImage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:resolveDirectoryReference",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "function:src/main.ts:setActiveDirectoryPath",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "file:src/debug.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "file:src/icons.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "file:src/json.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "file:src/pdf.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "file:src/platform.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "file:src/search.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/main.ts",
+      "target": "file:src/settings.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/pdf.ts",
+      "target": "function:src/pdf.ts:createPdfArticle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/pdf.ts",
+      "target": "function:src/pdf.ts:createPdfArticle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/search.ts",
+      "target": "function:src/search.ts:initializeDocumentSearch",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/search.ts",
+      "target": "function:src/search.ts:initializeDocumentSearch",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:renderStandaloneViewer",
+      "target": "function:src/debug.ts:logWarn",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:initializeFileOpening",
+      "target": "function:src/platform.ts:takeOpenedFile",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:initializeFileOpening",
+      "target": "function:src/platform.ts:errorMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:initializeFileOpening",
+      "target": "function:src/settings.ts:getSettings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:renderDiagrams",
+      "target": "function:src/debug.ts:logWarn",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:createViewer",
+      "target": "function:src/settings.ts:createSettingsPage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:createViewer",
+      "target": "function:src/icons.ts:createToolbarIcon",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:createViewer",
+      "target": "function:src/settings.ts:getSettings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:createViewer",
+      "target": "function:src/settings.ts:updateSettings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:createViewer",
+      "target": "function:src/settings.ts:subscribeSettings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:createViewer",
+      "target": "function:src/settings.ts:applyTypography",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:initializeViewerLibrary",
+      "target": "function:src/platform.ts:readLibrary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:initializeViewerLibrary",
+      "target": "function:src/debug.ts:logWarn",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:toggleViewerFavorite",
+      "target": "function:src/platform.ts:writeLibrary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:toggleViewerFavorite",
+      "target": "function:src/debug.ts:logWarn",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:recordViewerRecent",
+      "target": "function:src/platform.ts:writeLibrary",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:recordViewerRecent",
+      "target": "function:src/debug.ts:logWarn",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:initializeNativeNavigation",
+      "target": "function:src/search.ts:initializeDocumentSearch",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:initializeNativeNavigation",
+      "target": "function:src/platform.ts:openExternal",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:initializeNativeNavigation",
+      "target": "function:src/platform.ts:errorMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:chooseNative",
+      "target": "function:src/platform.ts:pickDirectory",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:chooseNative",
+      "target": "function:src/platform.ts:pickEntry",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:chooseNative",
+      "target": "function:src/platform.ts:errorMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:restoreSession",
+      "target": "function:src/platform.ts:readDirectory",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:restoreSession",
+      "target": "function:src/settings.ts:getSettings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:restoreSession",
+      "target": "function:src/platform.ts:errorMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:openNativeDirectory",
+      "target": "function:src/platform.ts:readDirectory",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:openNativeDirectory",
+      "target": "function:src/platform.ts:errorMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:openNativeFile",
+      "target": "function:src/platform.ts:readFile",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:openNativeFile",
+      "target": "function:src/platform.ts:errorMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:createDirectorySidebar",
+      "target": "function:src/icons.ts:createToolbarIcon",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:showDirectoryContextMenu",
+      "target": "function:src/debug.ts:logWarn",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:renderJson",
+      "target": "function:src/json.ts:createJsonArticle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:renderPdf",
+      "target": "function:src/pdf.ts:createPdfArticle",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/main.ts:prepareDirectoryDocument",
+      "target": "function:src/platform.ts:directoryFileKind",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:directoryFileKind",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:directoryFileKind",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:takeOpenedFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:takeOpenedFile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:pickEntry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:pickEntry",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:pickDirectory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:pickDirectory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:readFile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:readFile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:readDirectory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:readDirectory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:openExternal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:openExternal",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:readLibrary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:readLibrary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:writeLibrary",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:writeLibrary",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:errorMessage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/platform.ts",
+      "target": "function:src/platform.ts:errorMessage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:normalize",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:loadSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:getSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:getSettings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:subscribeSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:subscribeSettings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:updateSettings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:updateSettings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:applyTypography",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:applyTypography",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:createSettingsPage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "function:src/settings.ts:createSettingsPage",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/settings.ts",
+      "target": "file:src/updater.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/updater.ts",
+      "target": "function:src/updater.ts:createUpdaterControls",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/updater.ts",
+      "target": "function:src/updater.ts:createUpdaterControls",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/updater.ts",
+      "target": "file:src/platform.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:src/settings.ts:createSettingsPage",
+      "target": "function:src/updater.ts:createUpdaterControls",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/updater.ts:createUpdaterControls",
+      "target": "function:src/platform.ts:errorMessage",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/settings.ts:loadSettings",
+      "target": "function:src/settings.ts:normalize",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/settings.ts:updateSettings",
+      "target": "function:src/settings.ts:normalize",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src/settings.ts:createSettingsPage",
+      "target": "function:src/settings.ts:subscribeSettings",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "document:CHANGELOG.md",
+      "target": "document:README.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:README.md",
+      "target": "config:package.json",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:package.json",
+      "target": "config:tsconfig.json",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:public/index.html",
+      "target": "file:public/markdown.css",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:public/index.html",
+      "target": "file:public/settings.css",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:public/settings.css",
+      "target": "file:public/markdown.css",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src-tauri/tauri.macos.conf.json",
+      "target": "config:src-tauri/tauri.conf.json",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:src-tauri/tauri.macos.conf.json",
+      "target": "config:src-tauri/Info.plist",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src-tauri/build.rs",
+      "target": "function:src-tauri/build.rs:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:Access.authorize",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:Access.grant",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:take_opened_file",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:receive_opened_file",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:pick_entry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:pick_directory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:file_kind",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:read_file",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:walk",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:read_directory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:open_external",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:updater_configured",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "function:src-tauri/src/main.rs:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "class:src-tauri/src/main.rs:Access",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "class:src-tauri/src/main.rs:Content",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/main.rs",
+      "target": "file:src-tauri/src/native_picker.rs",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src-tauri/src/native_picker.rs",
+      "target": "function:src-tauri/src/native_picker.rs:pick_entry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src-tauri/src/native_picker.rs",
+      "target": "function:src-tauri/src/native_picker.rs:pick_entry",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src-tauri/src/native_picker.rs",
+      "target": "function:src-tauri/src/native_picker.rs:select_entry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:src-tauri/src/main.rs:pick_entry",
+      "target": "function:src-tauri/src/native_picker.rs:pick_entry",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "config:src-tauri/capabilities/main.json",
+      "target": "file:src-tauri/src/main.rs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src-tauri/build.rs",
+      "target": "file:src-tauri/src/main.rs",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:examples/第二篇.md",
+      "target": "document:examples/阅读示例.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:examples/阅读示例.md",
+      "target": "document:examples/第二篇.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "class:src-tauri/src/main.rs:Access",
+      "target": "function:src-tauri/src/main.rs:Access.authorize",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "class:src-tauri/src/main.rs:Access",
+      "target": "function:src-tauri/src/main.rs:Access.grant",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "function:src-tauri/src/main.rs:take_opened_file",
+      "target": "function:src-tauri/src/main.rs:file_kind",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src-tauri/src/main.rs:read_file",
+      "target": "function:src-tauri/src/main.rs:file_kind",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src-tauri/src/main.rs:walk",
+      "target": "function:src-tauri/src/main.rs:file_kind",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src-tauri/src/main.rs:read_directory",
+      "target": "function:src-tauri/src/main.rs:walk",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src-tauri/src/main.rs:main",
+      "target": "function:src-tauri/src/main.rs:receive_opened_file",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:src-tauri/src/native_picker.rs:pick_entry",
+      "target": "function:src-tauri/src/native_picker.rs:select_entry",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:reader",
+      "name": "阅读交互与渲染层",
+      "description": "协调本地文档导航、多格式渲染、搜索、阅读偏好和更新界面，并通过类型化平台接口调用桌面能力。",
+      "nodeIds": [
+        "file:src/debug.ts",
+        "file:src/icons.ts",
+        "file:src/json.ts",
+        "file:src/main.ts",
+        "file:src/pdf.ts",
+        "file:src/search.ts",
+        "file:src/platform.ts",
+        "file:src/settings.ts",
+        "file:src/updater.ts",
+        "file:src/vendor.d.ts"
+      ]
+    },
+    {
+      "id": "layer:presentation",
+      "name": "页面与视觉层",
+      "description": "提供阅读器页面外壳、文档排版及设置弹窗样式，覆盖响应式布局、打印和无障碍视觉状态。",
+      "nodeIds": [
+        "file:public/index.html",
+        "file:public/markdown.css",
+        "file:public/settings.css"
+      ]
+    },
+    {
+      "id": "layer:native",
+      "name": "原生文件访问层",
+      "description": "由 Tauri 桌面入口和 macOS 选择器处理路径授权、受限文件读取、文件打开事件与原生交互。",
+      "nodeIds": [
+        "file:src-tauri/src/main.rs",
+        "file:src-tauri/src/native_picker.rs"
+      ]
+    },
+    {
+      "id": "layer:build-config",
+      "name": "构建与安全配置层",
+      "description": "集中前端和 Rust 构建、签名更新包生成、桌面打包与文件关联配置，并声明命令权限和内容安全边界。",
+      "nodeIds": [
+        "config:package.json",
+        "config:tsconfig.json",
+        "config:src-tauri/Cargo.toml",
+        "config:src-tauri/Info.plist",
+        "config:src-tauri/tauri.conf.json",
+        "config:src-tauri/tauri.macos.conf.json",
+        "file:scripts/build-update.mjs",
+        "file:scripts/build.mjs",
+        "file:src-tauri/build.rs",
+        "config:src-tauri/capabilities/main.json"
+      ]
+    },
+    {
+      "id": "layer:documentation",
+      "name": "文档、示例与许可层",
+      "description": "提供阅读器使用与发布说明、相对导航和排版示例，并保留第三方 KaTeX 再分发许可。",
+      "nodeIds": [
+        "document:CHANGELOG.md",
+        "document:README.md",
+        "document:public/katex-LICENSE.txt",
+        "document:examples/第二篇.md",
+        "document:examples/阅读示例.md"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "入口与项目定位",
+      "description": "从前端入口认识这个基于 Tauri 的本地只读阅读器：它集中协调文件打开、目录导航和多格式渲染。结合项目说明，先明确单文件授权与目录授权的区别，再沿入口的依赖关系理解界面、平台桥接和渲染模块。",
+      "nodeIds": [
+        "file:src/main.ts",
+        "document:README.md"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "页面与视觉骨架",
+      "description": "有了入口的全局视角，再看页面外壳如何加载主模块与静态样式。基础样式负责正文、工具栏、目录和多格式视图，设置样式则把阅读排版与弹窗状态分开，帮助理解界面为何能独立滚动并适配不同阅读状态。",
+      "nodeIds": [
+        "file:public/index.html",
+        "file:public/markdown.css",
+        "file:public/settings.css"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "平台接口与本地状态",
+      "description": "从界面回到入口的直接依赖，平台模块为文件读取、目录选择、外链和书库存储提供类型化接口。它将阅读交互与桌面能力隔开，让收藏、最近阅读和会话恢复不必直接处理每个原生命令的调用细节。",
+      "nodeIds": [
+        "file:src/platform.ts",
+        "file:src/main.ts"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "原生授权与文件读取",
+      "description": "沿平台接口继续理解 Rust 桌面入口，它承担持久化路径授权、受限读取和系统文件打开事件。macOS 选择器仅返回用户选择的路径，授权与内容校验仍由调用层负责；构建期命令声明和窗口权限配置共同限定前端可调用的能力。",
+      "nodeIds": [
+        "file:src-tauri/src/main.rs",
+        "file:src-tauri/src/native_picker.rs",
+        "file:src-tauri/build.rs",
+        "config:src-tauri/capabilities/main.json"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "文档渲染与相对导航",
+      "description": "明确文件从哪里来之后，再看入口如何分派 Markdown 与 HTML 渲染，并处理内容净化、图表、目录和相对资源。两篇阅读示例把链接、图片、公式和返回锚点串成具体场景，也说明为什么跨文档导航需要先获得相应目录授权。",
+      "nodeIds": [
+        "file:src/main.ts",
+        "document:examples/阅读示例.md",
+        "document:examples/第二篇.md"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "结构化与分页渲染",
+      "description": "在通用文档流程之外，JSON 和 PDF 各自使用独立渲染模块。JSON 保留原始数字与重复键，按需展开树节点；PDF 按需加载 PDF.js 并管理可见页画布、缩放和资源释放，展示两种不同的延迟渲染策略。",
+      "nodeIds": [
+        "file:src/json.ts",
+        "file:src/pdf.ts"
+      ]
+    },
+    {
+      "order": 7,
+      "title": "正文搜索与交互清理",
+      "description": "接着将搜索放回不同格式的正文中理解：搜索模块跨文本节点匹配、高亮并循环定位，同时处理输入法和快捷键。它需要与 JSON 折叠节点展开和文档切换清理配合；PDF 的搜索范围则是当前页提取文本，而不是扫描图片中的文字。",
+      "nodeIds": [
+        "file:src/search.ts",
+        "file:src/json.ts",
+        "file:src/pdf.ts"
+      ]
+    },
+    {
+      "order": 8,
+      "title": "阅读偏好与界面同步",
+      "description": "在渲染与搜索之外，设置模块负责校验偏好、持久化并通知订阅者，让入口和设置弹窗共享同一组阅读参数。排版通过 CSS 变量应用到正文，工具栏图标保持独立；日志工具则为故障定位提供敏感字段脱敏。",
+      "nodeIds": [
+        "file:src/settings.ts",
+        "file:public/settings.css",
+        "file:src/icons.ts",
+        "file:src/debug.ts"
+      ],
+      "languageLesson": "订阅函数把状态变化与具体界面更新分离；CSS 自定义属性则让 TypeScript 写入的阅读偏好直接参与样式计算。"
+    },
+    {
+      "order": 9,
+      "title": "手动更新与信任边界",
+      "description": "沿设置模块的下一层依赖进入更新控件，了解检查、下载、安装和重启如何在设置页内串联。原生入口检查更新配置，Tauri 配置提供更新地址与公钥位置；目前公钥尚未填入，因此不能把已接入更新界面理解为线上更新已经启用。",
+      "nodeIds": [
+        "file:src/updater.ts",
+        "file:src-tauri/src/main.rs",
+        "config:src-tauri/tauri.conf.json"
+      ]
+    },
+    {
+      "order": 10,
+      "title": "前后端构建与依赖",
+      "description": "理解运行时之后，再把前端入口与桌面程序放回构建过程：前端脚本使用 esbuild 打包、注入应用元数据并复制 PDF.js 等静态资源。npm 清单、TypeScript 配置和 Rust 清单分别声明构建入口、类型检查约束与原生依赖，Tauri 配置将前端资源目录接入桌面应用。",
+      "nodeIds": [
+        "file:scripts/build.mjs",
+        "config:package.json",
+        "config:tsconfig.json",
+        "config:src-tauri/Cargo.toml",
+        "config:src-tauri/tauri.conf.json"
+      ]
+    },
+    {
+      "order": 11,
+      "title": "打包发布与版本边界",
+      "description": "最后区分本地应用打包与签名更新发布：macOS 覆盖配置及属性列表负责应用包与 Markdown 文件关联，更新脚本则校验签名条件并生成更新清单，但不上传产物。结合版本记录和第三方许可，理解已发布功能、尚未验证的平台与再分发义务，避免把构建成功等同于完成公证或线上发布。",
+      "nodeIds": [
+        "config:src-tauri/tauri.macos.conf.json",
+        "config:src-tauri/Info.plist",
+        "file:scripts/build-update.mjs",
+        "document:CHANGELOG.md",
+        "document:public/katex-LICENSE.txt"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,756 @@
+--- before/src/main.ts
++++ src/main.ts
+@@ -14,6 +14,7 @@
+ import { createJsonArticle } from "./json.ts";
+ import { createPdfArticle } from "./pdf.ts";
+ import { initializeDocumentSearch } from "./search.ts";
++import { createQuickOpen, type QuickOpenPanel } from "./quick-open.ts";
+ import { applyTypography, createSettingsPage, getSettings, subscribeSettings, updateSettings } from "./settings.ts";
+ import {
+   directoryFileKind, pickEntry, pickDirectory, readFile, readDirectory, takeOpenedFile,
+@@ -44,18 +45,14 @@
+   path: string;
+ }
+ 
+-interface ViewerLibraryElements {
+-  dialog: HTMLDialogElement;
+-  favoriteList: HTMLUListElement;
+-  recentList: HTMLUListElement;
+-}
+-
+ interface ViewerElements {
+   toolbar: HTMLElement;
+   shell: HTMLElement;
+   content: HTMLElement;
+   fileName: HTMLElement;
+   importButton: HTMLButtonElement;
++  backButton: HTMLButtonElement;
++  forwardButton: HTMLButtonElement;
+   favoriteButton: HTMLButtonElement;
+   favoriteIcon: HTMLElement;
+   favoriteLabel: HTMLElement;
+@@ -63,8 +60,7 @@
+   libraryDialog: HTMLDialogElement;
+   settingsDialog: HTMLDialogElement;
+   openSettings: () => void;
+-  favoriteList: HTMLUListElement;
+-  recentList: HTMLUListElement;
++  quickOpen: QuickOpenPanel;
+   currentItem?: ViewerItem;
+   directoryRootName?: string;
+   setSidebar: (view: SidebarView, sidebar: HTMLElement | undefined, activate?: boolean) => void;
+@@ -120,9 +116,11 @@
+ let historyNavigating = false;
+ let menuStateQueue = Promise.resolve();
+ 
+-function updateNavigationMenu(): void {
++function updateNavigationMenu(viewer: ViewerElements): void {
+   const canBack = !historyNavigating && navigationIndex > 0;
+   const canForward = !historyNavigating && navigationIndex < navigationHistory.length - 1;
++  viewer.backButton.disabled = !canBack;
++  viewer.forwardButton.disabled = !canForward;
+   menuStateQueue = menuStateQueue.then(() => setNavigationState(canBack, canForward))
+     .catch((error: unknown) => {
+       logWarn("content", "navigation.menu.failed", { errorName: errorName(error) });
+@@ -143,7 +141,7 @@
+       navigationIndex = navigationHistory.length - 1;
+     }
+   }
+-  updateNavigationMenu();
++  updateNavigationMenu(viewer);
+ }
+ 
+ async function navigateHistory(direction: "back" | "forward", viewer: ViewerElements): Promise<void> {
+@@ -152,7 +150,7 @@
+   const entry = navigationHistory[index];
+   if (!entry) return;
+   historyNavigating = true;
+-  updateNavigationMenu();
++  updateNavigationMenu(viewer);
+   const sequence = ++navigationSequence;
+   try {
+     if (entry.item.kind === "directory") {
+@@ -166,7 +164,7 @@
+     if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
+   } finally {
+     historyNavigating = false;
+-    updateNavigationMenu();
++    updateNavigationMenu(viewer);
+   }
+ }
+ 
+@@ -223,7 +221,7 @@
+     await listen<"back" | "forward">("document-navigation", ({ payload }) => {
+       if (payload === "back" || payload === "forward") void navigateHistory(payload, viewer);
+     });
+-    updateNavigationMenu();
++    updateNavigationMenu(viewer);
+     await listen("native-file-opened", () => { void drain(); });
+     const opened = await drain();
+     if (!opened && initialNavigation === navigationSequence && getSettings().restoreSession) {
+@@ -508,6 +506,24 @@
+   toolbar.className = "linguamark-markdown-toolbar";
+   toolbar.dataset.linguamarkUi = "";
+ 
++  const backButton = document.createElement("button");
++  backButton.type = "button";
++  backButton.className = "linguamark-markdown-directory-button";
++  backButton.disabled = true;
++  backButton.title = "后退（⌘[ / Ctrl+[）";
++  backButton.setAttribute("aria-label", "返回上一个浏览页面");
++  backButton.append(createToolbarIcon("back"));
++  backButton.addEventListener("click", () => { void navigateHistory("back", viewer); });
++
++  const forwardButton = document.createElement("button");
++  forwardButton.type = "button";
++  forwardButton.className = "linguamark-markdown-directory-button";
++  forwardButton.disabled = true;
++  forwardButton.title = "前进（⌘] / Ctrl+]）";
++  forwardButton.setAttribute("aria-label", "前进到下一个浏览页面");
++  forwardButton.append(createToolbarIcon("forward"));
++  forwardButton.addEventListener("click", () => { void navigateHistory("forward", viewer); });
++
+   const sidebarToggle = document.createElement("button");
+   sidebarToggle.type = "button";
+   sidebarToggle.className = "linguamark-markdown-directory-button";
+@@ -577,12 +593,12 @@
+   libraryButton.className = "linguamark-markdown-directory-button linguamark-markdown-library-button";
+   libraryButton.setAttribute("aria-haspopup", "dialog");
+   libraryButton.setAttribute("aria-controls", "linguamark-markdown-library");
+-  libraryButton.setAttribute("aria-label", "查看收藏与最近浏览");
+-  libraryButton.title = "收藏与最近浏览";
++  libraryButton.setAttribute("aria-label", "快捷打开收藏与最近项目");
++  libraryButton.title = "快捷打开";
+   const libraryIcon = createToolbarIcon("library");
+   const libraryLabel = document.createElement("span");
+   libraryLabel.className = "linguamark-markdown-action-label";
+-  libraryLabel.textContent = "收藏列表";
++  libraryLabel.textContent = "快捷打开";
+   libraryButton.append(libraryIcon, libraryLabel);
+ 
+   const actions = document.createElement("div");
+@@ -599,7 +615,7 @@
+   actions.append(widthButton, favoriteButton, libraryButton, settingsButton);
+   const navigation = document.createElement("div");
+   navigation.className = "linguamark-markdown-toolbar-navigation";
+-  navigation.append(sidebarToggle, sidebarControl, importButton);
++  navigation.append(backButton, forwardButton, sidebarToggle, sidebarControl, importButton);
+   toolbar.append(navigation, fileName, actions);
+ 
+   const shell = document.createElement("div");
+@@ -636,7 +652,12 @@
+   };
+   setContentCount("");
+ 
+-  const library = createViewerLibrary();
++  const library = createQuickOpen(
++    (item) => { void openViewerItem(item, viewer); },
++    () => {
++      if (!document.querySelector("body > dialog[open]")) viewer.content.focus({ preventScroll: true });
++    },
++  );
+   shell.append(content, resizer, backdrop, characterCountLabel);
+ 
+   const narrowScreen = matchMedia("(max-width: 900px)");
+@@ -767,12 +788,14 @@
+   setSidebarWidth(defaultSidebarWidth);
+   setSidebar("outline", documentSidebar, true);
+ 
+-  return {
++  const viewer: ViewerElements = {
+     toolbar,
+     shell,
+     content,
+     fileName,
+     importButton,
++    backButton,
++    forwardButton,
+     favoriteButton,
+     favoriteIcon,
+     favoriteLabel,
+@@ -780,8 +803,7 @@
+     libraryDialog: library.dialog,
+     settingsDialog: settingsPage.dialog,
+     openSettings: settingsPage.open,
+-    favoriteList: library.favoriteList,
+-    recentList: library.recentList,
++    quickOpen: library,
+     setSidebar,
+     openSidebar() {
+       setSidebarOpen(true);
+@@ -795,38 +817,7 @@
+       if (sidebars.files) setActiveDirectoryPath(path, sidebars.files);
+     },
+   };
+-}
+-
+-function createViewerLibrary(): ViewerLibraryElements {
+-  const dialog = document.createElement("dialog");
+-  dialog.id = "linguamark-markdown-library";
+-  dialog.className = "linguamark-markdown-library";
+-  dialog.dataset.linguamarkUi = "";
+-  dialog.setAttribute("aria-labelledby", "linguamark-markdown-library-title");
+-
+-  const panel = document.createElement("div");
+-  panel.className = "linguamark-markdown-library-panel";
+-  const header = document.createElement("div");
+-  header.className = "linguamark-markdown-library-header";
+-  const title = document.createElement("h2");
+-  title.id = "linguamark-markdown-library-title";
+-  title.textContent = "收藏与最近浏览";
+-  const closeButton = document.createElement("button");
+-  closeButton.type = "button";
+-  closeButton.className = "linguamark-markdown-library-close";
+-  closeButton.setAttribute("aria-label", "关闭收藏列表");
+-  closeButton.textContent = "×";
+-  closeButton.addEventListener("click", () => dialog.close());
+-  header.append(title, closeButton);
+-
+-  const grid = document.createElement("div");
+-  grid.className = "linguamark-markdown-library-grid";
+-  const favorites = createViewerLibrarySection("全部收藏");
+-  const recents = createViewerLibrarySection("最近浏览");
+-  grid.append(favorites.section, recents.section);
+-  panel.append(header, grid);
+-  dialog.append(panel);
+-  return { dialog, favoriteList: favorites.list, recentList: recents.list };
++  return viewer;
+ }
+ 
+ function createViewerLibrarySection(titleText: string): { section: HTMLElement; list: HTMLUListElement } {
+@@ -891,7 +882,7 @@
+ 
+ function openViewerLibrary(viewer: ViewerElements): void {
+   try {
+-    if (!viewer.libraryDialog.open) viewer.libraryDialog.showModal();
++    viewer.quickOpen.open();
+   } catch (error: unknown) {
+     logWarn("content", "markdown.library.open.failed", { errorName: errorName(error) });
+     showDirectoryNotice("无法打开收藏列表");
+@@ -936,8 +927,7 @@
+ 
+ function renderViewerLibrary(viewer: ViewerElements): void {
+   const favorites = viewerFavoritesForDisplay(viewer);
+-  renderViewerItems(viewer.favoriteList, favorites, "暂无收藏", viewer);
+-  renderViewerItems(viewer.recentList, viewerRecents, "暂无浏览记录", viewer);
++  viewer.quickOpen.update(favorites, viewerRecents);
+   const emptyFavorites = viewer.content.querySelector<HTMLUListElement>('[data-viewer-items="favorites"]');
+   const emptyRecents = viewer.content.querySelector<HTMLUListElement>('[data-viewer-items="recents"]');
+   if (emptyFavorites) renderViewerItems(emptyFavorites, favorites, "暂无收藏", viewer);
+--- before/public/markdown.css
++++ public/markdown.css
+@@ -2725,7 +2725,7 @@
+     position: relative;
+     z-index: 2147483000;
+     display: grid;
+-    grid-template-columns: 114px minmax(0, 1fr) 154px;
++    grid-template-columns: 194px minmax(0, 1fr) 154px;
+     height: 58px;
+     box-sizing: border-box;
+     align-items: center;
+@@ -2739,7 +2739,7 @@
+ 
+ .linguamark-markdown-toolbar-navigation {
+     display: grid;
+-    grid-template-columns: repeat(3, 34px);
++    grid-template-columns: repeat(5, 34px);
+     align-items: center;
+     gap: 6px;
+ }
+@@ -2870,16 +2870,13 @@
+ }
+ 
+ .linguamark-markdown-library {
+-    width: min(1080px, calc(100vw - 48px));
+-    height: min(780px, calc(100vh - 48px));
+-    min-width: min(680px, calc(100vw - 32px));
+-    min-height: min(480px, calc(100vh - 32px));
++    width: min(680px, calc(100vw - 32px));
+     max-width: calc(100vw - 32px);
+-    max-height: calc(100vh - 32px);
++    max-height: calc(100dvh - 32px);
++    margin: min(16vh, 120px) auto auto;
+     box-sizing: border-box;
+     padding: 0;
+     overflow: hidden;
+-    resize: both;
+     border: 1px solid rgba(74, 124, 89, 0.24);
+     border-radius: var(--radius-lg);
+     background: var(--bg-write);
+@@ -2889,72 +2886,162 @@
+ }
+ 
+ .linguamark-markdown-library::backdrop {
+-    background: rgba(31, 42, 35, 0.34);
++    background: rgba(31, 42, 35, 0.22);
+ }
+ 
+ .linguamark-markdown-library-panel {
+     display: flex;
+-    height: 100%;
++    max-height: min(580px, calc(84dvh - 32px));
++    flex-direction: column;
++    overflow: hidden;
++}
++
++.linguamark-quick-open-header {
++    display: flex;
++    flex: none;
++    align-items: center;
++    gap: 12px;
++    padding: 16px;
++    border-bottom: 1px solid var(--accent-soft);
++}
++
++.linguamark-quick-open-input {
++    width: 100%;
++    min-width: 0;
++    padding: 4px 0;
++    border: 0;
++    outline: none;
++    background: transparent;
++    color: var(--fg-main);
++    font: 16px/1.5 var(--font-body);
++}
++
++.linguamark-quick-open-input::placeholder {
++    color: var(--fg-muted);
++}
++
++.linguamark-quick-open-header:focus-within {
++    box-shadow: inset 0 -2px var(--accent);
++}
++
++.linguamark-quick-open-close {
++    flex: none;
++    padding: 4px 8px;
++    border: 1px solid var(--accent-soft);
++    border-radius: var(--radius-sm);
++    background: var(--bg-soft);
++    color: var(--fg-muted);
++    font: 12px/1.5 var(--font-body);
++    cursor: pointer;
++}
++
++.linguamark-quick-open-close:hover {
++    background: var(--bg-quote);
++    color: var(--accent-deep);
++}
++
++.linguamark-quick-open-close:focus-visible {
++    outline: 2px solid var(--accent);
++    outline-offset: 2px;
++}
++
++.linguamark-quick-open-results {
+     min-height: 0;
+-    box-sizing: border-box;
+-    flex-direction: column;
+-    padding: 24px;
+-    overflow: hidden;
+-}
+-
+-.linguamark-markdown-library-header {
++    padding: 6px;
++    overflow-y: auto;
++    overscroll-behavior: contain;
++    scroll-padding: 6px;
++}
++
++.linguamark-quick-open-results:empty {
++    display: none;
++}
++
++.linguamark-quick-open-heading {
++    padding: 10px 10px 5px;
++    color: var(--fg-muted);
++    font-size: 12px;
++}
++
++.linguamark-quick-open-option {
+     display: flex;
+     align-items: center;
++    gap: 12px;
++    padding: 9px 10px;
++    border-radius: var(--radius-sm);
++    cursor: pointer;
++}
++
++.linguamark-quick-open-option[aria-selected="true"] {
++    background: var(--bg-quote);
++    box-shadow: inset 2px 0 var(--accent);
++}
++
++.linguamark-quick-open-option > svg {
++    width: 18px;
++    height: 18px;
++    flex: none;
++    color: var(--accent-deep);
++}
++
++.linguamark-quick-open-text {
++    min-width: 0;
++    flex: 1;
++}
++
++.linguamark-quick-open-name,
++.linguamark-quick-open-path {
++    overflow: hidden;
++    white-space: nowrap;
++    text-overflow: ellipsis;
++}
++
++.linguamark-quick-open-name {
++    color: var(--fg-main);
++    font-size: 14px;
++    font-weight: 600;
++}
++
++.linguamark-quick-open-path {
++    margin-top: 2px;
++    color: var(--fg-muted);
++    font-size: 12px;
++}
++
++.linguamark-quick-open-option > .linguamark-quick-open-star {
++    width: 14px;
++    height: 14px;
++    fill: currentColor;
++}
++
++.linguamark-quick-open-empty {
++    margin: 0;
++    padding: 32px 16px;
++    color: var(--fg-muted);
++    font-size: 13px;
++    text-align: center;
++}
++
++.linguamark-quick-open-footer {
++    display: flex;
++    flex: none;
+     justify-content: space-between;
+-    gap: 16px;
+-    margin-bottom: 20px;
+-}
+-
+-.linguamark-markdown-library-header h2,
++    gap: 12px;
++    padding: 10px 16px;
++    border-top: 1px solid var(--accent-soft);
++    color: var(--fg-muted);
++    font-size: 11px;
++}
++
+ .linguamark-markdown-library-section h3 {
+     margin: 0;
+     color: var(--accent-deep);
+-}
+-
+-.linguamark-markdown-library-header h2 {
+-    font-size: 24px;
+-}
+-
+-.linguamark-markdown-library-close {
+-    display: inline-grid;
+-    width: 36px;
+-    height: 36px;
+-    flex: none;
+-    place-items: center;
+-    padding: 0;
+-    border: 1px solid rgba(74, 124, 89, 0.24);
+-    border-radius: 50%;
+-    background: var(--bg-soft);
+-    color: var(--accent-deep);
+-    font: 25px/1 system-ui, sans-serif;
+-    cursor: pointer;
+-}
+-
+-.linguamark-markdown-library-close:hover,
+-.linguamark-markdown-library-close:focus-visible {
+-    border-color: var(--accent);
+-    background: var(--bg-quote);
+-}
+-
+-.linguamark-markdown-library-close:focus-visible {
+-    outline: 3px solid rgba(74, 124, 89, 0.2);
+-    outline-offset: 2px;
+ }
+ 
+ .linguamark-markdown-library-grid {
+     display: grid;
+     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+     gap: 16px;
+-}
+-
+-.linguamark-markdown-library-panel .linguamark-markdown-library-grid {
+-    min-height: 0;
+-    flex: 1;
+ }
+ 
+ .linguamark-markdown-library-section {
+@@ -2963,12 +3050,6 @@
+     border: 1px solid rgba(74, 124, 89, 0.18);
+     border-radius: var(--radius);
+     background: var(--bg-soft);
+-}
+-
+-.linguamark-markdown-library-panel .linguamark-markdown-library-section {
+-    display: flex;
+-    min-height: 0;
+-    flex-direction: column;
+ }
+ 
+ .linguamark-markdown-library-section h3 {
+@@ -2986,12 +3067,6 @@
+     padding: 0;
+     overflow: auto;
+     list-style: none;
+-}
+-
+-.linguamark-markdown-library-panel .linguamark-markdown-library-list {
+-    min-height: 0;
+-    max-height: none;
+-    flex: 1;
+ }
+ 
+ .linguamark-markdown-library-item {
+@@ -3698,26 +3773,8 @@
+ }
+ 
+ @media (max-width: 700px) {
+-    .linguamark-markdown-library {
+-        width: calc(100vw - 24px);
+-        height: calc(100vh - 24px);
+-        min-width: 0;
+-        min-height: 0;
+-        max-width: calc(100vw - 24px);
+-        max-height: calc(100vh - 24px);
+-        resize: none;
+-    }
+-
+-    .linguamark-markdown-library-panel {
+-        padding: 18px;
+-    }
+-
+     .linguamark-markdown-library-grid {
+         grid-template-columns: minmax(0, 1fr);
+-    }
+-
+-    .linguamark-markdown-library-panel .linguamark-markdown-library-grid {
+-        grid-template-rows: repeat(2, minmax(0, 1fr));
+     }
+ 
+     body.linguamark-markdown-page #write {
+--- /dev/null
++++ src/quick-open.ts
+@@ -0,0 +1,209 @@
++import { createToolbarIcon } from "./icons.ts";
++
++interface QuickOpenItem {
++  kind: "directory" | "file";
++  path: string;
++}
++
++export interface QuickOpenPanel {
++  dialog: HTMLDialogElement;
++  open: () => void;
++  update: (favorites: QuickOpenItem[], recents: QuickOpenItem[]) => void;
++}
++
++export function createQuickOpen(
++  onSelect: (item: QuickOpenItem) => void,
++  onClose: () => void,
++): QuickOpenPanel {
++  const dialog = document.createElement("dialog");
++  dialog.id = "linguamark-markdown-library";
++  dialog.className = "linguamark-markdown-library";
++  dialog.dataset.linguamarkUi = "";
++  dialog.setAttribute("aria-label", "快捷打开收藏与最近项目");
++
++  const panel = document.createElement("div");
++  panel.className = "linguamark-markdown-library-panel";
++  const header = document.createElement("div");
++  header.className = "linguamark-quick-open-header";
++  const input = document.createElement("input");
++  input.type = "text";
++  input.className = "linguamark-quick-open-input";
++  input.placeholder = "搜索收藏与最近打开…";
++  input.autofocus = true;
++  input.autocomplete = "off";
++  input.spellcheck = false;
++  input.setAttribute("role", "combobox");
++  input.setAttribute("aria-label", "按文件名或路径搜索收藏与最近打开");
++  input.setAttribute("aria-autocomplete", "list");
++  input.setAttribute("aria-expanded", "true");
++  input.setAttribute("aria-controls", "linguamark-quick-open-results");
++  input.setAttribute("aria-describedby", "linguamark-quick-open-hints");
++  const close = document.createElement("button");
++  close.type = "button";
++  close.className = "linguamark-quick-open-close";
++  close.textContent = "Esc";
++  close.setAttribute("aria-label", "关闭快捷打开");
++  close.addEventListener("click", () => dialog.close());
++  header.append(input, close);
++
++  const results = document.createElement("div");
++  results.id = "linguamark-quick-open-results";
++  results.className = "linguamark-quick-open-results";
++  results.setAttribute("role", "listbox");
++  results.setAttribute("aria-label", "收藏与最近打开");
++  const empty = document.createElement("p");
++  empty.className = "linguamark-quick-open-empty";
++  const footer = document.createElement("div");
++  footer.className = "linguamark-quick-open-footer";
++  const status = document.createElement("span");
++  status.setAttribute("role", "status");
++  const hints = document.createElement("span");
++  hints.id = "linguamark-quick-open-hints";
++  hints.textContent = "↑↓ 选择 · Enter 打开";
++  footer.append(status, hints);
++  panel.append(header, results, empty, footer);
++  dialog.append(panel);
++
++  let favorites: QuickOpenItem[] = [];
++  let recents: QuickOpenItem[] = [];
++  let visibleItems: QuickOpenItem[] = [];
++  let options: HTMLElement[] = [];
++  let selectedIndex = -1;
++  const key = (item: QuickOpenItem): string => `${item.kind}:${item.path}`;
++
++  const select = (index: number, scroll = false): void => {
++    selectedIndex = index;
++    options.forEach((option, optionIndex) => {
++      option.setAttribute("aria-selected", String(optionIndex === index));
++    });
++    const active = options[index];
++    if (active) {
++      input.setAttribute("aria-activedescendant", active.id);
++      if (scroll) active.scrollIntoView({ block: "nearest" });
++    } else {
++      input.removeAttribute("aria-activedescendant");
++    }
++  };
++
++  const render = (): void => {
++    const selectedKey = visibleItems[selectedIndex] ? key(visibleItems[selectedIndex]!) : undefined;
++    const query = input.value.trim().toLocaleLowerCase();
++    const terms = query.split(/\s+/u).filter(Boolean);
++    const favoriteKeys = new Set(favorites.map(key));
++    const seen = new Set<string>();
++    const unique = (items: QuickOpenItem[]): QuickOpenItem[] => items.filter((item) => {
++      const itemKey = key(item);
++      if (seen.has(itemKey)) return false;
++      seen.add(itemKey);
++      return true;
++    });
++    const groups = query
++      ? [{ title: "搜索结果", items: unique([...favorites, ...recents]).filter((item) => {
++        const path = item.path.replaceAll("\\", "/").toLocaleLowerCase();
++        return terms.every((term) => path.includes(term.replaceAll("\\", "/")));
++      }) }]
++      : [{ title: "收藏", items: unique(favorites) }, { title: "最近打开", items: unique(recents) }];
++    visibleItems = [];
++    options = [];
++    results.replaceChildren();
++    for (const group of groups) {
++      if (!group.items.length) continue;
++      const section = document.createElement("div");
++      section.setAttribute("role", "group");
++      section.setAttribute("aria-label", group.title);
++      const heading = document.createElement("div");
++      heading.className = "linguamark-quick-open-heading";
++      heading.setAttribute("aria-hidden", "true");
++      heading.textContent = group.title;
++      section.append(heading);
++      for (const item of group.items) {
++        const index = visibleItems.length;
++        visibleItems.push(item);
++        const option = document.createElement("div");
++        option.id = `linguamark-quick-open-option-${index}`;
++        option.className = "linguamark-quick-open-option";
++        option.setAttribute("role", "option");
++        option.title = item.path;
++        const normalized = item.path.replaceAll("\\", "/").replace(/\/+$/u, "");
++        const slash = normalized.lastIndexOf("/");
++        const name = normalized.slice(slash + 1) || item.path;
++        const parent = normalized.slice(0, slash) || "/";
++        const saved = favoriteKeys.has(key(item));
++        const kind = item.kind === "directory" ? "目录" : "文件";
++        option.setAttribute("aria-label", `${name}，${kind}${saved ? "，已收藏" : ""}，${item.path}`);
++        const icon = createToolbarIcon(item.kind === "directory" ? "folder" : "list");
++        const text = document.createElement("div");
++        text.className = "linguamark-quick-open-text";
++        const label = document.createElement("div");
++        label.className = "linguamark-quick-open-name";
++        label.textContent = name;
++        const path = document.createElement("div");
++        path.className = "linguamark-quick-open-path";
++        path.textContent = parent;
++        text.append(label, path);
++        option.append(icon, text);
++        if (saved) {
++          const star = createToolbarIcon("star");
++          star.classList.add("linguamark-quick-open-star");
++          option.append(star);
++        }
++        option.addEventListener("pointermove", () => select(index));
++        option.addEventListener("mousedown", (event) => event.preventDefault());
++        option.addEventListener("click", () => onSelect(item));
++        options.push(option);
++        section.append(option);
++      }
++      results.append(section);
++    }
++    empty.hidden = visibleItems.length > 0;
++    empty.textContent = query ? "没有匹配的收藏或最近项目" : "暂无收藏或最近项目，先打开一份文档吧";
++    status.textContent = `${visibleItems.length} 个项目`;
++    const previousIndex = visibleItems.findIndex((item) => key(item) === selectedKey);
++    select(visibleItems.length ? Math.max(0, previousIndex) : -1);
++  };
++
++  input.addEventListener("input", () => {
++    selectedIndex = -1;
++    render();
++    results.scrollTop = 0;
++  });
++  input.addEventListener("keydown", (event) => {
++    if (event.isComposing || event.keyCode === 229) return;
++    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
++      event.preventDefault();
++      if (visibleItems.length) {
++        const step = event.key === "ArrowDown" ? 1 : -1;
++        select((selectedIndex + step + visibleItems.length) % visibleItems.length, true);
++      }
++    } else if (event.key === "Enter") {
++      event.preventDefault();
++      const item = visibleItems[selectedIndex];
++      if (item && !event.repeat) onSelect(item);
++    }
++  });
++  dialog.addEventListener("keydown", (event) => {
++    // Keep Escape and reading shortcuts inside the modal, including during IME composition.
++    event.stopPropagation();
++  });
++  dialog.addEventListener("close", () => {
++    if (!dialog.open) onClose();
++  });
++
++  return {
++    dialog,
++    open() {
++      if (dialog.open) return;
++      input.value = "";
++      selectedIndex = -1;
++      render();
++      dialog.showModal();
++      input.focus({ preventScroll: true });
++      results.scrollTop = 0;
++    },
++    update(nextFavorites, nextRecents) {
++      favorites = nextFavorites;
++      recents = nextRecents;
++      render();
++    },
++  };
++}

@@ -42,7 +42,7 @@ if (result.status !== 0) process.exit(result.status ?? 1);
 
 const directory = `${targetDirectory}/${target}/release/bundle/macos`;
 const source = `${app.productName}.app.tar.gz`;
-const filename = `LinguaMark-Reader_${app.version}_${arch}.app.tar.gz`;
+const filename = `Folio_${app.version}_${arch}.app.tar.gz`;
 const signature = (await readFile(`${directory}/${source}.sig`, "utf8")).trim();
 if (!signature) throw new Error("构建未生成有效的更新签名。");
 const verification = spawnSync("cargo", [

@@ -1,0 +1,96 @@
+
+> linguamark-desktop-reader@0.4.0 build:mac:update
+> node scripts/build-update.mjs
+
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `npm run build`
+
+> linguamark-desktop-reader@0.4.0 build
+> node scripts/build.mjs
+
+   Compiling objc2-exception-helper v0.1.1
+   Compiling ring v0.17.14
+   Compiling linguamark-reader v0.4.0 (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri)
+   Compiling objc2 v0.6.4
+   Compiling rustls v0.23.45
+   Compiling rustls-webpki v0.103.15
+   Compiling block2 v0.6.2
+   Compiling objc2-core-foundation v0.3.2
+   Compiling dispatch2 v0.3.1
+   Compiling objc2-foundation v0.3.2
+   Compiling tokio-rustls v0.26.5
+   Compiling rustls-platform-verifier v0.7.0
+   Compiling hyper-rustls v0.27.10
+   Compiling reqwest v0.13.5
+   Compiling objc2-app-kit v0.3.2
+   Compiling objc2-web-kit v0.3.2
+   Compiling tao v0.35.3
+   Compiling muda v0.19.3
+   Compiling window-vibrancy v0.6.0
+   Compiling objc2-osa-kit v0.3.2
+   Compiling rfd v0.16.0
+   Compiling osakit v0.3.1
+   Compiling tauri-runtime v2.11.3
+   Compiling wry v0.55.1
+   Compiling tauri-runtime-wry v2.11.4
+   Compiling tauri v2.11.5
+   Compiling tauri-plugin-fs v2.5.2
+   Compiling tauri-plugin-updater v2.12.0
+   Compiling tauri-plugin-process v2.3.1
+   Compiling tauri-plugin-opener v2.5.5
+   Compiling tauri-plugin-dialog v2.7.3
+    Finished `release` profile [optimized] target(s) in 43.56s
+       Built application at: /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/linguamark-reader
+    Bundling LinguaMark Reader.app (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app)
+     Signing with identity "-"
+Signing with identity "-"
+Signing /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app/Contents/MacOS/linguamark-reader
+/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app/Contents/MacOS/linguamark-reader: replacing existing signature
+Signing with identity "-"
+Signing /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app
+/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app: replacing existing signature
+        Warn skipping app notarization, no APPLE_ID & APPLE_PASSWORD & APPLE_TEAM_ID or APPLE_API_KEY & APPLE_API_ISSUER & APPLE_API_KEY_PATH environment variables found
+    Bundling /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app.tar.gz (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app.tar.gz)
+    Finished 1 bundle at:
+        /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app
+        /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app.tar.gz (updater)
+
+    Finished 1 updater signature at:
+        /Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app.tar.gz.sig
+
+   Compiling objc2-exception-helper v0.1.1
+   Compiling ring v0.17.14
+   Compiling linguamark-reader v0.4.0 (/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri)
+   Compiling objc2 v0.6.4
+   Compiling rustls v0.23.45
+   Compiling block2 v0.6.2
+   Compiling objc2-core-foundation v0.3.2
+   Compiling dispatch2 v0.3.1
+   Compiling rustls-webpki v0.103.15
+   Compiling objc2-foundation v0.3.2
+   Compiling tokio-rustls v0.26.5
+   Compiling rustls-platform-verifier v0.7.0
+   Compiling hyper-rustls v0.27.10
+   Compiling reqwest v0.13.5
+   Compiling objc2-app-kit v0.3.2
+   Compiling objc2-web-kit v0.3.2
+   Compiling tao v0.35.3
+   Compiling muda v0.19.3
+   Compiling window-vibrancy v0.6.0
+   Compiling objc2-osa-kit v0.3.2
+   Compiling rfd v0.16.0
+   Compiling osakit v0.3.1
+   Compiling tauri-runtime v2.11.3
+   Compiling wry v0.55.1
+   Compiling tauri-runtime-wry v2.11.4
+   Compiling tauri v2.11.5
+   Compiling tauri-plugin-fs v2.5.2
+   Compiling tauri-plugin-updater v2.12.0
+   Compiling tauri-plugin-opener v2.5.5
+   Compiling tauri-plugin-process v2.3.1
+   Compiling tauri-plugin-dialog v2.7.3
+    Finished `release` profile [optimized] target(s) in 21.06s
+     Running `src-tauri/target/aarch64-apple-darwin/release/examples/verify_update src-tauri/tauri.conf.json '/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app.tar.gz' '/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark Reader.app.tar.gz.sig'`
+更新归档签名和版本验证通过（仅使用公钥）。
+已生成当前架构的签名更新包和 latest.json：/Users/caishilin/Desktop/personal/LinguaMarkReader/src-tauri/target/aarch64-apple-darwin/release/bundle/macos
+尚未上传或发布。多架构发布须先合并 latest.json 的 platforms，再上传完整产物。

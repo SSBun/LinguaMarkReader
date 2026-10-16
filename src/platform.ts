@@ -28,12 +28,17 @@ export function directoryFileKind(path: string): DirectoryFileKind {
   return /\.(png|jpe?g|gif|webp|avif|svg)$/iu.test(path) ? "image" : "other";
 }
 
+export const setNavigationState = (canBack: boolean, canForward: boolean): Promise<void> =>
+  invoke("set_navigation_state", { canBack, canForward });
+
 export const takeOpenedFile = (): Promise<string | null> => invoke("take_opened_file");
 export const pickEntry = (): Promise<{ kind: "file" | "directory"; path: string } | null> => invoke("pick_entry");
 export const pickDirectory = (): Promise<string | null> => invoke("pick_directory");
 export const readFile = (path: string): Promise<DirectoryFileContent> => invoke("read_file", { path });
 export const readDirectory = (path: string): Promise<DirectoryBrowserState> => invoke("read_directory", { path });
 export const openExternal = (url: string): Promise<void> => invoke("open_external", { url });
+export const resolveLinkTarget = (source: string, path: string): Promise<{ kind: "file" | "directory"; path: string } | null> =>
+  invoke("resolve_link_target", { source, path });
 
 const LIBRARY_KEY = "linguamark-reader-library-v1";
 

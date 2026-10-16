@@ -1,0 +1,284 @@
+diff --git a/src-tauri/src/main.rs b/src-tauri/src/main.rs
+index 678853d..f4b389c 100644
+--- a/src-tauri/src/main.rs
++++ b/src-tauri/src/main.rs
+@@ -369,11 +369,50 @@ async fn read_directory(path: String, app: tauri::AppHandle) -> Result<Directory
+     .map_err(|_| "目录读取任务失败")?
+ }
+ 
++#[tauri::command]
++async fn resolve_link_target(
++    source: String, path: String, app: tauri::AppHandle,
++) -> Result<Option<SelectedEntry>, String> {
++    tauri::async_runtime::spawn_blocking(move || {
++        let access = app.state::<Access>();
++        let source = access.authorize(Path::new(&source))?;
++        if !source.is_file() {
++            return Err("链接来源必须是已授权的文件".into());
++        }
++        let canonical = Path::new(&path).canonicalize().map_err(|_| "链接目标不存在或不可访问")?;
++        let directory = canonical.is_dir();
++        if !directory && (!canonical.is_file() || file_kind(&canonical) == "other") {
++            return Err("阅读器不支持此链接目标的文件类型".into());
++        }
++        if access.authorize(&canonical).is_err() {
++            let description = if directory { "此文件夹及其内容" } else { "此文件" };
++            let approved = app.dialog()
++                .message(format!("文档链接请求访问{description}：\n{}\n\n是否允许阅读器访问？", display_path(&canonical)))
++                .title("打开本地链接")
++                .buttons(tauri_plugin_dialog::MessageDialogButtons::OkCancelCustom(
++                    "允许并打开".into(), "取消".into(),
++                ))
++                .blocking_show();
++            if !approved {
++                return Ok(None);
++            }
++            // Grant only the explicitly confirmed target, never a linked file's parent.
++            access.grant(&canonical, directory)?;
++        }
++        Ok(Some(SelectedEntry {
++            kind: if directory { "directory" } else { "file" },
++            path: display_path(&canonical),
++        }))
++    }).await.map_err(|_| "打开链接任务失败")?
++}
++
+ #[tauri::command]
+ fn open_external(url: String, app: tauri::AppHandle) -> Result<(), String> {
+     let parsed = tauri::Url::parse(&url).map_err(|_| "链接无效")?;
+-    if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
+-        return Err("仅允许在浏览器打开 HTTP/HTTPS 链接".into());
++    match parsed.scheme() {
++        "http" | "https" if parsed.host_str().is_some() => {},
++        "mailto" | "tel" | "sms" if !parsed.path().is_empty() => {},
++        _ => return Err(format!("不支持打开 {} 协议的链接", parsed.scheme())),
+     }
+     app.opener()
+         .open_url(parsed.to_string(), None::<&str>)
+@@ -430,7 +469,7 @@ fn main() {
+                 "main",
+                 tauri::WebviewUrl::App("index.html".into()),
+             )
+-            .title("LinguaMark Reader")
++            .title("Folio")
+             .inner_size(1200.0, 820.0)
+             .min_inner_size(640.0, 480.0)
+             .on_new_window(|_, _| tauri::webview::NewWindowResponse::Deny)
+@@ -453,11 +492,12 @@ fn main() {
+             read_file,
+             read_directory,
+             open_external,
++            resolve_link_target,
+             take_opened_file,
+             updater_configured
+         ])
+         .build(tauri::generate_context!())
+-        .expect("failed to build LinguaMark Reader")
++        .expect("failed to build Folio")
+         .run(|_app, _event| {
+             #[cfg(target_os = "macos")]
+             if let tauri::RunEvent::Opened { urls } = _event {
+diff --git a/src/main.ts b/src/main.ts
+index cde0e5e..2fc1c13 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -16,7 +16,7 @@ import { initializeDocumentSearch } from "./search.ts";
+ import { applyTypography, createSettingsPage, getSettings, subscribeSettings, updateSettings } from "./settings.ts";
+ import {
+   directoryFileKind, pickEntry, pickDirectory, readFile, readDirectory, takeOpenedFile,
+-  readLibrary, writeLibrary, openExternal, errorMessage,
++  readLibrary, writeLibrary, openExternal, resolveLinkTarget, errorMessage,
+   type DirectoryBrowserState, type DirectoryFileContent,
+   type DirectoryFileKind, type DirectoryTreeEntry,
+ } from "./platform.ts";
+@@ -104,7 +104,11 @@ const markdown = new MarkdownIt({
+     katexOptions: { throwOnError: false, strict: "ignore", trust: false },
+   });
+ 
++const validateMarkdownLink = markdown.validateLink.bind(markdown);
++markdown.validateLink = (url: string): boolean => /^file:/iu.test(url) || validateMarkdownLink(url);
++
+ let navigationSequence = 0;
++let openingDocumentLink = false;
+ let pickerOpen = false;
+ let restoringSession = false;
+ let restoreScrollCancelled = false;
+@@ -124,7 +128,7 @@ function renderStandaloneViewer(): void {
+     const viewer = createViewer(article);
+     document.body.replaceChildren(viewer.toolbar, viewer.shell, viewer.libraryDialog, viewer.settingsDialog);
+     document.documentElement.dataset.linguamarkMarkdown = "ready";
+-    document.title = "LinguaMark Reader";
++    document.title = "Folio";
+     initializeNativeNavigation(viewer);
+     initializeViewerLibrary(viewer);
+     void initializeFileOpening(viewer);
+@@ -204,6 +208,17 @@ function createArticle(source: string, kind: "markdown" | "html" = "markdown"):
+     .join("\n");
+   for (const style of template.content.querySelectorAll("style")) style.remove();
+ 
++  // Preserve link destinations through sanitization without allowing active URL schemes.
++  const linkDestinations = new Map<string, string>();
++  for (const anchor of template.content.querySelectorAll<HTMLAnchorElement>("a")) {
++    anchor.removeAttribute("data-reader-link");
++    anchor.removeAttribute("data-blocked-link");
++    const href = anchor.getAttribute("href");
++    if (href === null) continue;
++    const id = String(linkDestinations.size);
++    linkDestinations.set(id, href);
++    anchor.dataset.readerLink = id;
++  }
+   const purified = DOMPurify.sanitize(template.innerHTML, {
+     RETURN_DOM_FRAGMENT: true,
+     USE_PROFILES: { html: true, svg: true, svgFilters: true, mathMl: true },
+@@ -217,6 +232,18 @@ function createArticle(source: string, kind: "markdown" | "html" = "markdown"):
+   const article = document.createElement("article");
+   article.id = "write";
+   article.append(clean);
++  for (const anchor of article.querySelectorAll<HTMLAnchorElement>("a[data-reader-link]")) {
++    const href = linkDestinations.get(anchor.dataset.readerLink ?? "");
++    anchor.removeAttribute("data-reader-link");
++    if (href === undefined) continue;
++    // The dispatcher reports unsafe schemes; never restore them as navigable hrefs.
++    if (/^(?:javascript|vbscript|data|blob):/iu.test(href.replace(/[\s\u0000-\u001f\u007f]/gu, ""))) {
++      anchor.href = "#";
++      anchor.dataset.blockedLink = "true";
++    } else {
++      anchor.setAttribute("href", href);
++    }
++  }
+   secureInteractiveContent(article);
+   if (kind === "markdown") {
+     for (const table of article.querySelectorAll("table")) {
+@@ -1053,14 +1080,51 @@ function initializeNativeNavigation(viewer: ViewerElements): void {
+     const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
+     if (!anchor || !viewer.content.contains(anchor)) return;
+     const href = anchor.getAttribute("href") ?? "";
++    if (anchor.dataset.blockedLink === "true") {
++      event.preventDefault();
++      showDirectoryNotice("出于安全原因，不能打开此链接协议");
++      return;
++    }
+     if (href.startsWith("#")) return;
+     event.preventDefault();
+-    if (/^https?:\/\//iu.test(href)) {
+-      void openExternal(href).catch((error: unknown) => showDirectoryNotice(errorMessage(error)));
+-    }
++    void openDocumentLink(href, viewer);
+   });
+ }
+ 
++async function openDocumentLink(reference: string, viewer: ViewerElements): Promise<void> {
++  if (openingDocumentLink) return;
++  openingDocumentLink = true;
++  const source = viewer.currentItem;
++  const sequence = navigationSequence;
++  try {
++    reference = reference.trim();
++    if (!reference) throw new Error("链接地址为空");
++    if (reference.startsWith("//")) {
++      await openExternal(`https:${reference}`);
++      return;
++    }
++    if (/^[a-z][a-z\d+.-]*:/iu.test(reference) && !/^file:/iu.test(reference)) {
++      await openExternal(reference);
++      return;
++    }
++    if (source?.kind !== "file") throw new Error("请先打开链接所在的文档");
++    const base = `file://${source.path.split("/").map(encodeURIComponent).join("/")}`;
++    const url = new URL(reference, base);
++    if (url.protocol !== "file:" || (url.hostname && url.hostname !== "localhost")) {
++      throw new Error("仅支持本机文件链接");
++    }
++    const path = decodeURIComponent(url.pathname);
++    const target = await resolveLinkTarget(source.path, path);
++    if (!target || sequence !== navigationSequence) return;
++    if (target.kind === "directory") await openNativeDirectory(target.path, viewer);
++    else await openNativeFile(target.path, viewer, url.hash.slice(1) || undefined);
++  } catch (error: unknown) {
++    if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
++  } finally {
++    openingDocumentLink = false;
++  }
++}
++
+ async function chooseNative(directoryOnly: boolean, viewer: ViewerElements): Promise<void> {
+   if (pickerOpen) return;
+   pickerOpen = true;
+@@ -1148,7 +1212,7 @@ async function openNativeDirectory(path: string, viewer: ViewerElements): Promis
+     viewer.setPath(state.rootName ?? path);
+     setViewerCurrentItem(viewer, { kind: "directory", path: state.rootName ?? path });
+     renderViewerLibrary(viewer);
+-    document.title = "LinguaMark Reader";
++    document.title = "Folio";
+     clearDirectoryNotice();
+     saveSession(viewer);
+   } catch (error: unknown) {
+@@ -1180,13 +1244,16 @@ async function openNativeFile(path: string, viewer: ViewerElements, hash?: strin
+         document.title = article.querySelector("h1")?.textContent?.trim() || path.split("/").at(-1) || "Markdown";
+         resetLocationHash();
+         trackDocumentRender(article);
++        if (hash) {
++          article.querySelector(`#${CSS.escape(decodeURIComponentSafely(hash))}`)?.scrollIntoView();
++        }
+       }
+     } else if (file.kind === "json") renderJson(file, viewer);
+     else if (file.kind === "pdf") renderPdf(file, viewer);
+     else renderDirectoryImage(file, viewer);
+     setViewerCurrentItem(viewer, { kind: "file", path });
+     viewer.setActiveFile(relative ?? "");
+-    viewer.content.scrollTo({ top: 0, behavior: "instant" });
++    if (!hash) viewer.content.scrollTo({ top: 0, behavior: "instant" });
+     clearDirectoryNotice();
+     saveSession(viewer);
+   } catch (error: unknown) {
+@@ -1203,13 +1270,6 @@ function disableStandaloneRelativeResources(article: HTMLElement): void {
+     image.title = "打开所在目录后才能读取相对图片；不自动加载远程图片";
+     image.classList.add("linguamark-directory-image-error");
+   }
+-  for (const anchor of article.querySelectorAll<HTMLAnchorElement>("a[href]")) {
+-    const href = anchor.getAttribute("href") ?? "";
+-    if (href.startsWith("#") || /^https?:\/\//iu.test(href)) continue;
+-    anchor.removeAttribute("href");
+-    anchor.setAttribute("aria-disabled", "true");
+-    anchor.title = "打开所在目录后才能跳转相对文件";
+-  }
+ }
+ 
+ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElements): HTMLElement {
+@@ -1572,23 +1632,6 @@ function prepareDirectoryDocument(article: HTMLElement, currentPath: string, vie
+     imagesReady.push(loadDirectoryImage(image, resolved.path, article, viewer, renderId));
+   }
+ 
+-  for (const anchor of article.querySelectorAll<HTMLAnchorElement>("a[href]")) {
+-    const reference = anchor.getAttribute("href");
+-    if (!reference || reference.startsWith("#") || isExternalReference(reference)) continue;
+-    const resolved = resolveDirectoryReference(currentPath, reference);
+-    const kind = resolved ? directoryFileKind(resolved.path) : "other";
+-    if (!resolved || kind === "other") {
+-      anchor.removeAttribute("href");
+-      anchor.classList.add("linguamark-directory-link-disabled");
+-      anchor.setAttribute("aria-disabled", "true");
+-      continue;
+-    }
+-    anchor.href = "#";
+-    anchor.addEventListener("click", (event) => {
+-      event.preventDefault();
+-      void openDirectoryEntry(resolved.path, kind, viewer, resolved.hash);
+-    });
+-  }
+   return Promise.all(imagesReady).then(() => undefined);
+ }
+ 
+diff --git a/src/platform.ts b/src/platform.ts
+index dc56bc2..91573b9 100644
+--- a/src/platform.ts
++++ b/src/platform.ts
+@@ -34,6 +34,8 @@ export const pickDirectory = (): Promise<string | null> => invoke("pick_director
+ export const readFile = (path: string): Promise<DirectoryFileContent> => invoke("read_file", { path });
+ export const readDirectory = (path: string): Promise<DirectoryBrowserState> => invoke("read_directory", { path });
+ export const openExternal = (url: string): Promise<void> => invoke("open_external", { url });
++export const resolveLinkTarget = (source: string, path: string): Promise<{ kind: "file" | "directory"; path: string } | null> =>
++  invoke("resolve_link_target", { source, path });
+ 
+ const LIBRARY_KEY = "linguamark-reader-library-v1";
+ 

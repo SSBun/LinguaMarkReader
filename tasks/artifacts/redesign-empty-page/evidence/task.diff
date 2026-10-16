@@ -1,0 +1,311 @@
+--- before/src/main.ts
++++ src/main.ts
+@@ -243,18 +243,30 @@
+   message.className = "linguamark-empty-viewer-message";
+   const title = document.createElement("p");
+   title.className = "linguamark-empty-viewer-title";
+-  title.textContent = "打开 Markdown、JSON、HTML 或 PDF 开始阅读";
++  title.textContent = "开始阅读";
+   const description = document.createElement("p");
+-  description.textContent = "点击顶部“导入”，选择 Markdown、JSON、HTML、PDF 文件或阅读目录。";
+-  message.append(title, description);
++  description.textContent = "从侧栏选择文档，或打开文件与目录。";
++  const actions = document.createElement("div");
++  actions.className = "linguamark-empty-viewer-actions";
++  for (const [action, label] of [["file", "打开文件"], ["directory", "打开目录"]] as const) {
++    const button = document.createElement("button");
++    button.type = "button";
++    button.dataset.emptyOpen = action;
++    button.textContent = label;
++    actions.append(button);
++  }
++  const formats = document.createElement("p");
++  formats.className = "linguamark-empty-viewer-formats";
++  formats.textContent = "支持 Markdown、JSON、HTML 和 PDF";
++  message.append(title, description, actions, formats);
+ 
+   const library = document.createElement("div");
+   library.className = "linguamark-markdown-library-grid linguamark-empty-viewer-library";
+-  const favorites = createViewerLibrarySection("全部收藏");
++  const favorites = createViewerLibrarySection("收藏");
+   favorites.list.dataset.viewerItems = "favorites";
+-  const recents = createViewerLibrarySection("最近浏览");
++  const recents = createViewerLibrarySection("最近打开");
+   recents.list.dataset.viewerItems = "recents";
+-  library.append(favorites.section, recents.section);
++  library.append(recents.section, favorites.section);
+   home.append(message, library);
+   article.append(home);
+   return article;
+@@ -955,13 +967,19 @@
+     button.className = "linguamark-markdown-library-item";
+     button.title = item.path;
+     button.setAttribute("aria-label", `打开${viewerItemLabel(item)} ${item.path}`);
+-    const kind = document.createElement("span");
+-    kind.className = `linguamark-markdown-library-kind is-${item.kind}`;
+-    kind.textContent = viewerItemLabel(item);
++    const icon = createToolbarIcon(item.kind === "directory" ? "folder" : "list");
++    const details = document.createElement("span");
++    details.className = "linguamark-markdown-library-details";
++    const normalized = item.path.replaceAll("\\", "/").replace(/\/+$/u, "");
++    const separator = normalized.lastIndexOf("/");
++    const name = document.createElement("span");
++    name.className = "linguamark-markdown-library-name";
++    name.textContent = normalized.slice(separator + 1) || item.path;
+     const path = document.createElement("span");
+     path.className = "linguamark-markdown-library-path";
+-    path.textContent = item.path;
+-    button.append(kind, path);
++    path.textContent = normalized.slice(0, separator) || "/";
++    details.append(name, path);
++    button.append(icon, details);
+     button.addEventListener("click", () => {
+       void openViewerItem(item, viewer);
+     });
+@@ -1085,6 +1103,11 @@
+     addEventListener(type, () => { if (restoringSession) restoreScrollCancelled = true; }, { passive: true });
+   }
+   viewer.importButton.addEventListener("click", () => { void chooseNative(false, viewer); });
++  viewer.content.addEventListener("click", (event) => {
++    const button = event.target instanceof Element
++      ? event.target.closest<HTMLButtonElement>(".linguamark-empty-viewer button[data-empty-open]") : null;
++    if (button) void chooseNative(button.dataset.emptyOpen === "directory", viewer);
++  });
+   addEventListener("keydown", (event) => {
+     if (event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "r") {
+       event.preventDefault();
+--- before/public/markdown.css
++++ public/markdown.css
+@@ -3040,16 +3040,12 @@
+ 
+ .linguamark-markdown-library-grid {
+     display: grid;
+-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+-    gap: 16px;
++    grid-template-columns: minmax(0, 1fr);
++    gap: 28px;
+ }
+ 
+ .linguamark-markdown-library-section {
+     min-width: 0;
+-    padding: 16px;
+-    border: 1px solid rgba(74, 124, 89, 0.18);
+-    border-radius: var(--radius);
+-    background: var(--bg-soft);
+ }
+ 
+ .linguamark-markdown-library-section h3 {
+@@ -3059,13 +3055,11 @@
+ 
+ .linguamark-markdown-library-list {
+     display: grid;
+-    max-height: min(52vh, 440px);
+     align-content: start;
+     grid-auto-rows: max-content;
+-    gap: 8px;
++    gap: 4px;
+     margin: 0;
+     padding: 0;
+-    overflow: auto;
+     list-style: none;
+ }
+ 
+@@ -3074,9 +3068,10 @@
+     width: 100%;
+     min-width: 0;
+     grid-template-columns: auto minmax(0, 1fr);
+-    align-items: start;
+-    gap: 9px;
+-    padding: 10px;
++    align-items: center;
++    gap: 12px;
++    padding: 12px;
++    box-sizing: border-box;
+     border: 0;
+     border-radius: 8px;
+     background: var(--bg-write);
+@@ -3096,34 +3091,40 @@
+     outline-offset: -2px;
+ }
+ 
+-.linguamark-markdown-library-kind {
+-    min-width: 34px;
+-    padding: 3px 6px;
+-    border-radius: 999px;
+-    background: var(--bg-quote);
++.linguamark-markdown-library-item > svg {
++    width: 20px;
++    height: 20px;
+     color: var(--accent-deep);
+-    font-size: 11px;
+-    font-weight: 800;
+-    text-align: center;
+-}
+-
+-.linguamark-markdown-library-kind.is-file {
+-    background: var(--code-bg);
+-    color: var(--bg-write);
+-}
+-
++}
++
++.linguamark-markdown-library-details {
++    display: grid;
++    min-width: 0;
++    gap: 3px;
++}
++
++.linguamark-markdown-library-name,
+ .linguamark-markdown-library-path {
+-    min-width: 0;
+-    overflow-wrap: anywhere;
++    overflow: hidden;
++    white-space: nowrap;
++    text-overflow: ellipsis;
++}
++
++.linguamark-markdown-library-name {
+     color: var(--fg-main);
+-    font-size: 13px;
++    font-size: 14px;
++    font-weight: 600;
++}
++
++.linguamark-markdown-library-path {
++    color: var(--fg-muted);
++    font-size: 12px;
+ }
+ 
+ .linguamark-markdown-library-empty {
+-    padding: 18px 8px;
++    padding: 12px;
+     color: var(--fg-muted);
+     font-size: 13px;
+-    text-align: center;
+ }
+ 
+ .linguamark-markdown-shell {
+@@ -3480,37 +3481,79 @@
+     font-size: 13px;
+ }
+ 
+-#write.linguamark-empty-viewer {
++body.linguamark-markdown-page:has(#write.linguamark-empty-viewer) {
++    grid-template-columns: minmax(0, 1fr);
++}
++
++body.linguamark-markdown-page .linguamark-markdown-content #write.linguamark-empty-viewer {
+     display: grid;
+-    min-height: calc(100vh - 106px);
+-    place-items: center;
++    width: calc(100% - clamp(24px, 4vw, 48px));
++    min-height: calc(100% - clamp(24px, 4vw, 48px));
++    margin: clamp(12px, 2vw, 24px) auto;
++    padding: clamp(20px, 4vw, 48px);
++    align-content: start;
++    justify-items: center;
++    border-radius: var(--radius-lg);
+ }
+ 
+ .linguamark-empty-viewer-home {
+     display: grid;
+     width: min(720px, 100%);
+-    gap: 20px;
++    min-width: 0;
++    gap: 36px;
+ }
+ 
+ .linguamark-empty-viewer-message {
+-    max-width: 520px;
+-    justify-self: center;
+-    padding: 30px;
+-    border: 1px dashed rgba(74, 124, 89, 0.3);
+-    border-radius: var(--radius-lg);
+-    background: var(--bg-soft);
+     color: var(--fg-muted);
+-    text-align: center;
+-}
+-
+-.linguamark-empty-viewer-message p {
++    text-align: left;
++}
++
++#write .linguamark-empty-viewer-message p {
+     margin: 8px 0 0;
+-}
+-
+-.linguamark-empty-viewer-title {
++    font-size: 14px;
++}
++
++#write .linguamark-empty-viewer-message .linguamark-empty-viewer-title {
++    margin: 0;
+     color: var(--accent-deep);
+-    font-size: 22px;
+-    font-weight: 700;
++    font: 700 28px/1.3 var(--font-heading);
++}
++
++.linguamark-empty-viewer-actions {
++    display: flex;
++    flex-wrap: wrap;
++    gap: 12px;
++    margin: 24px 0 12px;
++}
++
++.linguamark-empty-viewer-actions button {
++    min-height: 40px;
++    padding: 9px 18px;
++    border: 1px solid var(--accent-soft);
++    border-radius: var(--radius);
++    background: var(--bg-write);
++    color: var(--accent-deep);
++    font: 600 14px/1.5 var(--font-body);
++    cursor: pointer;
++}
++
++.linguamark-empty-viewer-actions button:first-child {
++    border-color: var(--accent-deep);
++    background: var(--accent-deep);
++    color: var(--bg-write);
++}
++
++.linguamark-empty-viewer-actions button:hover {
++    box-shadow: var(--shadow);
++}
++
++.linguamark-empty-viewer-actions button:focus-visible {
++    outline: 2px solid var(--accent);
++    outline-offset: 3px;
++}
++
++#write .linguamark-empty-viewer-message .linguamark-empty-viewer-formats {
++    font-size: 12px;
+ }
+ 
+ .linguamark-empty-viewer-library {
+@@ -3519,9 +3562,11 @@
+ }
+ 
+ #write .linguamark-empty-viewer-library .linguamark-markdown-library-section h3 {
+-    margin: 0 0 12px;
++    margin: 0 0 8px;
++    padding: 0 0 10px;
++    border-bottom: 1px solid rgba(74, 124, 89, 0.18);
+     color: var(--accent-deep);
+-    font: 700 15px/1.35 var(--font-heading);
++    font: 600 13px/1.35 var(--font-heading);
+     letter-spacing: normal;
+ }
+ 
+@@ -3773,10 +3818,6 @@
+ }
+ 
+ @media (max-width: 700px) {
+-    .linguamark-markdown-library-grid {
+-        grid-template-columns: minmax(0, 1fr);
+-    }
+-
+     body.linguamark-markdown-page #write {
+         width: 100%;
+         margin: 0;

@@ -1,0 +1,10 @@
+{
+  "tag": "v0.4.0",
+  "sourceCommit": "e8b3027d58225e3b1e056121b21694537581df83",
+  "downloadedAssetsMatch": true,
+  "files": {
+    "LinguaMark-Reader_0.4.0_aarch64.app.tar.gz": "a8e03fc685d37278bcbe76a88f143b7a5dbfdddc489320eb97c11097bd082092",
+    "LinguaMark-Reader_0.4.0_aarch64.app.tar.gz.sig": "a0816f50d0a86ce70fb7f7bc8f934414d06b0c1dac756b5d55decdef2d1ce561",
+    "latest.json": "d85eef5285aff4e5e948b7367e246c56a54c12b6746c13b1a275de7d8c95d091"
+  }
+}

@@ -1,0 +1,2 @@
+/var/folders/lr/zrjft2s57_38p9t1ctj4_57m0000gn/T/folio-large-directory-dua45c7m
+目录数=101，文件数=10100，总条目数=10201

@@ -1,0 +1,158 @@
+--- before/src/main.ts
++++ src/main.ts
+@@ -80,6 +80,7 @@
+ 
+ let diagramRenderSequence = 0;
+ let directoryRenderSequence = 0;
++let directoryTreeRenderSequence = 0;
+ let mermaidInitialization: Promise<void> | undefined;
+ let viewerFavorites: ViewerItem[] = [];
+ let viewerRecents: ViewerItem[] = [];
+@@ -1273,6 +1274,7 @@
+ }
+ 
+ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElements): HTMLElement {
++  const renderId = ++directoryTreeRenderSequence;
+   const sidebar = document.createElement("aside");
+   sidebar.id = "linguamark-markdown-toc";
+   sidebar.className = "linguamark-markdown-toc linguamark-directory-sidebar";
+@@ -1308,7 +1310,12 @@
+ 
+   const tree = document.createElement("ul");
+   tree.className = "linguamark-directory-list";
+-  for (const entry of state.entries) tree.append(createDirectoryTreeItem(entry, viewer));
++  let loading = true;
++  tree.setAttribute("aria-busy", "true");
++  const progress = document.createElement("p");
++  progress.className = "linguamark-directory-empty";
++  progress.role = "status";
++  progress.textContent = "正在加载文件列表…";
+ 
+   const controls = document.createElement("div");
+   controls.className = "linguamark-directory-toolbar";
+@@ -1318,6 +1325,12 @@
+   folderToggle.type = "button";
+   folderToggle.className = "linguamark-markdown-directory-button linguamark-directory-toolbar-button";
+   const updateFolderToggle = (): void => {
++    if (loading) {
++      folderToggle.disabled = true;
++      folderToggle.title = "正在加载文件列表";
++      folderToggle.setAttribute("aria-label", folderToggle.title);
++      return;
++    }
+     const folders = [...tree.querySelectorAll<HTMLDetailsElement>("details")];
+     const allExpanded = folders.length > 0 && folders.every((folder) => folder.open);
+     folderToggle.disabled = folders.length === 0;
+@@ -1346,8 +1359,38 @@
+     if (path) setActiveDirectoryPath(path);
+   });
+   controls.append(folderToggle, focusButton);
+-  panel.append(tree);
++  panel.append(progress, tree);
+   sidebar.append(controls, panel);
++  // Bound each DOM update, including deeply nested trees, and yield to input/paint.
++  void (async () => {
++    const stack = [{ entries: state.entries!, index: 0, list: tree }];
++    while (stack.length > 0) {
++      await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
++      if (renderId !== directoryTreeRenderSequence) return;
++      let rendered = 0;
++      const started = performance.now();
++      while (stack.length > 0 && rendered < 200 && performance.now() - started < 8) {
++        const frame = stack[stack.length - 1];
++        const entry = frame.entries[frame.index++];
++        if (!entry) {
++          stack.pop();
++          continue;
++        }
++        const item = createDirectoryTreeItem(entry, viewer);
++        frame.list.append(item);
++        rendered += 1;
++        if (entry.type === "directory" && entry.children?.length) {
++          stack.push({ entries: entry.children, index: 0, list: item.querySelector<HTMLUListElement>("ul")! });
++        }
++      }
++    }
++    loading = false;
++    tree.removeAttribute("aria-busy");
++    progress.remove();
++    updateFolderToggle();
++    const activePath = currentDirectoryPath(viewer, sidebar);
++    if (activePath) setActiveDirectoryPath(activePath, sidebar, false);
++  })();
+   return sidebar;
+ }
+ 
+@@ -1362,7 +1405,6 @@
+     summary.title = entry.path;
+     const children = document.createElement("ul");
+     children.className = "linguamark-directory-list";
+-    for (const child of entry.children ?? []) children.append(createDirectoryTreeItem(child, viewer));
+     details.append(summary, children);
+     item.append(details);
+     return item;
+@@ -1700,7 +1742,7 @@
+     .some((element) => element.dataset.directoryPath === relative) ? relative : "";
+ }
+ 
+-function setActiveDirectoryPath(path: string, scope: ParentNode = document): void {
++function setActiveDirectoryPath(path: string, scope: ParentNode = document, reveal = true): void {
+   let activeFile: HTMLButtonElement | undefined;
+   for (const button of scope.querySelectorAll<HTMLButtonElement>(".linguamark-directory-file[data-directory-path]")) {
+     const isActive = button.dataset.directoryPath === path;
+@@ -1715,7 +1757,7 @@
+   for (const button of scope.querySelectorAll<HTMLButtonElement>(".linguamark-directory-focus-button")) {
+     button.disabled = !activeFile;
+   }
+-  if (!activeFile) return;
++  if (!activeFile || !reveal) return;
+   for (let folder = activeFile.closest("details"); folder; folder = folder.parentElement?.closest("details") ?? null) {
+     folder.open = true;
+   }
+--- before/src-tauri/src/main.rs
++++ src-tauri/src/main.rs
+@@ -18,7 +18,6 @@
+ use tauri_plugin_opener::OpenerExt;
+ 
+ const MAX_FILE_BYTES: u64 = 32 * 1024 * 1024;
+-const MAX_ENTRIES: usize = 10_000;
+ const MAX_DEPTH: usize = 32;
+ 
+ #[derive(Default, Deserialize, Serialize)]
+@@ -297,7 +296,6 @@
+     root: &Path,
+     directory: &Path,
+     depth: usize,
+-    count: &mut usize,
+ ) -> Result<Vec<Entry>, String> {
+     if depth > MAX_DEPTH {
+         return Err("目录层级超过 32 层，请选择更小的目录".into());
+@@ -309,10 +307,6 @@
+         // Do not follow links, special devices or sockets while traversing user directories.
+         if file_type.is_symlink() || (!file_type.is_file() && !file_type.is_dir()) {
+             continue;
+-        }
+-        *count += 1;
+-        if *count > MAX_ENTRIES {
+-            return Err("目录超过 10000 个条目，请选择更小的目录".into());
+         }
+         let path = entry.path();
+         let canonical = path.canonicalize().map_err(|_| "目录条目已不可访问")?;
+@@ -330,7 +324,7 @@
+                 Some(file_kind(&path))
+             },
+             children: if directory {
+-                Some(walk(root, &canonical, depth + 1, count)?)
++                Some(walk(root, &canonical, depth + 1)?)
+             } else {
+                 None
+             },
+@@ -362,7 +356,7 @@
+         Ok(Directory {
+             status: "granted",
+             root_name: display_path(&root),
+-            entries: walk(&root, &root, 0, &mut 0)?,
++            entries: walk(&root, &root, 0)?,
+         })
+     })
+     .await

@@ -1,0 +1,52 @@
+# Folio Markdown 编辑功能
+
+- Schema: topic/v1
+- Id: folio-editing
+- State: Active
+- Revision: 3e59653ff48f856b74128689a57069151019ca25f88ff8f44bc12fc7738e032e
+
+## Scope
+
+维护 Folio 的 Markdown 正文编辑与保存功能规格，供后续实现、改进、缺陷修复和审查任务共享。当前创建 Topic 不实现编辑功能，也不扩大 JSON、HTML、PDF 的编辑范围。
+
+## Spec Context
+
+### 已明确目标
+- EDIT-1：用户可以在 Folio 内修改 Markdown 文章正文。
+- EDIT-2：修改后的 Markdown 正文可以保存回原文件。
+
+### 当前实现基线
+- 当前应用仍是只读文档阅读器；现有文件接口提供读取，不提供正文写回。目标不能视为已实现。
+
+### 待定设计
+- 编辑模式：源码编辑、所见即所得或其他交互方式。
+- 阅读与编辑如何切换，是否需要实时预览。
+- 显式保存与自动保存策略、快捷键和保存状态提示。
+- 未保存修改遇到切换文档、关闭窗口或退出时的处理。
+- 外部修改冲突、写入失败、只读文件及写权限授权的处理。
+- 原文格式、编码、换行符与 front matter 的保留策略。
+- 编辑器依赖、实现分层和验证方案。
+上述项目必须在实施任务中按证据和用户决定收敛，不构成已批准的实现方案。
+
+## Decisions
+
+- 产品名称为 Folio；更名本身不意味着已经具备编辑能力。
+- 本次仅建立维护主题并关联已有编辑任务，不启动或恢复其实现。
+- 后续实施须明确写入授权、数据丢失防护和验证边界；当前只读权限不能直接当作写入授权。
+- 不预先选定编辑器框架，不默认加入云同步、协作或其他格式编辑。
+
+## Dependencies
+
+
+
+## Resources
+
+| Resource | Kind | Purpose | SHA-256 |
+| --- | --- | --- | --- |
+
+## Tasks
+
+| Task | Relation | Reference | Purpose | Repository |
+| --- | --- | --- | --- | --- |
+| [建立 Folio 编辑功能共享规格](<../tasks/create-folio-editing-topic.md>) | member | self:create-folio-editing-topic | 创建编辑功能维护主题 | local |
+| [支持编辑文章正文](<../tasks/edit-article-content.md>) | member | self:edit-article-content | 关联既有正文编辑与保存任务，本次不恢复实现 | local |

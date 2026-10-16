@@ -1,0 +1,101 @@
+--- before/src/main.ts
++++ src/main.ts
+@@ -207,7 +207,7 @@
+     queue = queue.then(async () => {
+       const path = await takeOpenedFile();
+       if (!path) return false;
+-      await openNativeFile(path, viewer);
++      await openExternalViewerItem({ kind: "file", path }, viewer);
+       return true;
+     }).catch((error: unknown) => {
+       ++navigationSequence;
+@@ -852,7 +852,6 @@
+     openViewerLibrary(viewer);
+   });
+ 
+-  const initialItem = viewer.currentItem;
+   viewerLibraryReady = readLibrary().then((stored) => {
+     viewerFavorites = readViewerItems(stored[VIEWER_FAVORITES_KEY]);
+     viewerRecents = readViewerItems(stored[VIEWER_RECENTS_KEY], MAX_VIEWER_RECENTS);
+@@ -863,7 +862,6 @@
+   });
+ 
+   void viewerLibraryReady
+-    .then(() => initialItem ? recordViewerRecent(initialItem, viewer) : undefined)
+     .catch((error: unknown) => {
+       logWarn("content", "markdown.library.initialize.failed", { errorName: errorName(error) });
+       showDirectoryNotice("无法读取收藏与最近浏览记录");
+@@ -904,11 +902,20 @@
+ function setViewerCurrentItem(viewer: ViewerElements, item: ViewerItem): void {
+   viewer.currentItem = item;
+   updateViewerFavoriteButton(viewer);
++}
++
++async function openExternalViewerItem(item: ViewerItem, viewer: ViewerElements): Promise<void> {
++  const opened = item.kind === "directory"
++    ? await openNativeDirectory(item.path, viewer)
++    : await openNativeFile(item.path, viewer);
+   const ready = viewerLibraryReady;
+-  if (!ready) return;
+-  void ready.then(() => recordViewerRecent(item, viewer)).catch((error: unknown) => {
++  if (!opened || !ready) return;
++  try {
++    await ready;
++    await recordViewerRecent(opened, viewer);
++  } catch (error: unknown) {
+     logWarn("content", "markdown.recent.save.failed", { errorName: errorName(error) });
+-  });
++  }
+ }
+ 
+ async function recordViewerRecent(item: ViewerItem, viewer: ViewerElements): Promise<void> {
+@@ -1212,13 +1219,12 @@
+   try {
+     if (directoryOnly) {
+       const path = await pickDirectory();
+-      if (path) await openNativeDirectory(path, viewer);
++      if (path) await openExternalViewerItem({ kind: "directory", path }, viewer);
+       return;
+     }
+     const entry = await pickEntry();
+     if (!entry) return;
+-    if (entry.kind === "directory") await openNativeDirectory(entry.path, viewer);
+-    else await openNativeFile(entry.path, viewer);
++    await openExternalViewerItem(entry, viewer);
+   } catch (error: unknown) {
+     showDirectoryNotice(errorMessage(error));
+   } finally {
+@@ -1274,7 +1280,7 @@
+   renderViewerLibrary(viewer);
+ }
+ 
+-async function openNativeDirectory(path: string, viewer: ViewerElements, historyIndex?: number): Promise<void> {
++async function openNativeDirectory(path: string, viewer: ViewerElements, historyIndex?: number): Promise<ViewerItem | undefined> {
+   const sequence = ++navigationSequence;
+   try {
+     const state = await readDirectory(path);
+@@ -1296,6 +1302,7 @@
+     clearDirectoryNotice();
+     recordNavigation(viewer, undefined, historyIndex);
+     saveSession(viewer);
++    return { kind: "directory", path: state.rootName ?? path };
+   } catch (error: unknown) {
+     if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
+   }
+@@ -1304,7 +1311,7 @@
+ async function openNativeFile(
+   path: string, viewer: ViewerElements, hash?: string,
+   historyIndex?: number, directoryState?: DirectoryBrowserState,
+-): Promise<void> {
++): Promise<ViewerItem | undefined> {
+   const sequence = ++navigationSequence;
+   try {
+     const file = await readFile(path);
+@@ -1342,6 +1349,7 @@
+     clearDirectoryNotice();
+     recordNavigation(viewer, hash, historyIndex);
+     saveSession(viewer);
++    return { kind: "file", path };
+   } catch (error: unknown) {
+     if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
+   }

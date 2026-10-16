@@ -1,4 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
+import { setNavigationState } from "./platform.ts";
 import zenuml from "@mermaid-js/mermaid-zenuml";
 import DOMPurify from "dompurify";
 import hljs from "highlight.js/lib/common";
@@ -13,10 +14,11 @@ import { createToolbarIcon } from "./icons.ts";
 import { createJsonArticle } from "./json.ts";
 import { createPdfArticle } from "./pdf.ts";
 import { initializeDocumentSearch } from "./search.ts";
+import { createQuickOpen, type QuickOpenPanel } from "./quick-open.ts";
 import { applyTypography, createSettingsPage, getSettings, subscribeSettings, updateSettings } from "./settings.ts";
 import {
   directoryFileKind, pickEntry, pickDirectory, readFile, readDirectory, takeOpenedFile,
-  readLibrary, writeLibrary, openExternal, errorMessage,
+  readLibrary, writeLibrary, openExternal, resolveLinkTarget, errorMessage,
   type DirectoryBrowserState, type DirectoryFileContent,
   type DirectoryFileKind, type DirectoryTreeEntry,
 } from "./platform.ts";
@@ -43,18 +45,14 @@ interface ViewerItem {
   path: string;
 }
 
-interface ViewerLibraryElements {
-  dialog: HTMLDialogElement;
-  favoriteList: HTMLUListElement;
-  recentList: HTMLUListElement;
-}
-
 interface ViewerElements {
   toolbar: HTMLElement;
   shell: HTMLElement;
   content: HTMLElement;
   fileName: HTMLElement;
   importButton: HTMLButtonElement;
+  backButton: HTMLButtonElement;
+  forwardButton: HTMLButtonElement;
   favoriteButton: HTMLButtonElement;
   favoriteIcon: HTMLElement;
   favoriteLabel: HTMLElement;
@@ -62,8 +60,7 @@ interface ViewerElements {
   libraryDialog: HTMLDialogElement;
   settingsDialog: HTMLDialogElement;
   openSettings: () => void;
-  favoriteList: HTMLUListElement;
-  recentList: HTMLUListElement;
+  quickOpen: QuickOpenPanel;
   currentItem?: ViewerItem;
   directoryRootName?: string;
   setSidebar: (view: SidebarView, sidebar: HTMLElement | undefined, activate?: boolean) => void;
@@ -80,6 +77,7 @@ interface ResolvedDirectoryReference {
 
 let diagramRenderSequence = 0;
 let directoryRenderSequence = 0;
+let directoryTreeRenderSequence = 0;
 let mermaidInitialization: Promise<void> | undefined;
 let viewerFavorites: ViewerItem[] = [];
 let viewerRecents: ViewerItem[] = [];
@@ -104,7 +102,74 @@ const markdown = new MarkdownIt({
     katexOptions: { throwOnError: false, strict: "ignore", trust: false },
   });
 
+const validateMarkdownLink = markdown.validateLink.bind(markdown);
+markdown.validateLink = (url: string): boolean => /^file:/iu.test(url) || validateMarkdownLink(url);
+
+interface NavigationEntry {
+  item: ViewerItem;
+  root?: string;
+  hash?: string;
+}
+
+const navigationHistory: NavigationEntry[] = [];
+let navigationIndex = -1;
+let historyNavigating = false;
+let menuStateQueue = Promise.resolve();
+
+function updateNavigationMenu(viewer: ViewerElements): void {
+  const canBack = !historyNavigating && navigationIndex > 0;
+  const canForward = !historyNavigating && navigationIndex < navigationHistory.length - 1;
+  viewer.backButton.disabled = !canBack;
+  viewer.forwardButton.disabled = !canForward;
+  menuStateQueue = menuStateQueue.then(() => setNavigationState(canBack, canForward))
+    .catch((error: unknown) => {
+      logWarn("content", "navigation.menu.failed", { errorName: errorName(error) });
+    });
+}
+
+function recordNavigation(viewer: ViewerElements, hash?: string, historyIndex?: number): void {
+  if (!viewer.currentItem) return;
+  if (historyIndex !== undefined) {
+    navigationIndex = historyIndex;
+  } else {
+    const entry = { item: { ...viewer.currentItem }, root: viewer.directoryRootName, hash };
+    const current = navigationHistory[navigationIndex];
+    if (!current || viewerItemKey(current.item) !== viewerItemKey(entry.item)
+      || current.root !== entry.root || current.hash !== entry.hash) {
+      navigationHistory.splice(navigationIndex + 1);
+      navigationHistory.push(entry);
+      navigationIndex = navigationHistory.length - 1;
+    }
+  }
+  updateNavigationMenu(viewer);
+}
+
+async function navigateHistory(direction: "back" | "forward", viewer: ViewerElements): Promise<void> {
+  if (historyNavigating || pickerOpen) return;
+  const index = navigationIndex + (direction === "back" ? -1 : 1);
+  const entry = navigationHistory[index];
+  if (!entry) return;
+  historyNavigating = true;
+  updateNavigationMenu(viewer);
+  const sequence = ++navigationSequence;
+  try {
+    if (entry.item.kind === "directory") {
+      await openNativeDirectory(entry.item.path, viewer, index);
+    } else {
+      const state = entry.root ? await readDirectory(entry.root) : { status: "none" as const };
+      if (sequence !== navigationSequence) return;
+      await openNativeFile(entry.item.path, viewer, entry.hash, index, state);
+    }
+  } catch (error: unknown) {
+    if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
+  } finally {
+    historyNavigating = false;
+    updateNavigationMenu(viewer);
+  }
+}
+
 let navigationSequence = 0;
+let openingDocumentLink = false;
 let pickerOpen = false;
 let restoringSession = false;
 let restoreScrollCancelled = false;
@@ -124,7 +189,7 @@ function renderStandaloneViewer(): void {
     const viewer = createViewer(article);
     document.body.replaceChildren(viewer.toolbar, viewer.shell, viewer.libraryDialog, viewer.settingsDialog);
     document.documentElement.dataset.linguamarkMarkdown = "ready";
-    document.title = "LinguaMark Reader";
+    document.title = "Folio";
     initializeNativeNavigation(viewer);
     initializeViewerLibrary(viewer);
     void initializeFileOpening(viewer);
@@ -142,7 +207,7 @@ async function initializeFileOpening(viewer: ViewerElements): Promise<void> {
     queue = queue.then(async () => {
       const path = await takeOpenedFile();
       if (!path) return false;
-      await openNativeFile(path, viewer);
+      await openExternalViewerItem({ kind: "file", path }, viewer);
       return true;
     }).catch((error: unknown) => {
       ++navigationSequence;
@@ -153,6 +218,10 @@ async function initializeFileOpening(viewer: ViewerElements): Promise<void> {
     return queue;
   };
   try {
+    await listen<"back" | "forward">("document-navigation", ({ payload }) => {
+      if (payload === "back" || payload === "forward") void navigateHistory(payload, viewer);
+    });
+    updateNavigationMenu(viewer);
     await listen("native-file-opened", () => { void drain(); });
     const opened = await drain();
     if (!opened && initialNavigation === navigationSequence && getSettings().restoreSession) {
@@ -174,18 +243,30 @@ function createEmptyViewerArticle(): HTMLElement {
   message.className = "linguamark-empty-viewer-message";
   const title = document.createElement("p");
   title.className = "linguamark-empty-viewer-title";
-  title.textContent = "打开 Markdown、JSON、HTML 或 PDF 开始阅读";
+  title.textContent = "开始阅读";
   const description = document.createElement("p");
-  description.textContent = "点击顶部“导入”，选择 Markdown、JSON、HTML、PDF 文件或阅读目录。";
-  message.append(title, description);
+  description.textContent = "从侧栏选择文档，或打开文件与目录。";
+  const actions = document.createElement("div");
+  actions.className = "linguamark-empty-viewer-actions";
+  for (const [action, label] of [["file", "打开文件"], ["directory", "打开目录"]] as const) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.emptyOpen = action;
+    button.textContent = label;
+    actions.append(button);
+  }
+  const formats = document.createElement("p");
+  formats.className = "linguamark-empty-viewer-formats";
+  formats.textContent = "支持 Markdown、JSON、HTML 和 PDF";
+  message.append(title, description, actions, formats);
 
   const library = document.createElement("div");
   library.className = "linguamark-markdown-library-grid linguamark-empty-viewer-library";
-  const favorites = createViewerLibrarySection("全部收藏");
+  const favorites = createViewerLibrarySection("收藏");
   favorites.list.dataset.viewerItems = "favorites";
-  const recents = createViewerLibrarySection("最近浏览");
+  const recents = createViewerLibrarySection("最近打开");
   recents.list.dataset.viewerItems = "recents";
-  library.append(favorites.section, recents.section);
+  library.append(recents.section, favorites.section);
   home.append(message, library);
   article.append(home);
   return article;
@@ -204,6 +285,17 @@ function createArticle(source: string, kind: "markdown" | "html" = "markdown"): 
     .join("\n");
   for (const style of template.content.querySelectorAll("style")) style.remove();
 
+  // Preserve link destinations through sanitization without allowing active URL schemes.
+  const linkDestinations = new Map<string, string>();
+  for (const anchor of template.content.querySelectorAll<HTMLAnchorElement>("a")) {
+    anchor.removeAttribute("data-reader-link");
+    anchor.removeAttribute("data-blocked-link");
+    const href = anchor.getAttribute("href");
+    if (href === null) continue;
+    const id = String(linkDestinations.size);
+    linkDestinations.set(id, href);
+    anchor.dataset.readerLink = id;
+  }
   const purified = DOMPurify.sanitize(template.innerHTML, {
     RETURN_DOM_FRAGMENT: true,
     USE_PROFILES: { html: true, svg: true, svgFilters: true, mathMl: true },
@@ -217,6 +309,18 @@ function createArticle(source: string, kind: "markdown" | "html" = "markdown"): 
   const article = document.createElement("article");
   article.id = "write";
   article.append(clean);
+  for (const anchor of article.querySelectorAll<HTMLAnchorElement>("a[data-reader-link]")) {
+    const href = linkDestinations.get(anchor.dataset.readerLink ?? "");
+    anchor.removeAttribute("data-reader-link");
+    if (href === undefined) continue;
+    // The dispatcher reports unsafe schemes; never restore them as navigable hrefs.
+    if (/^(?:javascript|vbscript|data|blob):/iu.test(href.replace(/[\s\u0000-\u001f\u007f]/gu, ""))) {
+      anchor.href = "#";
+      anchor.dataset.blockedLink = "true";
+    } else {
+      anchor.setAttribute("href", href);
+    }
+  }
   secureInteractiveContent(article);
   if (kind === "markdown") {
     for (const table of article.querySelectorAll("table")) {
@@ -414,6 +518,24 @@ function createViewer(article: HTMLElement): ViewerElements {
   toolbar.className = "linguamark-markdown-toolbar";
   toolbar.dataset.linguamarkUi = "";
 
+  const backButton = document.createElement("button");
+  backButton.type = "button";
+  backButton.className = "linguamark-markdown-directory-button";
+  backButton.disabled = true;
+  backButton.title = "后退（⌘[ / Ctrl+[）";
+  backButton.setAttribute("aria-label", "返回上一个浏览页面");
+  backButton.append(createToolbarIcon("back"));
+  backButton.addEventListener("click", () => { void navigateHistory("back", viewer); });
+
+  const forwardButton = document.createElement("button");
+  forwardButton.type = "button";
+  forwardButton.className = "linguamark-markdown-directory-button";
+  forwardButton.disabled = true;
+  forwardButton.title = "前进（⌘] / Ctrl+]）";
+  forwardButton.setAttribute("aria-label", "前进到下一个浏览页面");
+  forwardButton.append(createToolbarIcon("forward"));
+  forwardButton.addEventListener("click", () => { void navigateHistory("forward", viewer); });
+
   const sidebarToggle = document.createElement("button");
   sidebarToggle.type = "button";
   sidebarToggle.className = "linguamark-markdown-directory-button";
@@ -483,12 +605,12 @@ function createViewer(article: HTMLElement): ViewerElements {
   libraryButton.className = "linguamark-markdown-directory-button linguamark-markdown-library-button";
   libraryButton.setAttribute("aria-haspopup", "dialog");
   libraryButton.setAttribute("aria-controls", "linguamark-markdown-library");
-  libraryButton.setAttribute("aria-label", "查看收藏与最近浏览");
-  libraryButton.title = "收藏与最近浏览";
+  libraryButton.setAttribute("aria-label", "快捷打开收藏与最近项目");
+  libraryButton.title = "快捷打开";
   const libraryIcon = createToolbarIcon("library");
   const libraryLabel = document.createElement("span");
   libraryLabel.className = "linguamark-markdown-action-label";
-  libraryLabel.textContent = "收藏列表";
+  libraryLabel.textContent = "快捷打开";
   libraryButton.append(libraryIcon, libraryLabel);
 
   const actions = document.createElement("div");
@@ -505,7 +627,7 @@ function createViewer(article: HTMLElement): ViewerElements {
   actions.append(widthButton, favoriteButton, libraryButton, settingsButton);
   const navigation = document.createElement("div");
   navigation.className = "linguamark-markdown-toolbar-navigation";
-  navigation.append(sidebarToggle, sidebarControl, importButton);
+  navigation.append(backButton, forwardButton, sidebarToggle, sidebarControl, importButton);
   toolbar.append(navigation, fileName, actions);
 
   const shell = document.createElement("div");
@@ -542,7 +664,12 @@ function createViewer(article: HTMLElement): ViewerElements {
   };
   setContentCount("");
 
-  const library = createViewerLibrary();
+  const library = createQuickOpen(
+    (item) => { void openViewerItem(item, viewer); },
+    () => {
+      if (!document.querySelector("body > dialog[open]")) viewer.content.focus({ preventScroll: true });
+    },
+  );
   shell.append(content, resizer, backdrop, characterCountLabel);
 
   const narrowScreen = matchMedia("(max-width: 900px)");
@@ -673,12 +800,14 @@ function createViewer(article: HTMLElement): ViewerElements {
   setSidebarWidth(defaultSidebarWidth);
   setSidebar("outline", documentSidebar, true);
 
-  return {
+  const viewer: ViewerElements = {
     toolbar,
     shell,
     content,
     fileName,
     importButton,
+    backButton,
+    forwardButton,
     favoriteButton,
     favoriteIcon,
     favoriteLabel,
@@ -686,8 +815,7 @@ function createViewer(article: HTMLElement): ViewerElements {
     libraryDialog: library.dialog,
     settingsDialog: settingsPage.dialog,
     openSettings: settingsPage.open,
-    favoriteList: library.favoriteList,
-    recentList: library.recentList,
+    quickOpen: library,
     setSidebar,
     openSidebar() {
       setSidebarOpen(true);
@@ -701,38 +829,7 @@ function createViewer(article: HTMLElement): ViewerElements {
       if (sidebars.files) setActiveDirectoryPath(path, sidebars.files);
     },
   };
-}
-
-function createViewerLibrary(): ViewerLibraryElements {
-  const dialog = document.createElement("dialog");
-  dialog.id = "linguamark-markdown-library";
-  dialog.className = "linguamark-markdown-library";
-  dialog.dataset.linguamarkUi = "";
-  dialog.setAttribute("aria-labelledby", "linguamark-markdown-library-title");
-
-  const panel = document.createElement("div");
-  panel.className = "linguamark-markdown-library-panel";
-  const header = document.createElement("div");
-  header.className = "linguamark-markdown-library-header";
-  const title = document.createElement("h2");
-  title.id = "linguamark-markdown-library-title";
-  title.textContent = "收藏与最近浏览";
-  const closeButton = document.createElement("button");
-  closeButton.type = "button";
-  closeButton.className = "linguamark-markdown-library-close";
-  closeButton.setAttribute("aria-label", "关闭收藏列表");
-  closeButton.textContent = "×";
-  closeButton.addEventListener("click", () => dialog.close());
-  header.append(title, closeButton);
-
-  const grid = document.createElement("div");
-  grid.className = "linguamark-markdown-library-grid";
-  const favorites = createViewerLibrarySection("全部收藏");
-  const recents = createViewerLibrarySection("最近浏览");
-  grid.append(favorites.section, recents.section);
-  panel.append(header, grid);
-  dialog.append(panel);
-  return { dialog, favoriteList: favorites.list, recentList: recents.list };
+  return viewer;
 }
 
 function createViewerLibrarySection(titleText: string): { section: HTMLElement; list: HTMLUListElement } {
@@ -755,7 +852,6 @@ function initializeViewerLibrary(viewer: ViewerElements): void {
     openViewerLibrary(viewer);
   });
 
-  const initialItem = viewer.currentItem;
   viewerLibraryReady = readLibrary().then((stored) => {
     viewerFavorites = readViewerItems(stored[VIEWER_FAVORITES_KEY]);
     viewerRecents = readViewerItems(stored[VIEWER_RECENTS_KEY], MAX_VIEWER_RECENTS);
@@ -766,7 +862,6 @@ function initializeViewerLibrary(viewer: ViewerElements): void {
   });
 
   void viewerLibraryReady
-    .then(() => initialItem ? recordViewerRecent(initialItem, viewer) : undefined)
     .catch((error: unknown) => {
       logWarn("content", "markdown.library.initialize.failed", { errorName: errorName(error) });
       showDirectoryNotice("无法读取收藏与最近浏览记录");
@@ -797,7 +892,7 @@ async function toggleViewerFavorite(viewer: ViewerElements, item: ViewerItem | u
 
 function openViewerLibrary(viewer: ViewerElements): void {
   try {
-    if (!viewer.libraryDialog.open) viewer.libraryDialog.showModal();
+    viewer.quickOpen.open();
   } catch (error: unknown) {
     logWarn("content", "markdown.library.open.failed", { errorName: errorName(error) });
     showDirectoryNotice("无法打开收藏列表");
@@ -807,11 +902,20 @@ function openViewerLibrary(viewer: ViewerElements): void {
 function setViewerCurrentItem(viewer: ViewerElements, item: ViewerItem): void {
   viewer.currentItem = item;
   updateViewerFavoriteButton(viewer);
+}
+
+async function openExternalViewerItem(item: ViewerItem, viewer: ViewerElements): Promise<void> {
+  const opened = item.kind === "directory"
+    ? await openNativeDirectory(item.path, viewer)
+    : await openNativeFile(item.path, viewer);
   const ready = viewerLibraryReady;
-  if (!ready) return;
-  void ready.then(() => recordViewerRecent(item, viewer)).catch((error: unknown) => {
+  if (!opened || !ready) return;
+  try {
+    await ready;
+    await recordViewerRecent(opened, viewer);
+  } catch (error: unknown) {
     logWarn("content", "markdown.recent.save.failed", { errorName: errorName(error) });
-  });
+  }
 }
 
 async function recordViewerRecent(item: ViewerItem, viewer: ViewerElements): Promise<void> {
@@ -842,8 +946,7 @@ function updateViewerFavoriteButton(viewer: ViewerElements): void {
 
 function renderViewerLibrary(viewer: ViewerElements): void {
   const favorites = viewerFavoritesForDisplay(viewer);
-  renderViewerItems(viewer.favoriteList, favorites, "暂无收藏", viewer);
-  renderViewerItems(viewer.recentList, viewerRecents, "暂无浏览记录", viewer);
+  viewer.quickOpen.update(favorites, viewerRecents);
   const emptyFavorites = viewer.content.querySelector<HTMLUListElement>('[data-viewer-items="favorites"]');
   const emptyRecents = viewer.content.querySelector<HTMLUListElement>('[data-viewer-items="recents"]');
   if (emptyFavorites) renderViewerItems(emptyFavorites, favorites, "暂无收藏", viewer);
@@ -871,13 +974,19 @@ function renderViewerItems(
     button.className = "linguamark-markdown-library-item";
     button.title = item.path;
     button.setAttribute("aria-label", `打开${viewerItemLabel(item)} ${item.path}`);
-    const kind = document.createElement("span");
-    kind.className = `linguamark-markdown-library-kind is-${item.kind}`;
-    kind.textContent = viewerItemLabel(item);
+    const icon = createToolbarIcon(item.kind === "directory" ? "folder" : "list");
+    const details = document.createElement("span");
+    details.className = "linguamark-markdown-library-details";
+    const normalized = item.path.replaceAll("\\", "/").replace(/\/+$/u, "");
+    const separator = normalized.lastIndexOf("/");
+    const name = document.createElement("span");
+    name.className = "linguamark-markdown-library-name";
+    name.textContent = normalized.slice(separator + 1) || item.path;
     const path = document.createElement("span");
     path.className = "linguamark-markdown-library-path";
-    path.textContent = item.path;
-    button.append(kind, path);
+    path.textContent = normalized.slice(0, separator) || "/";
+    details.append(name, path);
+    button.append(icon, details);
     button.addEventListener("click", () => {
       void openViewerItem(item, viewer);
     });
@@ -1001,6 +1110,11 @@ function initializeNativeNavigation(viewer: ViewerElements): void {
     addEventListener(type, () => { if (restoringSession) restoreScrollCancelled = true; }, { passive: true });
   }
   viewer.importButton.addEventListener("click", () => { void chooseNative(false, viewer); });
+  viewer.content.addEventListener("click", (event) => {
+    const button = event.target instanceof Element
+      ? event.target.closest<HTMLButtonElement>(".linguamark-empty-viewer button[data-empty-open]") : null;
+    if (button) void chooseNative(button.dataset.emptyOpen === "directory", viewer);
+  });
   addEventListener("keydown", (event) => {
     if (event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "r") {
       event.preventDefault();
@@ -1053,12 +1167,49 @@ function initializeNativeNavigation(viewer: ViewerElements): void {
     const anchor = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
     if (!anchor || !viewer.content.contains(anchor)) return;
     const href = anchor.getAttribute("href") ?? "";
+    if (anchor.dataset.blockedLink === "true") {
+      event.preventDefault();
+      showDirectoryNotice("出于安全原因，不能打开此链接协议");
+      return;
+    }
     if (href.startsWith("#")) return;
     event.preventDefault();
-    if (/^https?:\/\//iu.test(href)) {
-      void openExternal(href).catch((error: unknown) => showDirectoryNotice(errorMessage(error)));
-    }
+    void openDocumentLink(href, viewer);
   });
+}
+
+async function openDocumentLink(reference: string, viewer: ViewerElements): Promise<void> {
+  if (openingDocumentLink) return;
+  openingDocumentLink = true;
+  const source = viewer.currentItem;
+  const sequence = navigationSequence;
+  try {
+    reference = reference.trim();
+    if (!reference) throw new Error("链接地址为空");
+    if (reference.startsWith("//")) {
+      await openExternal(`https:${reference}`);
+      return;
+    }
+    if (/^[a-z][a-z\d+.-]*:/iu.test(reference) && !/^file:/iu.test(reference)) {
+      await openExternal(reference);
+      return;
+    }
+    if (source?.kind !== "file") throw new Error("请先打开链接所在的文档");
+    const base = `file://${source.path.split("/").map(encodeURIComponent).join("/")}`;
+    const url = new URL(reference, base);
+    if (url.protocol !== "file:" || (url.hostname && url.hostname !== "localhost")) {
+      throw new Error("仅支持本机文件链接");
+    }
+    const path = decodeURIComponent(url.pathname);
+    const target = await resolveLinkTarget(source.path, path);
+    if (!target || sequence !== navigationSequence) return;
+    if (target.kind === "directory") await openNativeDirectory(target.path, viewer);
+    else await openNativeFile(target.path, viewer, url.hash.slice(1) || undefined);
+  } catch (error: unknown) {
+    if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
+  } finally {
+    openingDocumentLink = false;
+  }
 }
 
 async function chooseNative(directoryOnly: boolean, viewer: ViewerElements): Promise<void> {
@@ -1068,13 +1219,12 @@ async function chooseNative(directoryOnly: boolean, viewer: ViewerElements): Pro
   try {
     if (directoryOnly) {
       const path = await pickDirectory();
-      if (path) await openNativeDirectory(path, viewer);
+      if (path) await openExternalViewerItem({ kind: "directory", path }, viewer);
       return;
     }
     const entry = await pickEntry();
     if (!entry) return;
-    if (entry.kind === "directory") await openNativeDirectory(entry.path, viewer);
-    else await openNativeFile(entry.path, viewer);
+    await openExternalViewerItem(entry, viewer);
   } catch (error: unknown) {
     showDirectoryNotice(errorMessage(error));
   } finally {
@@ -1130,7 +1280,7 @@ function applyDirectoryState(state: DirectoryBrowserState, viewer: ViewerElement
   renderViewerLibrary(viewer);
 }
 
-async function openNativeDirectory(path: string, viewer: ViewerElements): Promise<void> {
+async function openNativeDirectory(path: string, viewer: ViewerElements, historyIndex?: number): Promise<ViewerItem | undefined> {
   const sequence = ++navigationSequence;
   try {
     const state = await readDirectory(path);
@@ -1148,19 +1298,25 @@ async function openNativeDirectory(path: string, viewer: ViewerElements): Promis
     viewer.setPath(state.rootName ?? path);
     setViewerCurrentItem(viewer, { kind: "directory", path: state.rootName ?? path });
     renderViewerLibrary(viewer);
-    document.title = "LinguaMark Reader";
+    document.title = "Folio";
     clearDirectoryNotice();
+    recordNavigation(viewer, undefined, historyIndex);
     saveSession(viewer);
+    return { kind: "directory", path: state.rootName ?? path };
   } catch (error: unknown) {
     if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
   }
 }
 
-async function openNativeFile(path: string, viewer: ViewerElements, hash?: string): Promise<void> {
+async function openNativeFile(
+  path: string, viewer: ViewerElements, hash?: string,
+  historyIndex?: number, directoryState?: DirectoryBrowserState,
+): Promise<ViewerItem | undefined> {
   const sequence = ++navigationSequence;
   try {
     const file = await readFile(path);
     if (sequence !== navigationSequence) return;
+    if (directoryState) applyDirectoryState(directoryState, viewer);
     const root = viewer.directoryRootName;
     const prefix = root ? `${root.replace(/\/$/u, "")}/` : "";
     const relative = prefix && path.startsWith(prefix) ? path.slice(prefix.length) : undefined;
@@ -1180,15 +1336,20 @@ async function openNativeFile(path: string, viewer: ViewerElements, hash?: strin
         document.title = article.querySelector("h1")?.textContent?.trim() || path.split("/").at(-1) || "Markdown";
         resetLocationHash();
         trackDocumentRender(article);
+        if (hash) {
+          article.querySelector(`#${CSS.escape(decodeURIComponentSafely(hash))}`)?.scrollIntoView();
+        }
       }
     } else if (file.kind === "json") renderJson(file, viewer);
     else if (file.kind === "pdf") renderPdf(file, viewer);
     else renderDirectoryImage(file, viewer);
     setViewerCurrentItem(viewer, { kind: "file", path });
     viewer.setActiveFile(relative ?? "");
-    viewer.content.scrollTo({ top: 0, behavior: "instant" });
+    if (!hash) viewer.content.scrollTo({ top: 0, behavior: "instant" });
     clearDirectoryNotice();
+    recordNavigation(viewer, hash, historyIndex);
     saveSession(viewer);
+    return { kind: "file", path };
   } catch (error: unknown) {
     if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
   }
@@ -1203,16 +1364,10 @@ function disableStandaloneRelativeResources(article: HTMLElement): void {
     image.title = "打开所在目录后才能读取相对图片；不自动加载远程图片";
     image.classList.add("linguamark-directory-image-error");
   }
-  for (const anchor of article.querySelectorAll<HTMLAnchorElement>("a[href]")) {
-    const href = anchor.getAttribute("href") ?? "";
-    if (href.startsWith("#") || /^https?:\/\//iu.test(href)) continue;
-    anchor.removeAttribute("href");
-    anchor.setAttribute("aria-disabled", "true");
-    anchor.title = "打开所在目录后才能跳转相对文件";
-  }
 }
 
 function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElements): HTMLElement {
+  const renderId = ++directoryTreeRenderSequence;
   const sidebar = document.createElement("aside");
   sidebar.id = "linguamark-markdown-toc";
   sidebar.className = "linguamark-markdown-toc linguamark-directory-sidebar";
@@ -1248,7 +1403,12 @@ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElem
 
   const tree = document.createElement("ul");
   tree.className = "linguamark-directory-list";
-  for (const entry of state.entries) tree.append(createDirectoryTreeItem(entry, viewer));
+  let loading = true;
+  tree.setAttribute("aria-busy", "true");
+  const progress = document.createElement("p");
+  progress.className = "linguamark-directory-empty";
+  progress.role = "status";
+  progress.textContent = "正在加载文件列表…";
 
   const controls = document.createElement("div");
   controls.className = "linguamark-directory-toolbar";
@@ -1258,6 +1418,12 @@ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElem
   folderToggle.type = "button";
   folderToggle.className = "linguamark-markdown-directory-button linguamark-directory-toolbar-button";
   const updateFolderToggle = (): void => {
+    if (loading) {
+      folderToggle.disabled = true;
+      folderToggle.title = "正在加载文件列表";
+      folderToggle.setAttribute("aria-label", folderToggle.title);
+      return;
+    }
     const folders = [...tree.querySelectorAll<HTMLDetailsElement>("details")];
     const allExpanded = folders.length > 0 && folders.every((folder) => folder.open);
     folderToggle.disabled = folders.length === 0;
@@ -1286,8 +1452,38 @@ function createDirectorySidebar(state: DirectoryBrowserState, viewer: ViewerElem
     if (path) setActiveDirectoryPath(path);
   });
   controls.append(folderToggle, focusButton);
-  panel.append(tree);
+  panel.append(progress, tree);
   sidebar.append(controls, panel);
+  // Bound each DOM update, including deeply nested trees, and yield to input/paint.
+  void (async () => {
+    const stack = [{ entries: state.entries!, index: 0, list: tree }];
+    while (stack.length > 0) {
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+      if (renderId !== directoryTreeRenderSequence) return;
+      let rendered = 0;
+      const started = performance.now();
+      while (stack.length > 0 && rendered < 200 && performance.now() - started < 8) {
+        const frame = stack[stack.length - 1];
+        const entry = frame.entries[frame.index++];
+        if (!entry) {
+          stack.pop();
+          continue;
+        }
+        const item = createDirectoryTreeItem(entry, viewer);
+        frame.list.append(item);
+        rendered += 1;
+        if (entry.type === "directory" && entry.children?.length) {
+          stack.push({ entries: entry.children, index: 0, list: item.querySelector<HTMLUListElement>("ul")! });
+        }
+      }
+    }
+    loading = false;
+    tree.removeAttribute("aria-busy");
+    progress.remove();
+    updateFolderToggle();
+    const activePath = currentDirectoryPath(viewer, sidebar);
+    if (activePath) setActiveDirectoryPath(activePath, sidebar, false);
+  })();
   return sidebar;
 }
 
@@ -1302,7 +1498,6 @@ function createDirectoryTreeItem(entry: DirectoryTreeEntry, viewer: ViewerElemen
     summary.title = entry.path;
     const children = document.createElement("ul");
     children.className = "linguamark-directory-list";
-    for (const child of entry.children ?? []) children.append(createDirectoryTreeItem(child, viewer));
     details.append(summary, children);
     item.append(details);
     return item;
@@ -1572,23 +1767,6 @@ function prepareDirectoryDocument(article: HTMLElement, currentPath: string, vie
     imagesReady.push(loadDirectoryImage(image, resolved.path, article, viewer, renderId));
   }
 
-  for (const anchor of article.querySelectorAll<HTMLAnchorElement>("a[href]")) {
-    const reference = anchor.getAttribute("href");
-    if (!reference || reference.startsWith("#") || isExternalReference(reference)) continue;
-    const resolved = resolveDirectoryReference(currentPath, reference);
-    const kind = resolved ? directoryFileKind(resolved.path) : "other";
-    if (!resolved || kind === "other") {
-      anchor.removeAttribute("href");
-      anchor.classList.add("linguamark-directory-link-disabled");
-      anchor.setAttribute("aria-disabled", "true");
-      continue;
-    }
-    anchor.href = "#";
-    anchor.addEventListener("click", (event) => {
-      event.preventDefault();
-      void openDirectoryEntry(resolved.path, kind, viewer, resolved.hash);
-    });
-  }
   return Promise.all(imagesReady).then(() => undefined);
 }
 
@@ -1657,7 +1835,7 @@ function currentDirectoryPath(viewer: ViewerElements, sidebar: HTMLElement): str
     .some((element) => element.dataset.directoryPath === relative) ? relative : "";
 }
 
-function setActiveDirectoryPath(path: string, scope: ParentNode = document): void {
+function setActiveDirectoryPath(path: string, scope: ParentNode = document, reveal = true): void {
   let activeFile: HTMLButtonElement | undefined;
   for (const button of scope.querySelectorAll<HTMLButtonElement>(".linguamark-directory-file[data-directory-path]")) {
     const isActive = button.dataset.directoryPath === path;
@@ -1672,7 +1850,7 @@ function setActiveDirectoryPath(path: string, scope: ParentNode = document): voi
   for (const button of scope.querySelectorAll<HTMLButtonElement>(".linguamark-directory-focus-button")) {
     button.disabled = !activeFile;
   }
-  if (!activeFile) return;
+  if (!activeFile || !reveal) return;
   for (let folder = activeFile.closest("details"); folder; folder = folder.parentElement?.closest("details") ?? null) {
     folder.open = true;
   }

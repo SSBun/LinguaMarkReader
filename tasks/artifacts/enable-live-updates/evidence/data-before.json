@@ -1,0 +1,19 @@
+{
+  "backupRoot": "/Users/caishilin/Library/Application Support/LinguaMarkReaderUpdateBackups/20260923-154046",
+  "appVersion": "0.3.0",
+  "grantsSha256": "5b09256d27e0696c2d7e576df14fcf8f96900aa320b5d659b028483db86fde60",
+  "storage": {
+    "webkit-bundle/WebsiteData/Default/UmGXX3-SXfeXj_U9nL8NXADDbLTM8URKBunYIavFOdA/UmGXX3-SXfeXj_U9nL8NXADDbLTM8URKBunYIavFOdA/LocalStorage/localstorage.sqlite3": {
+      "linguamark-reader-settings-v1": "6d48fb8f012ce0812b836f83aafd1193159f60bb529d3e83d80b7883d35def4b",
+      "linguamark-reader-library-v1": "665efa41755c5420ae80084e9d3b601aa5a0c251d69a2019f22320bfea384898"
+    },
+    "webkit-executable/WebsiteData/Default/Y5MRhchQkDYVsFy0tBAkHaRi2D662iqoby2IJNY3nv4/Y5MRhchQkDYVsFy0tBAkHaRi2D662iqoby2IJNY3nv4/LocalStorage/localstorage.sqlite3": {
+      "linguamark-reader-settings-v1": "6d48fb8f012ce0812b836f83aafd1193159f60bb529d3e83d80b7883d35def4b",
+      "linguamark-reader-library-v1": "f1b350dc1ce804cd6c21bbcc66011ddcf30bee41102b073a971baba17cb6a65a"
+    },
+    "webkit-executable/WebsiteData/Default/K3iWJ3ItJXJcddzSyl5JrVqBy1INBbWDce0fKCbGrVA/K3iWJ3ItJXJcddzSyl5JrVqBy1INBbWDce0fKCbGrVA/LocalStorage/localstorage.sqlite3": {
+      "linguamark-reader-settings-v1": "6d48fb8f012ce0812b836f83aafd1193159f60bb529d3e83d80b7883d35def4b",
+      "linguamark-reader-library-v1": "4b250bc5ce52a7a6e1204b3163cd4acfb25d958a3faa8230d4e49809fa41941b"
+    }
+  }
+}

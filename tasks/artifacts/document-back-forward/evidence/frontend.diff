@@ -1,0 +1,140 @@
+--- tasks/artifacts/document-back-forward/evidence/before/main.ts	2026-10-15 18:04:27
++++ src/main.ts	2026-10-15 18:05:23
+@@ -1,4 +1,5 @@
+ import { listen } from "@tauri-apps/api/event";
++import { setNavigationState } from "./platform.ts";
+ import zenuml from "@mermaid-js/mermaid-zenuml";
+ import DOMPurify from "dompurify";
+ import hljs from "highlight.js/lib/common";
+@@ -107,6 +108,67 @@
+ 
+ const validateMarkdownLink = markdown.validateLink.bind(markdown);
+ markdown.validateLink = (url: string): boolean => /^file:/iu.test(url) || validateMarkdownLink(url);
++
++interface NavigationEntry {
++  item: ViewerItem;
++  root?: string;
++  hash?: string;
++}
++
++const navigationHistory: NavigationEntry[] = [];
++let navigationIndex = -1;
++let historyNavigating = false;
++let menuStateQueue = Promise.resolve();
++
++function updateNavigationMenu(): void {
++  const canBack = !historyNavigating && navigationIndex > 0;
++  const canForward = !historyNavigating && navigationIndex < navigationHistory.length - 1;
++  menuStateQueue = menuStateQueue.then(() => setNavigationState(canBack, canForward))
++    .catch((error: unknown) => {
++      logWarn("content", "navigation.menu.failed", { errorName: errorName(error) });
++    });
++}
++
++function recordNavigation(viewer: ViewerElements, hash?: string, historyIndex?: number): void {
++  if (!viewer.currentItem) return;
++  if (historyIndex !== undefined) {
++    navigationIndex = historyIndex;
++  } else {
++    const entry = { item: { ...viewer.currentItem }, root: viewer.directoryRootName, hash };
++    const current = navigationHistory[navigationIndex];
++    if (!current || viewerItemKey(current.item) !== viewerItemKey(entry.item)
++      || current.root !== entry.root || current.hash !== entry.hash) {
++      navigationHistory.splice(navigationIndex + 1);
++      navigationHistory.push(entry);
++      navigationIndex = navigationHistory.length - 1;
++    }
++  }
++  updateNavigationMenu();
++}
++
++async function navigateHistory(direction: "back" | "forward", viewer: ViewerElements): Promise<void> {
++  if (historyNavigating || pickerOpen) return;
++  const index = navigationIndex + (direction === "back" ? -1 : 1);
++  const entry = navigationHistory[index];
++  if (!entry) return;
++  historyNavigating = true;
++  updateNavigationMenu();
++  const sequence = ++navigationSequence;
++  try {
++    if (entry.item.kind === "directory") {
++      await openNativeDirectory(entry.item.path, viewer, index);
++    } else {
++      const state = entry.root ? await readDirectory(entry.root) : { status: "none" as const };
++      if (sequence !== navigationSequence) return;
++      await openNativeFile(entry.item.path, viewer, entry.hash, index, state);
++    }
++  } catch (error: unknown) {
++    if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
++  } finally {
++    historyNavigating = false;
++    updateNavigationMenu();
++  }
++}
+ 
+ let navigationSequence = 0;
+ let openingDocumentLink = false;
+@@ -158,6 +220,10 @@
+     return queue;
+   };
+   try {
++    await listen<"back" | "forward">("document-navigation", ({ payload }) => {
++      if (payload === "back" || payload === "forward") void navigateHistory(payload, viewer);
++    });
++    updateNavigationMenu();
+     await listen("native-file-opened", () => { void drain(); });
+     const opened = await drain();
+     if (!opened && initialNavigation === navigationSequence && getSettings().restoreSession) {
+@@ -1195,7 +1261,7 @@
+   renderViewerLibrary(viewer);
+ }
+ 
+-async function openNativeDirectory(path: string, viewer: ViewerElements): Promise<void> {
++async function openNativeDirectory(path: string, viewer: ViewerElements, historyIndex?: number): Promise<void> {
+   const sequence = ++navigationSequence;
+   try {
+     const state = await readDirectory(path);
+@@ -1215,17 +1281,22 @@
+     renderViewerLibrary(viewer);
+     document.title = "Folio";
+     clearDirectoryNotice();
++    recordNavigation(viewer, undefined, historyIndex);
+     saveSession(viewer);
+   } catch (error: unknown) {
+     if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
+   }
+ }
+ 
+-async function openNativeFile(path: string, viewer: ViewerElements, hash?: string): Promise<void> {
++async function openNativeFile(
++  path: string, viewer: ViewerElements, hash?: string,
++  historyIndex?: number, directoryState?: DirectoryBrowserState,
++): Promise<void> {
+   const sequence = ++navigationSequence;
+   try {
+     const file = await readFile(path);
+     if (sequence !== navigationSequence) return;
++    if (directoryState) applyDirectoryState(directoryState, viewer);
+     const root = viewer.directoryRootName;
+     const prefix = root ? `${root.replace(/\/$/u, "")}/` : "";
+     const relative = prefix && path.startsWith(prefix) ? path.slice(prefix.length) : undefined;
+@@ -1256,6 +1327,7 @@
+     viewer.setActiveFile(relative ?? "");
+     if (!hash) viewer.content.scrollTo({ top: 0, behavior: "instant" });
+     clearDirectoryNotice();
++    recordNavigation(viewer, hash, historyIndex);
+     saveSession(viewer);
+   } catch (error: unknown) {
+     if (sequence === navigationSequence) showDirectoryNotice(errorMessage(error));
+--- tasks/artifacts/document-back-forward/evidence/before/platform.ts	2026-10-15 18:04:27
++++ src/platform.ts	2026-10-15 18:04:53
+@@ -28,6 +28,9 @@
+   return /\.(png|jpe?g|gif|webp|avif|svg)$/iu.test(path) ? "image" : "other";
+ }
+ 
++export const setNavigationState = (canBack: boolean, canForward: boolean): Promise<void> =>
++  invoke("set_navigation_state", { canBack, canForward });
++
+ export const takeOpenedFile = (): Promise<string | null> => invoke("take_opened_file");
+ export const pickEntry = (): Promise<{ kind: "file" | "directory"; path: string } | null> => invoke("pick_entry");
+ export const pickDirectory = (): Promise<string | null> => invoke("pick_directory");

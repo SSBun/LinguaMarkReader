@@ -1,0 +1,13 @@
+{
+  "files": {
+    "src/main.ts": "5ffe94bcfc699ad17441b00299f55532bdba5f38279a7e6fe6332b7521195a44",
+    "src/quick-open.ts": "c9a78b9dac7012d079b245b0355b8bc52bed4b456ba5edbc32186d737bd77bde",
+    "public/markdown.css": "dabb6e585a07f5496ec8e82ea9eeefca06df09a9f556e1b4b1f944d55f825ec6",
+    "tasks/artifacts/quick-open-panel/evidence/integration.diff": "24283b81e6b424f467168233cad93695dd58b8b1b99f5809be946b26861a8915",
+    "tasks/artifacts/quick-open-panel/evidence/observations.md": "c8efbca8d84be82c8f65d59944ecac8646b225b8dec99ad037acc578880280ad",
+    "tasks/artifacts/quick-open-panel/evidence/desktop.png": "3bb939f57c6ae3770d14d3ca23f16e655a71d4d3feaf0dfef082ac37f8603869",
+    "tasks/artifacts/quick-open-panel/evidence/narrow.png": "ae7b4b33b8fd1dc18380455e894f3ea9df60e680d3cd129fcf2a426e5184ab54"
+  },
+  "head": "18c0c8ff0f0ac141c4529cc1a3e7526ebe56cf64",
+  "note": "仅快捷打开及其接入属于任务；差异中的前进后退导航属于并发任务。工作区未暂存、未提交，不以 HEAD 代表实际内容。"
+}

@@ -1,0 +1,18 @@
+{
+  "artifact": "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/LinguaMark-Reader_0.4.0_aarch64.app.tar.gz",
+  "sha256": "a8e03fc685d37278bcbe76a88f143b7a5dbfdddc489320eb97c11097bd082092",
+  "size": 10057066,
+  "version": "0.4.0",
+  "platform": "darwin-aarch64",
+  "validSignature": true,
+  "modifiedArchiveRejected": true,
+  "mismatchedVersionRejected": true,
+  "modifiedArchiveDiagnostic": "Error: InvalidSignature",
+  "mismatchedVersionDiagnostic": "Error: \"签名中的版本与应用配置不一致，或签名缺少版本信息\"",
+  "signing": "ad-hoc; not notarized",
+  "files": {
+    "LinguaMark-Reader_0.4.0_aarch64.app.tar.gz": "a8e03fc685d37278bcbe76a88f143b7a5dbfdddc489320eb97c11097bd082092",
+    "LinguaMark-Reader_0.4.0_aarch64.app.tar.gz.sig": "a0816f50d0a86ce70fb7f7bc8f934414d06b0c1dac756b5d55decdef2d1ce561",
+    "latest.json": "7a3ac347a9cf3b9d62b80c8160fa596a98ade7af2f6a2116277cb3ed88d3bdb8"
+  }
+}
